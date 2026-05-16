@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using TiraWantToCross.GameLogic;
 using TiraWantToCross.Stage;
 using UnityEngine;
 
@@ -6,77 +9,93 @@ namespace TiraWantToCross.DebugTools
 {
     public class StageDataDebugLogger : MonoBehaviour
     {
-        [SerializeField] private bool loadAllStages = true;
-        [SerializeField] private string stageId = "stage_001";
-
         private void Start()
         {
-            if (loadAllStages)
+            var targets = new[] { "stage_001", "stage_002", "stage_003" };
+            foreach (var stageId in targets)
             {
-                var stageList = StageDataLoader.LoadAllStages();
-                Debug.Log($"[StageDataDebugLogger] 読み込みステージ数: {stageList.Count}");
-
-                foreach (var stageData in stageList)
-                {
-                    Debug.Log(BuildStageLog(stageData));
-                }
-
-                return;
+                RunDebugScenario(stageId);
             }
-
-            var singleStage = StageDataLoader.LoadByStageId(stageId);
-            if (singleStage == null)
-            {
-                Debug.LogWarning($"[StageDataDebugLogger] ステージ読み込み失敗: {stageId}");
-                return;
-            }
-
-            Debug.Log(BuildStageLog(singleStage));
         }
 
-        private static string BuildStageLog(StageData stageData)
+        private static void RunDebugScenario(string stageId)
+        {
+            var stageData = StageDataLoader.LoadByStageId(stageId);
+            if (stageData == null)
+            {
+                Debug.LogWarning($"[StageDebug] ステージ読み込み失敗: {stageId}");
+                return;
+            }
+
+            var state = new RiverCrossingGameState(stageData);
+            Debug.Log($"[StageDebug] ===== {stageData.stageId} ({stageData.title}) =====");
+            Debug.Log(BuildStateLog("初期状態", state));
+
+            foreach (var move in BuildScenarioMoves(stageId))
+            {
+                var result = state.TryMove(move.routeId, move.passengerIds);
+                Debug.Log($"[StageDebug] Move route={move.routeId}, passengers=[{string.Join(",", move.passengerIds)}], result={result.Succeeded}, message={result.Message}");
+                Debug.Log(BuildStateLog("移動後状態", state));
+            }
+        }
+
+        private static string BuildStateLog(string header, RiverCrossingGameState state)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("=== Stage Data ===");
-            sb.AppendLine($"stageId: {stageData.stageId}");
-            sb.AppendLine($"title: {stageData.title}");
-            sb.AppendLine($"optimalMoves: {stageData.optimalMoves}");
-
-            if (stageData.boat != null)
+            sb.AppendLine($"[StageDebug] --- {header} ---");
+            sb.AppendLine($"boat: {state.BoatLocation}");
+            foreach (var entity in state.EntityLocations.OrderBy(x => x.Key))
             {
-                sb.AppendLine($"boat.capacity: {stageData.boat.capacity}");
-                sb.AppendLine($"boat.startLocation: {stageData.boat.startLocation}");
+                sb.AppendLine($"entity {entity.Key}: {entity.Value}");
             }
 
-            sb.AppendLine("locations:");
-            if (stageData.locations != null)
-            {
-                foreach (var location in stageData.locations)
-                {
-                    sb.AppendLine($"- {location.locationId} ({location.displayName})");
-                }
-            }
-
-            sb.AppendLine("routes:");
-            if (stageData.routes != null)
-            {
-                foreach (var route in stageData.routes)
-                {
-                    sb.AppendLine($"- {route.routeId}: {route.from} -> {route.to} (bidirectional: {route.bidirectional})");
-                }
-            }
-
-            sb.AppendLine("entities:");
-            if (stageData.entities != null)
-            {
-                foreach (var entity in stageData.entities)
-                {
-                    sb.AppendLine($"- {entity.entityId} ({entity.displayName}), start: {entity.startLocation}, canOperateBoat: {entity.canOperateBoat}");
-                }
-            }
-
-            sb.AppendLine($"failConditions count: {stageData.failConditions?.Length ?? 0}");
+            sb.AppendLine($"moves: {state.MoveCount}");
+            sb.AppendLine($"cleared: {state.IsCleared}");
+            sb.AppendLine($"failed: {state.IsFailed}");
+            sb.AppendLine($"withinOptimal: {state.IsWithinOptimalMoves()}");
+            sb.AppendLine($"exactOptimal: {state.IsExactlyOptimalMoves()}");
             return sb.ToString();
+        }
+
+        private static IReadOnlyList<DebugMoveCommand> BuildScenarioMoves(string stageId)
+        {
+            if (stageId == "stage_001")
+            {
+                return new[]
+                {
+                    new DebugMoveCommand("lr", "tira_1", "tira_2")
+                };
+            }
+
+            if (stageId == "stage_002")
+            {
+                return new[]
+                {
+                    new DebugMoveCommand("lr", "tira_1", "tira_2"),
+                    new DebugMoveCommand("lr", "tira_1"),
+                    new DebugMoveCommand("lr", "tira_1", "tira_3")
+                };
+            }
+
+            return new[]
+            {
+                new DebugMoveCommand("lr", "tira_2"),
+                new DebugMoveCommand("lr", "tira_leader", "tira_2"),
+                new DebugMoveCommand("lr", "tira_leader"),
+                new DebugMoveCommand("lr", "tira_leader", "tira_3")
+            };
+        }
+
+        private readonly struct DebugMoveCommand
+        {
+            public string routeId { get; }
+            public IReadOnlyList<string> passengerIds { get; }
+
+            public DebugMoveCommand(string routeId, params string[] passengerIds)
+            {
+                this.routeId = routeId;
+                this.passengerIds = passengerIds;
+            }
         }
     }
 }

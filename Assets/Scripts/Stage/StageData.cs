@@ -12,6 +12,7 @@ namespace TiraWantToCross.Stage
         public LocationData[] locations;
         public RouteData[] routes;
         public EntityData[] entities;
+        public ClearConditionData[] clearConditions;
         public FailConditionData[] failConditions;
     }
 
@@ -48,8 +49,17 @@ namespace TiraWantToCross.Stage
     }
 
     [Serializable]
+    public class ClearConditionData
+    {
+        public string conditionType;
+        public string targetLocationId;
+    }
+
+    [Serializable]
     public class FailConditionData
     {
-        // failConditions の将来拡張向けプレースホルダー
+        public string conditionType;
+        public string locationId;
+        public string[] entityIds;
     }
 }

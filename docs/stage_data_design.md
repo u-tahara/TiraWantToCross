@@ -28,6 +28,12 @@
       "canOperateBoat": true
     }
   ],
+  "clearConditions": [
+    {
+      "conditionType": "all_entities_at_location",
+      "targetLocationId": "right"
+    }
+  ],
   "failConditions": []
 }
 ```
@@ -51,11 +57,18 @@
   - `displayName` (string): 表示名。
   - `startLocation` (string): 初期配置ロケーション。
   - `canOperateBoat` (bool): 操船可否。
+- `clearConditions` (array): クリア条件ルール。
+  - `conditionType` (string): 条件種別。現時点は `all_entities_at_location` のみ対応。
+  - `targetLocationId` (string): 全員到達先ロケーションID。
 - `failConditions` (array): 条件違反ルール（将来拡張）。
+  - `conditionType` (string): 条件種別。最小実装では `entity_alone_with` を予約。
+  - `locationId` (string): 判定対象ロケーションID。
+  - `entityIds` (array): 同居判定対象のentityIdリスト。
 
 ## 4. 仕様意図
 - `locations` / `routes` によって2地点固定から脱却し、複数地点・複数ルートステージを定義可能にする。
 - `startLocation` を各要素に持たせることで、柔軟な初期配置を実現する。
+- `clearConditions` / `failConditions` を配列化して、将来の複数ルール共存に対応する。
 
 ## 5. バリデーション方針（実装時）
 - `boat.startLocation` が `locations` に存在すること。
