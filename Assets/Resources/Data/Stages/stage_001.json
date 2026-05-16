@@ -7,15 +7,42 @@
     "startLocation": "left"
   },
   "locations": [
-    { "locationId": "left", "displayName": "左岸" },
-    { "locationId": "right", "displayName": "右岸" }
+    {
+      "locationId": "left",
+      "displayName": "左岸"
+    },
+    {
+      "locationId": "right",
+      "displayName": "右岸"
+    }
   ],
   "routes": [
-    { "routeId": "lr", "from": "left", "to": "right", "bidirectional": true }
+    {
+      "routeId": "lr",
+      "from": "left",
+      "to": "right",
+      "bidirectional": true
+    }
   ],
   "entities": [
-    { "entityId": "tira_1", "displayName": "チラ1", "startLocation": "left", "canOperateBoat": true },
-    { "entityId": "tira_2", "displayName": "チラ2", "startLocation": "left", "canOperateBoat": true }
+    {
+      "entityId": "tira_1",
+      "displayName": "チラ1",
+      "startLocation": "left",
+      "canOperateBoat": true
+    },
+    {
+      "entityId": "tira_2",
+      "displayName": "チラ2",
+      "startLocation": "left",
+      "canOperateBoat": true
+    }
   ],
-  "failConditions": []
+  "failConditions": [],
+  "clearConditions": [
+    {
+      "conditionType": "all_entities_at_location",
+      "targetLocationId": "right"
+    }
+  ]
 }
