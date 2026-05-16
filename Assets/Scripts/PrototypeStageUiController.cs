@@ -23,6 +23,11 @@ namespace TiraWantToCross.Prototype
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
+            if (!ShouldBootstrap())
+            {
+                return;
+            }
+
             var existing = FindAnyObjectByType<PrototypeStageUiController>();
             if (existing != null)
             {
@@ -32,6 +37,15 @@ namespace TiraWantToCross.Prototype
             var go = new GameObject(nameof(PrototypeStageUiController));
             DontDestroyOnLoad(go);
             go.AddComponent<PrototypeStageUiController>();
+        }
+
+        private static bool ShouldBootstrap()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return true;
+#else
+            return false;
+#endif
         }
 
         private void Start()
