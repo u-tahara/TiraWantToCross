@@ -120,21 +120,29 @@ namespace TiraWantToCross.GameLogic
 
         private bool EvaluateClearConditions()
         {
-            foreach (var goal in StageData.clearConditions ?? Array.Empty<ClearConditionData>())
+            var clearConditions = StageData.clearConditions ?? Array.Empty<ClearConditionData>();
+            if (clearConditions.Length == 0)
             {
-                if (goal.conditionType != "all_entities_at_location")
+                return false;
+            }
+
+            foreach (var goal in clearConditions)
+            {
+                if (goal.conditionType == "all_entities_at_location")
                 {
+                    var isAllAtTarget = EntityLocations.Values.All(loc => loc == goal.targetLocationId);
+                    if (!isAllAtTarget)
+                    {
+                        return false;
+                    }
+
                     continue;
                 }
 
-                var isAllAtTarget = EntityLocations.Values.All(loc => loc == goal.targetLocationId);
-                if (!isAllAtTarget)
-                {
-                    return false;
-                }
+                return false;
             }
 
-            return (StageData.clearConditions?.Length ?? 0) > 0;
+            return true;
         }
 
         private bool EvaluateFailConditions()
