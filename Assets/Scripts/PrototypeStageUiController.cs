@@ -210,7 +210,37 @@ namespace TiraWantToCross.Prototype
         private void DrawResultSection()
         {
             GUILayout.Label("[Result]");
+            GUILayout.Label(BuildGameResultSummary());
+            GUILayout.Space(4);
+            GUILayout.Label(BuildGameResultDetails());
+            GUILayout.Space(4);
             GUILayout.TextArea(lastMessage, GUILayout.MinHeight(60));
+        }
+
+        private string BuildGameResultSummary()
+        {
+            if (gameState.IsFailed)
+            {
+                return "FAILED";
+            }
+
+            if (gameState.IsCleared && !gameState.IsFailed && gameState.IsExactlyOptimalMoves())
+            {
+                return "CLEAR! 最短手数でクリア";
+            }
+
+            if (gameState.IsCleared && !gameState.IsExactlyOptimalMoves())
+            {
+                return "ゴールしたが最短手数ではない";
+            }
+
+            return "プレイ中";
+        }
+
+        private string BuildGameResultDetails()
+        {
+            var withinOptimal = gameState.MoveCount <= stageData.optimalMoves;
+            return $"moves={gameState.MoveCount}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, withinOptimal={withinOptimal}, exactOptimal={gameState.IsExactlyOptimalMoves()}";
         }
 
         private void TogglePassengerSelection(string entityId)
