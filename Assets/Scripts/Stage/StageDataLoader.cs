@@ -1,31 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 namespace TiraWantToCross.Stage
 {
     public static class StageDataLoader
     {
-        private const string StageDirectoryRelativePath = "Data/Stages";
+        private const string StageResourcePath = "Data/Stages";
 
         public static IReadOnlyList<StageData> LoadAllStages()
         {
             var stageList = new List<StageData>();
-            var stageDirectoryPath = Path.Combine(Application.dataPath, StageDirectoryRelativePath);
+            var stageAssets = Resources.LoadAll<TextAsset>(StageResourcePath);
 
-            if (!Directory.Exists(stageDirectoryPath))
+            if (stageAssets == null || stageAssets.Length == 0)
             {
-                Debug.LogWarning($"[StageDataLoader] ステージディレクトリが存在しません: {stageDirectoryPath}");
+                Debug.LogWarning($"[StageDataLoader] ステージデータが存在しません: Resources/{StageResourcePath}");
                 return stageList;
             }
 
-            var jsonFiles = Directory.GetFiles(stageDirectoryPath, "*.json", SearchOption.TopDirectoryOnly);
-            Array.Sort(jsonFiles, StringComparer.Ordinal);
+            Array.Sort(stageAssets, (left, right) => string.CompareOrdinal(left.name, right.name));
 
-            foreach (var jsonFilePath in jsonFiles)
+            foreach (var stageAsset in stageAssets)
             {
-                var stageData = LoadFromFile(jsonFilePath);
+                var stageData = LoadFromTextAsset(stageAsset);
                 if (stageData != null)
                 {
                     stageList.Add(stageData);
@@ -43,26 +41,25 @@ namespace TiraWantToCross.Stage
                 return null;
             }
 
-            var filePath = Path.Combine(Application.dataPath, StageDirectoryRelativePath, $"{stageId}.json");
-            if (!File.Exists(filePath))
+            var stageAsset = Resources.Load<TextAsset>($"{StageResourcePath}/{stageId}");
+            if (stageAsset == null)
             {
-                Debug.LogWarning($"[StageDataLoader] ステージファイルが見つかりません: {filePath}");
+                Debug.LogWarning($"[StageDataLoader] ステージファイルが見つかりません: Resources/{StageResourcePath}/{stageId}.json");
                 return null;
             }
 
-            return LoadFromFile(filePath);
+            return LoadFromTextAsset(stageAsset);
         }
 
-        private static StageData LoadFromFile(string filePath)
+        private static StageData LoadFromTextAsset(TextAsset textAsset)
         {
             try
             {
-                var json = File.ReadAllText(filePath);
-                var stageData = JsonUtility.FromJson<StageData>(json);
+                var stageData = JsonUtility.FromJson<StageData>(textAsset.text);
 
                 if (stageData == null)
                 {
-                    Debug.LogWarning($"[StageDataLoader] JSONの読み込みに失敗しました: {filePath}");
+                    Debug.LogWarning($"[StageDataLoader] JSONの読み込みに失敗しました: {textAsset.name}");
                     return null;
                 }
 
@@ -70,7 +67,7 @@ namespace TiraWantToCross.Stage
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[StageDataLoader] ファイル読み込み中に例外が発生しました: {filePath}\n{ex.Message}");
+                Debug.LogWarning($"[StageDataLoader] JSON読み込み中に例外が発生しました: {textAsset.name}\n{ex.Message}");
                 return null;
             }
         }

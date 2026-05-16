@@ -67,3 +67,9 @@
 
 ## 6. 更新ルール
 - JSON構造を変更した場合、必ず本ドキュメントを同時更新すること。
+
+## 7. 配置場所（読み込み経路）
+- ステージJSONは `Assets/Resources/Data/Stages/` 配下に配置する。
+- ローダーは `Resources.Load` / `Resources.LoadAll` で `Data/Stages` を参照する。
+- `LoadByStageId("stage_001")` のように、ファイル名（拡張子なし）を `stageId` と一致させる。
+- これによりエディタ実行時・ビルド実行時の両方で同一経路から読み込める。
