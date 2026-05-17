@@ -68,7 +68,6 @@ namespace TiraWantToCross.Prototype
             selectedEntities.Clear();
             onboardPassengers.Clear();
             lastMessage = $"初期化完了: {stageData.stageId} ({stageData.title})";
-            RefreshView();
         }
 
         private void OnGUI()
@@ -135,11 +134,6 @@ namespace TiraWantToCross.Prototype
                 onboardPassengers,
                 lastMessage,
                 ResolveAvailableRoutes());
-        }
-
-        private void RefreshView()
-        {
-            stageUIView?.Refresh(BuildViewContext());
         }
 
         private void LoadNextStage()
