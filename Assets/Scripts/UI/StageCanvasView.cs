@@ -91,17 +91,17 @@ namespace TiraWantToCross.UI
             root.offsetMin = Vector2.zero;
             root.offsetMax = Vector2.zero;
 
-            var main = CreateVerticalLayout("Main", root, 12f);
-            main.offsetMin = new Vector2(20, 20);
-            main.offsetMax = new Vector2(-20, -20);
+            var main = CreateVerticalLayout("Main", root, 18f);
+            main.offsetMin = new Vector2(24, 24);
+            main.offsetMax = new Vector2(-24, -24);
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 180);
-            stageTitleText = CreateText("Title", top, "", 30, TextAnchor.UpperCenter);
-            stageNameText = CreateText("StageName", top, "", 26, TextAnchor.UpperCenter);
-            movesText = CreateText("Moves", top, "", 24, TextAnchor.UpperCenter);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 260);
+            stageTitleText = CreateText("Title", top, "", 48, TextAnchor.UpperCenter, 64);
+            stageNameText = CreateText("StageName", top, "", 52, TextAnchor.UpperCenter, 78);
+            movesText = CreateText("Moves", top, "", 40, TextAnchor.UpperCenter, 64);
 
-            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 540);
-            var midLayout = CreateHorizontalLayout("MidLayout", mid, 10f);
+            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 860);
+            var midLayout = CreateHorizontalLayout("MidLayout", mid, 16f);
 
             var left = CreateLocationArea("左岸", midLayout, "left");
             leftContainer = left;
@@ -112,7 +112,11 @@ namespace TiraWantToCross.UI
             boatLayout.childControlWidth = true;
             boatLayout.childForceExpandHeight = false;
             boatLayout.childAlignment = TextAnchor.UpperCenter;
-            boatLocationText = CreateText("BoatLocation", boatContainer, "", 20, TextAnchor.MiddleCenter);
+            boatLayout.spacing = 12f;
+            boatLayout.padding = new RectOffset(14, 14, 14, 14);
+            var boatAreaLayout = boatContainer.gameObject.AddComponent<LayoutElement>();
+            boatAreaLayout.preferredHeight = 700;
+            boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
 
             var right = CreateLocationArea("右岸", midLayout, "right");
             rightContainer = right;
@@ -121,31 +125,31 @@ namespace TiraWantToCross.UI
             locationPanels["right"] = right as RectTransform;
             locationPanels["river"] = river as RectTransform;
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 280);
-            var stageRow = CreateHorizontalLayout("StageRow", bottom, 8f);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 420);
+            var stageRow = CreateHorizontalLayout("StageRow", bottom, 10f);
             for (var i = 0; i < 4; i++)
             {
-                var button = CreateButton($"Stage{i + 1}", stageRow, $"Stage{i + 1}", () => { });
+                var button = CreateButton($"Stage{i + 1}", stageRow, $"Stage{i + 1}", () => { }, 100, 36);
                 stageButtons.Add(button);
             }
 
-            var routeRow = CreateHorizontalLayout("RouteRow", bottom, 8f);
+            var routeRow = CreateHorizontalLayout("RouteRow", bottom, 12f);
             for (var i = 0; i < 2; i++)
             {
-                var routeButton = CreateButton($"Route{i + 1}", routeRow, "Move", () => { });
+                var routeButton = CreateButton($"Route{i + 1}", routeRow, "Move", () => { }, 108, 36);
                 routeButtons.Add(routeButton);
             }
 
-            var actionRow = CreateHorizontalLayout("ActionRow", bottom, 8f);
-            boardButton = CreateButton("Board", actionRow, "乗船", () => onBoard?.Invoke());
-            unboardButton = CreateButton("Unboard", actionRow, "降船", () => onUnboard?.Invoke());
-            moveButton = CreateButton("Move", actionRow, "移動", () => onMove?.Invoke(null));
-            restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke());
-            nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke());
+            var actionRow = CreateHorizontalLayout("ActionRow", bottom, 12f);
+            boardButton = CreateButton("Board", actionRow, "乗船", () => onBoard?.Invoke(), 110, 38);
+            unboardButton = CreateButton("Unboard", actionRow, "降船", () => onUnboard?.Invoke(), 110, 38);
+            moveButton = CreateButton("Move", actionRow, "移動", () => onMove?.Invoke(null), 110, 38);
+            restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke(), 110, 36);
+            nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke(), 110, 34);
 
-            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 120);
-            resultText = CreateText("Result", resultPanel, "", 26, TextAnchor.MiddleCenter);
-            messageText = CreateText("Message", resultPanel, "", 20, TextAnchor.MiddleCenter);
+            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 150);
+            resultText = CreateText("Result", resultPanel, "", 40, TextAnchor.MiddleCenter, 60);
+            messageText = CreateText("Message", resultPanel, "", 32, TextAnchor.MiddleCenter, 54);
         }
 
         private void RenderStageButtons(StageUIViewContext context)
@@ -264,18 +268,18 @@ namespace TiraWantToCross.UI
         private static Transform CreateLocationArea(string label, Transform parent, string key)
         {
             var panel = CreateRect($"{key}Panel", parent, new Color(0.22f, 0.22f, 0.3f, 0.8f));
-            panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 300;
+            panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 330;
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 8f;
-            layout.padding = new RectOffset(8, 8, 8, 8);
+            layout.spacing = 12f;
+            layout.padding = new RectOffset(14, 14, 14, 14);
             layout.childControlHeight = false;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
-            CreateText("Label", panel, label, 24, TextAnchor.MiddleCenter);
+            CreateText("Label", panel, label, 38, TextAnchor.MiddleCenter, 56);
             return panel;
         }
 
-        private static Text CreateText(string name, Transform parent, string text, int fontSize, TextAnchor anchor)
+        private static Text CreateText(string name, Transform parent, string text, int fontSize, TextAnchor anchor, float preferredHeight = 40f)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Text));
             go.transform.SetParent(parent, false);
@@ -285,11 +289,11 @@ namespace TiraWantToCross.UI
             txt.fontSize = fontSize;
             txt.alignment = anchor;
             txt.color = Color.white;
-            go.AddComponent<LayoutElement>().preferredHeight = 40;
+            go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
             return txt;
         }
 
-        private static Button CreateButton(string name, Transform parent, string text, Action onClick)
+        private static Button CreateButton(string name, Transform parent, string text, Action onClick, float preferredHeight = 56f, int fontSize = 22)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
@@ -297,9 +301,9 @@ namespace TiraWantToCross.UI
             img.color = Color.white;
             var btn = go.GetComponent<Button>();
             btn.onClick.AddListener(() => onClick?.Invoke());
-            go.AddComponent<LayoutElement>().preferredHeight = 56;
+            go.AddComponent<LayoutElement>().preferredHeight = preferredHeight;
 
-            CreateText("Text", go.transform, text, 22, TextAnchor.MiddleCenter).color = Color.black;
+            CreateText("Text", go.transform, text, fontSize, TextAnchor.MiddleCenter, preferredHeight).color = Color.black;
             return btn;
         }
     }
