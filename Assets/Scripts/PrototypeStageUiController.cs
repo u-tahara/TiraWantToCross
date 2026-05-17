@@ -9,13 +9,14 @@ namespace TiraWantToCross.Prototype
 {
     public sealed class PrototypeStageUiController : MonoBehaviour
     {
-        private readonly string[] stageIds = { "stage_001", "stage_002", "stage_003" };
+        private readonly List<string> stageIds = new List<string>();
+        private readonly Dictionary<string, StageData> stageDataById = new Dictionary<string, StageData>();
         private readonly List<string> selectedEntities = new List<string>();
         private readonly List<string> onboardPassengers = new List<string>();
 
         private RiverCrossingGameState gameState;
         private StageData stageData;
-        private string activeStageId = "stage_001";
+        private string activeStageId;
         private string lastMessage = "未実行";
         private StageUIView stageUIView;
 
@@ -50,12 +51,52 @@ namespace TiraWantToCross.Prototype
         private void Start()
         {
             stageUIView = new StageUIView();
+            ReloadStageList();
+
+            if (stageIds.Count == 0)
+            {
+                gameState = null;
+                stageData = null;
+                lastMessage = "ステージが見つかりません。Resources/Data/Stages を確認してください。";
+                return;
+            }
+
+            activeStageId = stageIds[0];
             InitializeStage(activeStageId);
+        }
+
+        private void ReloadStageList()
+        {
+            stageIds.Clear();
+            stageDataById.Clear();
+
+            var loadedStages = StageDataLoader.LoadAllStages();
+            foreach (var loadedStage in loadedStages)
+            {
+                if (loadedStage == null || string.IsNullOrWhiteSpace(loadedStage.stageId))
+                {
+                    continue;
+                }
+
+                stageDataById[loadedStage.stageId] = loadedStage;
+            }
+
+            stageIds.AddRange(stageDataById.Keys.OrderBy(stageId => stageId, StringComparer.Ordinal));
         }
 
         private void InitializeStage(string stageId)
         {
-            stageData = StageDataLoader.LoadByStageId(stageId);
+            if (string.IsNullOrWhiteSpace(stageId))
+            {
+                gameState = null;
+                lastMessage = "ステージIDが未指定です。";
+                return;
+            }
+
+            stageData = stageDataById.TryGetValue(stageId, out var loadedStage)
+                ? loadedStage
+                : StageDataLoader.LoadByStageId(stageId);
+
             if (stageData == null)
             {
                 gameState = null;
@@ -138,14 +179,20 @@ namespace TiraWantToCross.Prototype
 
         private void LoadNextStage()
         {
-            var currentIndex = Array.IndexOf(stageIds, activeStageId);
+            if (stageIds.Count == 0)
+            {
+                lastMessage = "次に進めるステージがありません。";
+                return;
+            }
+
+            var currentIndex = stageIds.IndexOf(activeStageId);
             if (currentIndex < 0)
             {
                 InitializeStage(stageIds[0]);
                 return;
             }
 
-            var next = (currentIndex + 1) % stageIds.Length;
+            var next = (currentIndex + 1) % stageIds.Count;
             InitializeStage(stageIds[next]);
         }
 
