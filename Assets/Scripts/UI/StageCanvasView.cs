@@ -188,6 +188,9 @@ namespace TiraWantToCross.UI
                 entityParents.Remove(staleId);
             }
 
+            var leftSiblingIndex = 1;
+            var rightSiblingIndex = 1;
+
             foreach (var entity in entities)
             {
                 var entityId = entity.entityId;
@@ -198,6 +201,7 @@ namespace TiraWantToCross.UI
 
                 var parent = location == "left" ? leftContainer : rightContainer;
                 var parentKey = location == "left" ? "left" : "right";
+                var siblingIndex = parentKey == "left" ? leftSiblingIndex++ : rightSiblingIndex++;
                 var isAtBoatLocation = location == context.GameState.BoatLocation;
 
                 if (!entityButtons.TryGetValue(entityId, out var button) || button == null)
@@ -211,6 +215,8 @@ namespace TiraWantToCross.UI
                     button.transform.SetParent(parent, false);
                     entityParents[entityId] = parentKey;
                 }
+
+                button.transform.SetSiblingIndex(siblingIndex);
 
                 var label = button.GetComponentInChildren<Text>();
                 if (label != null)
