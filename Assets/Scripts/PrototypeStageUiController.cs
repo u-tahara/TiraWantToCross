@@ -160,7 +160,7 @@ namespace TiraWantToCross.Prototype
 
             if (actions.NextStage)
             {
-                LoadNextStage();
+                TryLoadNextStage();
             }
         }
 
@@ -175,6 +175,17 @@ namespace TiraWantToCross.Prototype
                 onboardPassengers,
                 lastMessage,
                 ResolveAvailableRoutes());
+        }
+
+        private void TryLoadNextStage()
+        {
+            if (!CanGoToNextStage())
+            {
+                lastMessage = "NextStageに進むには、最短手数でクリアする必要があります。";
+                return;
+            }
+
+            LoadNextStage();
         }
 
         private void LoadNextStage()
@@ -194,6 +205,14 @@ namespace TiraWantToCross.Prototype
 
             var next = (currentIndex + 1) % stageIds.Count;
             InitializeStage(stageIds[next]);
+        }
+
+        private bool CanGoToNextStage()
+        {
+            return gameState != null
+                && gameState.IsCleared
+                && !gameState.IsFailed
+                && gameState.IsExactlyOptimalMoves();
         }
 
         private void TogglePassengerSelection(string entityId)
