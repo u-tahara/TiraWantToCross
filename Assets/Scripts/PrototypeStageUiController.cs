@@ -15,7 +15,6 @@ namespace TiraWantToCross.Prototype
         private readonly List<string> stageIds = new List<string>();
         private readonly Dictionary<string, StageData> stageDataById = new Dictionary<string, StageData>();
         private readonly List<string> selectedEntities = new List<string>();
-        private readonly List<string> onboardPassengers = new List<string>();
 
         private RiverCrossingGameState gameState;
         private StageData stageData;
@@ -114,7 +113,6 @@ namespace TiraWantToCross.Prototype
             activeStageId = stageId;
             gameState = new RiverCrossingGameState(stageData);
             selectedEntities.Clear();
-            onboardPassengers.Clear();
             selectedRouteId = null;
             lastMessage = $"初期化完了: {stageData.stageId} ({stageData.title})";
         }
@@ -141,9 +139,8 @@ namespace TiraWantToCross.Prototype
             stageCanvasView.Initialize(canvas.transform,
                 stageId => InitializeStage(stageId),
                 entityId => TogglePassengerSelection(entityId),
-                BoardSelectedEntities,
-                UnboardSelectedEntities,
                 ExecuteMoveFromSelectedRoute,
+                ClearSelection,
                 () => InitializeStage(activeStageId),
                 TryLoadNextStage);
         }
@@ -207,20 +204,9 @@ namespace TiraWantToCross.Prototype
                 TogglePassengerSelection(actions.ToggleSelectEntityId);
             }
 
-            if (actions.BoardSelected)
-            {
-                BoardSelectedEntities();
-            }
-
-            if (actions.UnboardSelected)
-            {
-                UnboardSelectedEntities();
-            }
-
             if (actions.ClearSelection)
             {
-                selectedEntities.Clear();
-                lastMessage = "選択解除しました。";
+                ClearSelection();
             }
 
             if (!string.IsNullOrEmpty(actions.MoveRouteId))
@@ -247,7 +233,6 @@ namespace TiraWantToCross.Prototype
                 stageData,
                 gameState,
                 selectedEntities,
-                onboardPassengers,
                 lastMessage,
                 ResolveAvailableRoutes());
         }
@@ -307,48 +292,9 @@ namespace TiraWantToCross.Prototype
             selectedEntities.Add(entityId);
         }
 
-        private void BoardSelectedEntities()
-        {
-            var boarded = 0;
-            foreach (var entityId in selectedEntities)
-            {
-                if (onboardPassengers.Contains(entityId))
-                {
-                    continue;
-                }
-
-                if (onboardPassengers.Count >= gameState.BoatCapacity)
-                {
-                    break;
-                }
-
-                if (gameState.EntityLocations[entityId] == gameState.BoatLocation)
-                {
-                    onboardPassengers.Add(entityId);
-                    boarded += 1;
-                }
-            }
-
-            lastMessage = boarded > 0 ? $"{boarded}体を乗船させました。" : "乗船できるキャラがいません。";
-        }
-
-        private void UnboardSelectedEntities()
-        {
-            var unboarded = 0;
-            foreach (var entityId in selectedEntities)
-            {
-                if (onboardPassengers.Remove(entityId))
-                {
-                    unboarded += 1;
-                }
-            }
-
-            lastMessage = unboarded > 0 ? $"{unboarded}体を降ろしました。" : "降ろせるキャラがいません。";
-        }
-
         private void ExecuteMove(string routeId)
         {
-            var result = gameState.TryMove(routeId, onboardPassengers);
+            var result = gameState.TryMove(routeId, selectedEntities);
             if (!result.Succeeded)
             {
                 lastMessage = $"Move失敗: {result.Message}";
@@ -356,10 +302,15 @@ namespace TiraWantToCross.Prototype
                 return;
             }
 
-            onboardPassengers.Clear();
             selectedEntities.Clear();
             lastMessage = $"Move成功: destination={result.Destination}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, moves={gameState.MoveCount}, exactOptimal={gameState.IsExactlyOptimalMoves()} / 移動後、自動で降船しました。";
             Debug.Log($"[PrototypeUI] {lastMessage}");
+        }
+
+        private void ClearSelection()
+        {
+            selectedEntities.Clear();
+            lastMessage = "選択解除しました。";
         }
 
         private List<RouteData> ResolveAvailableRoutes()

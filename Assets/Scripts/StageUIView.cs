@@ -128,7 +128,7 @@ namespace TiraWantToCross.Prototype
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"boat location: {context.GameState.BoatLocation}");
             GUILayout.Label($"capacity: {context.GameState.BoatCapacity}");
-            GUILayout.Label($"onboard entities: {(context.OnboardPassengers.Count == 0 ? "(none)" : string.Join(", ", context.OnboardPassengers))}");
+            GUILayout.Label($"selected entities: {(context.SelectedEntities.Count == 0 ? "(none)" : string.Join(", ", context.SelectedEntities))}");
             GUILayout.EndVertical();
 
             GUILayout.Label("[Boat Routes]");
@@ -151,16 +151,6 @@ namespace TiraWantToCross.Prototype
         {
             GUILayout.Label("[Actions]");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("乗船", GUILayout.Height(32)))
-            {
-                actions.BoardSelected = true;
-            }
-
-            if (GUILayout.Button("降船", GUILayout.Height(32)))
-            {
-                actions.UnboardSelected = true;
-            }
-
             if (GUILayout.Button("選択解除", GUILayout.Height(32)))
             {
                 actions.ClearSelection = true;
@@ -243,7 +233,6 @@ namespace TiraWantToCross.Prototype
         public StageData StageData { get; }
         public RiverCrossingGameState GameState { get; }
         public IReadOnlyCollection<string> SelectedEntities { get; }
-        public IReadOnlyCollection<string> OnboardPassengers { get; }
         public string LastMessage { get; }
         public IReadOnlyList<RouteData> AvailableRoutes { get; }
 
@@ -253,7 +242,6 @@ namespace TiraWantToCross.Prototype
             StageData stageData,
             RiverCrossingGameState gameState,
             IReadOnlyCollection<string> selectedEntities,
-            IReadOnlyCollection<string> onboardPassengers,
             string lastMessage,
             IReadOnlyList<RouteData> availableRoutes)
         {
@@ -262,7 +250,6 @@ namespace TiraWantToCross.Prototype
             StageData = stageData;
             GameState = gameState;
             SelectedEntities = selectedEntities;
-            OnboardPassengers = onboardPassengers;
             LastMessage = lastMessage;
             AvailableRoutes = availableRoutes;
         }
@@ -275,8 +262,6 @@ namespace TiraWantToCross.Prototype
         public string StageToLoad { get; set; }
         public string ToggleSelectEntityId { get; set; }
         public string MoveRouteId { get; set; }
-        public bool BoardSelected { get; set; }
-        public bool UnboardSelected { get; set; }
         public bool ClearSelection { get; set; }
         public bool RestartStage { get; set; }
         public bool NextStage { get; set; }
