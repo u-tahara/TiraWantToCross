@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TiraWantToCross.GameLogic;
 using TiraWantToCross.Stage;
 using UnityEngine;
@@ -18,7 +17,7 @@ namespace TiraWantToCross.Prototype
         private StageData stageData;
         private string activeStageId = "stage_001";
         private string lastMessage = "未実行";
-        private Vector2 scrollPosition;
+        private StageUIView stageUIView;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -50,6 +49,7 @@ namespace TiraWantToCross.Prototype
 
         private void Start()
         {
+            stageUIView = new StageUIView();
             InitializeStage(activeStageId);
         }
 
@@ -68,179 +68,85 @@ namespace TiraWantToCross.Prototype
             selectedEntities.Clear();
             onboardPassengers.Clear();
             lastMessage = $"初期化完了: {stageData.stageId} ({stageData.title})";
-            Debug.Log($"[PrototypeUI] {lastMessage}");
         }
 
         private void OnGUI()
         {
-            const int panelWidth = 560;
-            var area = new Rect(16, 16, panelWidth, Screen.height - 32);
-            GUILayout.BeginArea(area, GUI.skin.box);
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-
-            DrawStageSelector();
-            GUILayout.Space(8);
-
-            if (gameState == null || stageData == null)
+            if (stageUIView == null)
             {
-                GUILayout.Label("ゲーム状態を作成できていません。");
-                GUILayout.Label(lastMessage);
-                GUILayout.EndScrollView();
-                GUILayout.EndArea();
                 return;
             }
 
-            DrawStateSummary();
-            GUILayout.Space(8);
-            DrawEntityControls();
-            GUILayout.Space(8);
-            DrawBoatControls();
-            GUILayout.Space(8);
-            DrawResultSection();
+            var context = BuildViewContext();
+            var actions = stageUIView.Refresh(context);
 
-            GUILayout.EndScrollView();
-            GUILayout.EndArea();
-        }
-
-        private void DrawStageSelector()
-        {
-            GUILayout.Label("[Stage Select]");
-            GUILayout.BeginHorizontal();
-            foreach (var stageId in stageIds)
+            if (actions.StageToLoad != null)
             {
-                var style = new GUIStyle(GUI.skin.button);
-                if (stageId == activeStageId)
-                {
-                    style.normal.textColor = Color.green;
-                }
-
-                if (GUILayout.Button(stageId, style, GUILayout.Height(28)))
-                {
-                    InitializeStage(stageId);
-                }
+                InitializeStage(actions.StageToLoad);
+                return;
             }
 
-            GUILayout.EndHorizontal();
-        }
-
-        private void DrawStateSummary()
-        {
-            GUILayout.Label("[Current State]");
-            GUILayout.Label($"stage: {stageData.stageId} / title: {stageData.title}");
-            GUILayout.Label($"boat location: {gameState.BoatLocation}");
-            GUILayout.Label($"boat capacity: {stageData.boat.capacity}");
-            GUILayout.Label($"moves: {gameState.MoveCount} / optimal: {stageData.optimalMoves}");
-            GUILayout.Label($"cleared: {gameState.IsCleared} / failed: {gameState.IsFailed} / exactOptimal: {gameState.IsExactlyOptimalMoves()}");
-            GUILayout.Label($"onboard passengers: {(onboardPassengers.Count == 0 ? "(none)" : string.Join(", ", onboardPassengers))}");
-
-            var locationsText = new StringBuilder();
-            foreach (var location in stageData.locations ?? Array.Empty<LocationData>())
+            if (!string.IsNullOrEmpty(actions.ToggleSelectEntityId))
             {
-                var entities = gameState.EntityLocations
-                    .Where(x => x.Value == location.locationId)
-                    .Select(x => x.Key)
-                    .OrderBy(x => x)
-                    .ToArray();
-
-                locationsText.AppendLine($"- {location.locationId} ({location.displayName}): [{string.Join(", ", entities)}]");
+                TogglePassengerSelection(actions.ToggleSelectEntityId);
             }
 
-            GUILayout.TextArea(locationsText.ToString(), GUILayout.MinHeight(90));
-        }
-
-        private void DrawEntityControls()
-        {
-            GUILayout.Label("[Entity Select / Board / Unboard]");
-
-            foreach (var entity in stageData.entities ?? Array.Empty<EntityData>())
-            {
-                GUILayout.BeginHorizontal();
-
-                var isSelected = selectedEntities.Contains(entity.entityId);
-                if (GUILayout.Button(isSelected ? $"解除 {entity.entityId}" : $"選択 {entity.entityId}", GUILayout.Width(140)))
-                {
-                    TogglePassengerSelection(entity.entityId);
-                }
-
-                GUILayout.Label($"loc: {gameState.EntityLocations[entity.entityId]}", GUILayout.Width(150));
-                GUILayout.Label(entity.canOperateBoat ? "operator" : "passenger");
-                GUILayout.EndHorizontal();
-            }
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("選択キャラを乗船", GUILayout.Height(30)))
+            if (actions.BoardSelected)
             {
                 BoardSelectedEntities();
             }
 
-            if (GUILayout.Button("選択キャラを降ろす", GUILayout.Height(30)))
+            if (actions.UnboardSelected)
             {
                 UnboardSelectedEntities();
             }
 
-            if (GUILayout.Button("全選択解除", GUILayout.Height(30)))
+            if (actions.ClearSelection)
             {
                 selectedEntities.Clear();
                 lastMessage = "選択解除しました。";
             }
 
-            GUILayout.EndHorizontal();
+            if (!string.IsNullOrEmpty(actions.MoveRouteId))
+            {
+                ExecuteMove(actions.MoveRouteId);
+            }
+
+            if (actions.RestartStage)
+            {
+                InitializeStage(activeStageId);
+            }
+
+            if (actions.NextStage)
+            {
+                LoadNextStage();
+            }
         }
 
-        private void DrawBoatControls()
+        private StageUIViewContext BuildViewContext()
         {
-            GUILayout.Label("[Boat Move]");
-            var availableRoutes = ResolveAvailableRoutes();
-            if (availableRoutes.Count == 0)
+            return new StageUIViewContext(
+                stageIds,
+                activeStageId,
+                stageData,
+                gameState,
+                selectedEntities,
+                onboardPassengers,
+                lastMessage,
+                ResolveAvailableRoutes());
+        }
+
+        private void LoadNextStage()
+        {
+            var currentIndex = Array.IndexOf(stageIds, activeStageId);
+            if (currentIndex < 0)
             {
-                GUILayout.Label("現在地から利用可能な route がありません。");
+                InitializeStage(stageIds[0]);
                 return;
             }
 
-            foreach (var route in availableRoutes)
-            {
-                var destination = ResolveDestination(route, gameState.BoatLocation);
-                if (GUILayout.Button($"Move ({route.routeId}): {gameState.BoatLocation} -> {destination}", GUILayout.Height(36)))
-                {
-                    ExecuteMove(route.routeId);
-                }
-            }
-        }
-
-        private void DrawResultSection()
-        {
-            GUILayout.Label("[Result]");
-            GUILayout.Label(BuildGameResultSummary());
-            GUILayout.Space(4);
-            GUILayout.Label(BuildGameResultDetails());
-            GUILayout.Space(4);
-            GUILayout.TextArea(lastMessage, GUILayout.MinHeight(60));
-        }
-
-        private string BuildGameResultSummary()
-        {
-            if (gameState.IsFailed)
-            {
-                return "FAILED";
-            }
-
-            if (gameState.IsCleared && !gameState.IsFailed && gameState.IsExactlyOptimalMoves())
-            {
-                return "CLEAR! 最短手数でクリア";
-            }
-
-            if (gameState.IsCleared && !gameState.IsExactlyOptimalMoves())
-            {
-                return "ゴールしたが最短手数ではない";
-            }
-
-            return "プレイ中";
-        }
-
-        private string BuildGameResultDetails()
-        {
-            var withinOptimal = gameState.MoveCount <= stageData.optimalMoves;
-            return $"moves={gameState.MoveCount}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, withinOptimal={withinOptimal}, exactOptimal={gameState.IsExactlyOptimalMoves()}";
+            var next = (currentIndex + 1) % stageIds.Length;
+            InitializeStage(stageIds[next]);
         }
 
         private void TogglePassengerSelection(string entityId)
@@ -253,7 +159,6 @@ namespace TiraWantToCross.Prototype
 
             selectedEntities.Add(entityId);
         }
-
 
         private void BoardSelectedEntities()
         {
@@ -293,6 +198,7 @@ namespace TiraWantToCross.Prototype
 
             lastMessage = unboarded > 0 ? $"{unboarded}体を降ろしました。" : "降ろせるキャラがいません。";
         }
+
         private void ExecuteMove(string routeId)
         {
             var result = gameState.TryMove(routeId, onboardPassengers);
@@ -310,6 +216,11 @@ namespace TiraWantToCross.Prototype
         private List<RouteData> ResolveAvailableRoutes()
         {
             var list = new List<RouteData>();
+            if (gameState == null || stageData == null)
+            {
+                return list;
+            }
+
             foreach (var route in stageData.routes ?? Array.Empty<RouteData>())
             {
                 if (!string.IsNullOrEmpty(ResolveDestination(route, gameState.BoatLocation)))
