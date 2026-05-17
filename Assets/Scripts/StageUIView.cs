@@ -101,10 +101,20 @@ namespace TiraWantToCross.Prototype
                 {
                     var isSelected = context.SelectedEntities.Contains(entity.entityId);
                     var label = isSelected ? $"[SELECTED] {entity.entityId}" : entity.entityId;
+                    var canSelectMore = context.SelectedEntities.Count < context.GameState.BoatCapacity;
+                    var shouldDisable = !isSelected && !canSelectMore;
+                    GUI.enabled = !shouldDisable;
                     if (GUILayout.Button(label, GUILayout.Width(130), GUILayout.Height(32)))
                     {
                         actions.ToggleSelectEntityId = entity.entityId;
                     }
+
+                    GUI.enabled = true;
+                }
+
+                if (context.SelectedEntities.Count >= context.GameState.BoatCapacity)
+                {
+                    GUILayout.Label("これ以上乗せられません。");
                 }
 
                 GUILayout.EndHorizontal();
@@ -117,7 +127,7 @@ namespace TiraWantToCross.Prototype
             GUILayout.Label("[Boat]");
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"boat location: {context.GameState.BoatLocation}");
-            GUILayout.Label($"capacity: {context.StageData.boat.capacity}");
+            GUILayout.Label($"capacity: {context.GameState.BoatCapacity}");
             GUILayout.Label($"onboard entities: {(context.OnboardPassengers.Count == 0 ? "(none)" : string.Join(", ", context.OnboardPassengers))}");
             GUILayout.EndVertical();
 
