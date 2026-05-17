@@ -95,12 +95,12 @@ namespace TiraWantToCross.UI
             main.offsetMin = new Vector2(24, 24);
             main.offsetMax = new Vector2(-24, -24);
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 260);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 220f, 180f);
             stageTitleText = CreateText("Title", top, "", 48, TextAnchor.UpperCenter, 64);
             stageNameText = CreateText("StageName", top, "", 52, TextAnchor.UpperCenter, 78);
             movesText = CreateText("Moves", top, "", 40, TextAnchor.UpperCenter, 64);
 
-            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 860);
+            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
             var midLayout = CreateHorizontalLayout("MidLayout", mid, 16f);
 
             var left = CreateLocationArea("左岸", midLayout, "left");
@@ -115,7 +115,8 @@ namespace TiraWantToCross.UI
             boatLayout.spacing = 12f;
             boatLayout.padding = new RectOffset(14, 14, 14, 14);
             var boatAreaLayout = boatContainer.gameObject.AddComponent<LayoutElement>();
-            boatAreaLayout.preferredHeight = 700;
+            boatAreaLayout.minHeight = 220f;
+            boatAreaLayout.flexibleHeight = 1f;
             boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
 
             var right = CreateLocationArea("右岸", midLayout, "right");
@@ -125,7 +126,7 @@ namespace TiraWantToCross.UI
             locationPanels["right"] = right as RectTransform;
             locationPanels["river"] = river as RectTransform;
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 420);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 360f, 300f);
             var stageRow = CreateHorizontalLayout("StageRow", bottom, 10f);
             for (var i = 0; i < 4; i++)
             {
@@ -147,7 +148,7 @@ namespace TiraWantToCross.UI
             restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke(), 110, 36);
             nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke(), 110, 34);
 
-            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 150);
+            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 130f, 100f);
             resultText = CreateText("Result", resultPanel, "", 40, TextAnchor.MiddleCenter, 60);
             messageText = CreateText("Message", resultPanel, "", 32, TextAnchor.MiddleCenter, 54);
         }
@@ -231,11 +232,21 @@ namespace TiraWantToCross.UI
             return go.GetComponent<RectTransform>();
         }
 
-        private static RectTransform CreatePanel(string name, Transform parent, Color color, float preferredHeight)
+        private static RectTransform CreatePanel(string name, Transform parent, Color color, float preferredHeight, float minHeight = -1f, float flexibleHeight = 0f)
         {
             var rect = CreateRect(name, parent, color);
             var layout = rect.gameObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = preferredHeight;
+            if (preferredHeight > 0f)
+            {
+                layout.preferredHeight = preferredHeight;
+            }
+
+            if (minHeight >= 0f)
+            {
+                layout.minHeight = minHeight;
+            }
+
+            layout.flexibleHeight = flexibleHeight;
             return rect;
         }
 
