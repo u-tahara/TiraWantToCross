@@ -12,6 +12,7 @@ namespace TiraWantToCross.UI
     public sealed class StageCanvasView
     {
         private readonly Dictionary<string, Button> entityButtons = new Dictionary<string, Button>();
+        private readonly Dictionary<string, string> entityParents = new Dictionary<string, string>();
         private readonly List<Button> stageButtons = new List<Button>();
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly List<Button> routeButtons = new List<Button>();
@@ -28,6 +29,11 @@ namespace TiraWantToCross.UI
         private Text boatLocationText;
         private HorizontalLayoutGroup midLayoutGroup;
         private VerticalLayoutGroup mainLayoutGroup;
+        private VerticalLayoutGroup bottomLayoutGroup;
+
+        private RectTransform stageRowTransform;
+        private RectTransform routeRowTransform;
+        private RectTransform actionRowTransform;
 
         private Button restartButton;
         private Button nextStageButton;
@@ -121,25 +127,42 @@ namespace TiraWantToCross.UI
             locationPanels["right"] = right as RectTransform;
             locationPanels["river"] = river as RectTransform;
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 360f, 300f);
-            var stageRow = CreateHorizontalLayout("StageRow", bottom, 10f, true);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 420f, 360f);
+            bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
+            bottomLayoutGroup.spacing = 12f;
+            bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
+            bottomLayoutGroup.childControlHeight = true;
+            bottomLayoutGroup.childControlWidth = true;
+            bottomLayoutGroup.childForceExpandHeight = false;
+            bottomLayoutGroup.childForceExpandWidth = true;
+
+            stageRowTransform = CreateHorizontalLayout("StageRow", bottom, 10f, false);
+            var stageRowLayout = stageRowTransform.gameObject.AddComponent<LayoutElement>();
+            stageRowLayout.preferredHeight = 116f;
+            stageRowLayout.minHeight = 96f;
             for (var i = 0; i < 4; i++)
             {
-                var button = CreateButton($"Stage{i + 1}", stageRow, $"Stage{i + 1}", () => { }, 100, 36);
+                var button = CreateButton($"Stage{i + 1}", stageRowTransform, $"Stage{i + 1}", () => { }, 92, 36);
                 stageButtons.Add(button);
             }
 
-            var routeRow = CreateHorizontalLayout("RouteRow", bottom, 12f, true);
+            routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
+            var routeRowLayout = routeRowTransform.gameObject.AddComponent<LayoutElement>();
+            routeRowLayout.preferredHeight = 122f;
+            routeRowLayout.minHeight = 102f;
             for (var i = 0; i < 2; i++)
             {
-                var routeButton = CreateButton($"Route{i + 1}", routeRow, "Move", () => { }, 108, 36);
+                var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 98, 36);
                 routeButtons.Add(routeButton);
             }
 
-            var actionRow = CreateHorizontalLayout("ActionRow", bottom, 12f, true);
-            CreateButton("ClearSelection", actionRow, "選択解除", () => onClearSelection?.Invoke(), 110, 34);
-            restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke(), 110, 36);
-            nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke(), 110, 34);
+            actionRowTransform = CreateHorizontalLayout("ActionRow", bottom, 12f, false);
+            var actionRowLayout = actionRowTransform.gameObject.AddComponent<LayoutElement>();
+            actionRowLayout.preferredHeight = 112f;
+            actionRowLayout.minHeight = 92f;
+            CreateButton("ClearSelection", actionRowTransform, "選択解除", () => onClearSelection?.Invoke(), 90, 32);
+            restartButton = CreateButton("Restart", actionRowTransform, "Restart", () => onRestart?.Invoke(), 90, 34);
+            nextStageButton = CreateButton("NextStage", actionRowTransform, "NextStage", () => onNextStage?.Invoke(), 90, 32);
 
             var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 130f, 100f);
             resultText = CreateText("Result", resultPanel, "", 40, TextAnchor.MiddleCenter, 60);
@@ -169,30 +192,63 @@ namespace TiraWantToCross.UI
 
         private void RenderEntities(StageUIViewContext context)
         {
-            foreach (Transform child in leftContainer) { if (child.name != "Label") GameObject.Destroy(child.gameObject); }
-            foreach (Transform child in rightContainer) { if (child.name != "Label") GameObject.Destroy(child.gameObject); }
-            foreach (Transform child in boatContainer) { if (child.name != "BoatLocation") GameObject.Destroy(child.gameObject); }
-
             var entities = context.StageData.entities ?? Array.Empty<EntityData>();
+            var activeIds = new HashSet<string>(entities.Select(x => x.entityId));
+
+            var staleIds = entityButtons.Keys.Where(id => !activeIds.Contains(id)).ToList();
+            foreach (var staleId in staleIds)
+            {
+                if (entityButtons.TryGetValue(staleId, out var staleButton) && staleButton != null)
+                {
+                    GameObject.Destroy(staleButton.gameObject);
+                }
+
+                entityButtons.Remove(staleId);
+                entityParents.Remove(staleId);
+            }
+
             foreach (var entity in entities.OrderBy(x => x.entityId))
             {
-                var location = context.GameState.EntityLocations[entity.entityId];
-                var parent = location == "left" ? leftContainer : rightContainer;
-                var isAtBoatLocation = location == context.GameState.BoatLocation;
-
-                var buttonText = isAtBoatLocation ? entity.entityId : $"{entity.entityId}（反対岸）";
-                var button = CreateButton(entity.entityId, parent, buttonText, () => onEntitySelected?.Invoke(entity.entityId));
-                button.interactable = isAtBoatLocation;
-
-                if (context.SelectedEntities.Contains(entity.entityId))
+                var entityId = entity.entityId;
+                if (!context.GameState.EntityLocations.TryGetValue(entityId, out var location))
                 {
-                    button.image.color = new Color(1f, 0.9f, 0.3f, 1f);
                     continue;
                 }
 
-                if (!isAtBoatLocation)
+                var parent = location == "left" ? leftContainer : rightContainer;
+                var parentKey = location == "left" ? "left" : "right";
+                var isAtBoatLocation = location == context.GameState.BoatLocation;
+
+                if (!entityButtons.TryGetValue(entityId, out var button) || button == null)
+                {
+                    button = CreateButton(entityId, parent, entityId, () => onEntitySelected?.Invoke(entityId));
+                    entityButtons[entityId] = button;
+                    entityParents[entityId] = parentKey;
+                }
+                else if (!entityParents.TryGetValue(entityId, out var currentParentKey) || currentParentKey != parentKey)
+                {
+                    button.transform.SetParent(parent, false);
+                    entityParents[entityId] = parentKey;
+                }
+
+                var label = button.GetComponentInChildren<Text>();
+                if (label != null)
+                {
+                    label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
+                }
+
+                button.interactable = isAtBoatLocation;
+                if (context.SelectedEntities.Contains(entityId))
+                {
+                    button.image.color = new Color(1f, 0.9f, 0.3f, 1f);
+                }
+                else if (!isAtBoatLocation)
                 {
                     button.image.color = new Color(0.55f, 0.55f, 0.55f, 0.8f);
+                }
+                else
+                {
+                    button.image.color = Color.white;
                 }
             }
         }
@@ -373,6 +429,12 @@ namespace TiraWantToCross.UI
             {
                 midLayoutGroup.spacing = compact ? 6f : 12f;
                 midLayoutGroup.padding = compact ? new RectOffset(4, 4, 4, 4) : new RectOffset(8, 8, 8, 8);
+            }
+
+            if (bottomLayoutGroup != null)
+            {
+                bottomLayoutGroup.spacing = compact ? 8f : 12f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(8, 8, 8, 8) : new RectOffset(12, 12, 12, 12);
             }
 
             foreach (var panel in locationPanels.Values)
