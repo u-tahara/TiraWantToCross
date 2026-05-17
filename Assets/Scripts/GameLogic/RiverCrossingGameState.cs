@@ -16,10 +16,12 @@ namespace TiraWantToCross.GameLogic
         public int MoveCount { get; private set; }
         public bool IsFailed { get; private set; }
         public bool IsCleared { get; private set; }
+        public int BoatCapacity { get; }
 
         public RiverCrossingGameState(StageData stageData)
         {
             StageData = stageData ?? throw new ArgumentNullException(nameof(stageData));
+            BoatCapacity = ResolveBoatCapacity(stageData);
             BoatLocation = stageData.boat.startLocation;
             MoveCount = 0;
             IsFailed = false;
@@ -55,9 +57,9 @@ namespace TiraWantToCross.GameLogic
                 return MoveResult.Fail("最低1キャラクターを乗船させてください。");
             }
 
-            if (passengerList.Count > StageData.boat.capacity)
+            if (passengerList.Count > BoatCapacity)
             {
-                return MoveResult.Fail($"最大乗船人数を超えています。capacity={StageData.boat.capacity}, request={passengerList.Count}");
+                return MoveResult.Fail($"最大乗船人数を超えています。capacity={BoatCapacity}, request={passengerList.Count}");
             }
 
             foreach (var entityId in passengerList)
@@ -180,6 +182,37 @@ namespace TiraWantToCross.GameLogic
         private bool IsOperatorRequired()
         {
             return (StageData.entities ?? Array.Empty<EntityData>()).Any(entity => entity.canOperateBoat);
+        }
+
+        private static int ResolveBoatCapacity(StageData stageData)
+        {
+            if (stageData?.boat != null)
+            {
+                if (stageData.boat.capacity > 0)
+                {
+                    return stageData.boat.capacity;
+                }
+
+                if (stageData.boat.maxPassengers > 0)
+                {
+                    return stageData.boat.maxPassengers;
+                }
+            }
+
+            if (stageData != null)
+            {
+                if (stageData.maxPassengers > 0)
+                {
+                    return stageData.maxPassengers;
+                }
+
+                if (stageData.capacity > 0)
+                {
+                    return stageData.capacity;
+                }
+            }
+
+            return 2;
         }
     }
 

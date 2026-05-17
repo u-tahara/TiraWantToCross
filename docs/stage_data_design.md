@@ -13,6 +13,7 @@
     "capacity": 2,
     "startLocation": "left"
   },
+  "maxPassengers": 2,
   "locations": [
     { "locationId": "left", "displayName": "ひだり岸" },
     { "locationId": "right", "displayName": "みぎ岸" }
@@ -43,8 +44,11 @@
 - `title` (string): ステージ表示名。
 - `optimalMoves` (number): 最短手数。
 - `boat` (object)
-  - `capacity` (number): 最大搭乗数（現仕様は2を想定）。
+  - `capacity` (number): 最大搭乗数（最優先で参照）。
+  - `maxPassengers` (number): 最大搭乗数の別名（`boat.capacity` 未指定時のフォールバック）。
   - `startLocation` (string): ボート初期位置（`locations.locationId`参照）。
+- `maxPassengers` (number): 最大搭乗数の別名（`boat.capacity` と `boat.maxPassengers` が未指定時に参照）。
+- `capacity` (number): 最大搭乗数の別名（上記3項目が未指定時に参照）。
 - `locations` (array)
   - `locationId` (string): ロケーションID。
   - `displayName` (string): 表示名。
@@ -74,7 +78,7 @@
 - `boat.startLocation` が `locations` に存在すること。
 - `routes.from` / `routes.to` が `locations` に存在すること。
 - `entities.startLocation` が `locations` に存在すること。
-- `capacity` が1以上であること。
+- 最大搭乗数（`boat.capacity` / `boat.maxPassengers` / `maxPassengers` / `capacity` のいずれか）が1以上であること。
 - `optimalMoves` が1以上であること。
 - `entityId` / `locationId` / `routeId` が重複しないこと。
 

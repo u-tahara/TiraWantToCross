@@ -8,6 +8,8 @@ namespace TiraWantToCross.Stage
         public string stageId;
         public string title;
         public int optimalMoves;
+        public int capacity;
+        public int maxPassengers;
         public BoatData boat;
         public LocationData[] locations;
         public RouteData[] routes;
@@ -20,6 +22,7 @@ namespace TiraWantToCross.Stage
     public class BoatData
     {
         public int capacity;
+        public int maxPassengers;
         public string startLocation;
     }
 

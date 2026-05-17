@@ -157,6 +157,12 @@ namespace TiraWantToCross.Prototype
                 return;
             }
 
+            if (gameState != null && selectedEntities.Count >= gameState.BoatCapacity)
+            {
+                lastMessage = $"これ以上乗せられません。（定員: {gameState.BoatCapacity}）";
+                return;
+            }
+
             selectedEntities.Add(entityId);
         }
 
@@ -170,7 +176,7 @@ namespace TiraWantToCross.Prototype
                     continue;
                 }
 
-                if (onboardPassengers.Count >= stageData.boat.capacity)
+                if (onboardPassengers.Count >= gameState.BoatCapacity)
                 {
                     break;
                 }
