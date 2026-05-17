@@ -101,7 +101,7 @@ namespace TiraWantToCross.UI
             movesText = CreateText("Moves", top, "", 40, TextAnchor.UpperCenter, 64);
 
             var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
-            var midLayout = CreateHorizontalLayout("MidLayout", mid, 16f);
+            var midLayout = CreateHorizontalLayout("MidLayout", mid, 10f);
 
             var left = CreateLocationArea("左岸", midLayout, "left");
             leftContainer = left;
@@ -279,7 +279,7 @@ namespace TiraWantToCross.UI
         private static Transform CreateLocationArea(string label, Transform parent, string key)
         {
             var panel = CreateRect($"{key}Panel", parent, new Color(0.22f, 0.22f, 0.3f, 0.8f));
-            panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 330;
+            panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 300;
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 12f;
             layout.padding = new RectOffset(14, 14, 14, 14);
