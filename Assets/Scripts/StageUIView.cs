@@ -38,7 +38,7 @@ namespace TiraWantToCross.Prototype
             GUILayout.Space(8);
             DrawBoatPanel(context, actions);
             GUILayout.Space(8);
-            DrawActionButtons(actions);
+            DrawActionButtons(context, actions);
             GUILayout.Space(8);
             DrawResult(context);
 
@@ -147,7 +147,7 @@ namespace TiraWantToCross.Prototype
             }
         }
 
-        private static void DrawActionButtons(StageUIViewActions actions)
+        private static void DrawActionButtons(StageUIViewContext context, StageUIViewActions actions)
         {
             GUILayout.Label("[Actions]");
             GUILayout.BeginHorizontal();
@@ -174,10 +174,13 @@ namespace TiraWantToCross.Prototype
                 actions.RestartStage = true;
             }
 
+            var canGoToNextStage = CanGoToNextStage(context.GameState);
+            GUI.enabled = canGoToNextStage;
             if (GUILayout.Button("NextStage", GUILayout.Height(32)))
             {
                 actions.NextStage = true;
             }
+            GUI.enabled = true;
 
             GUILayout.EndHorizontal();
         }
@@ -193,20 +196,28 @@ namespace TiraWantToCross.Prototype
         {
             if (context.GameState.IsFailed)
             {
-                return "FAILED";
+                return "FAILED: 失敗しました。Restartしてください。";
             }
 
-            if (context.GameState.IsCleared && context.GameState.IsExactlyOptimalMoves())
+            if (CanGoToNextStage(context.GameState))
             {
-                return "CLEAR";
+                return "CLEAR: 最短手数でクリアしました。NextStageに進めます。";
             }
 
             if (context.GameState.IsCleared && !context.GameState.IsExactlyOptimalMoves())
             {
-                return "NOT OPTIMAL";
+                return "NOT OPTIMAL: 最短手数ではありません。Restartしてください。";
             }
 
-            return "PLAYING";
+            return "PLAYING: プレイ中はNextStageに進めません。";
+        }
+
+        private static bool CanGoToNextStage(RiverCrossingGameState gameState)
+        {
+            return gameState != null
+                && gameState.IsCleared
+                && !gameState.IsFailed
+                && gameState.IsExactlyOptimalMoves();
         }
 
         private static string ResolveDestination(RouteData route, string currentBoatLocation)
