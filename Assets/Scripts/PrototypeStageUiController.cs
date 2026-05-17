@@ -281,7 +281,9 @@ namespace TiraWantToCross.Prototype
                 return;
             }
 
-            lastMessage = $"Move成功: destination={result.Destination}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, moves={gameState.MoveCount}, exactOptimal={gameState.IsExactlyOptimalMoves()}";
+            onboardPassengers.Clear();
+            selectedEntities.Clear();
+            lastMessage = $"Move成功: destination={result.Destination}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, moves={gameState.MoveCount}, exactOptimal={gameState.IsExactlyOptimalMoves()} / 移動後、自動で降船しました。";
             Debug.Log($"[PrototypeUI] {lastMessage}");
         }
 
