@@ -13,7 +13,6 @@ namespace TiraWantToCross.UI
     {
         private readonly Dictionary<string, Button> entityButtons = new Dictionary<string, Button>();
         private readonly Dictionary<string, string> entityParents = new Dictionary<string, string>();
-        private readonly List<Button> stageButtons = new List<Button>();
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly List<Button> routeButtons = new List<Button>();
 
@@ -31,14 +30,12 @@ namespace TiraWantToCross.UI
         private VerticalLayoutGroup mainLayoutGroup;
         private VerticalLayoutGroup bottomLayoutGroup;
 
-        private RectTransform stageRowTransform;
         private RectTransform routeRowTransform;
         private RectTransform actionRowTransform;
 
         private Button restartButton;
         private Button nextStageButton;
 
-        private Action<string> onStageSelected;
         private Action<string> onEntitySelected;
         private Action<string> onMove;
         private Action onClearSelection;
@@ -46,14 +43,12 @@ namespace TiraWantToCross.UI
         private Action onNextStage;
 
         public void Initialize(Transform parent,
-            Action<string> onStageSelected,
             Action<string> onEntitySelected,
             Action<string> onMove,
             Action onClearSelection,
             Action onRestart,
             Action onNextStage)
         {
-            this.onStageSelected = onStageSelected;
             this.onEntitySelected = onEntitySelected;
             this.onMove = onMove;
             this.onClearSelection = onClearSelection;
@@ -79,7 +74,6 @@ namespace TiraWantToCross.UI
             messageText.text = context.LastMessage;
             boatLocationText.text = $"ボート位置: {context.GameState.BoatLocation}";
 
-            RenderStageButtons(context);
             RenderEntities(context);
             RenderRoutes(context);
             nextStageButton.interactable = context.GameState.IsCleared && !context.GameState.IsFailed && context.GameState.IsExactlyOptimalMoves();
@@ -94,10 +88,18 @@ namespace TiraWantToCross.UI
             ApplyFullStretch(main, 24f, 24f, 24f, 24f);
             mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 220f, 180f);
-            stageTitleText = CreateText("Title", top, "", 48, TextAnchor.UpperCenter, 64);
-            stageNameText = CreateText("StageName", top, "", 52, TextAnchor.UpperCenter, 78);
-            movesText = CreateText("Moves", top, "", 40, TextAnchor.UpperCenter, 64);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 260f, 220f);
+            var topLayout = top.gameObject.AddComponent<VerticalLayoutGroup>();
+            topLayout.spacing = 8f;
+            topLayout.padding = new RectOffset(16, 16, 16, 16);
+            topLayout.childControlHeight = true;
+            topLayout.childControlWidth = true;
+            topLayout.childForceExpandHeight = false;
+            topLayout.childForceExpandWidth = true;
+            topLayout.childAlignment = TextAnchor.UpperCenter;
+            stageTitleText = CreateText("Title", top, "", 46, TextAnchor.MiddleCenter, 70);
+            stageNameText = CreateText("StageName", top, "", 42, TextAnchor.MiddleCenter, 88);
+            movesText = CreateText("Moves", top, "", 36, TextAnchor.MiddleCenter, 66);
 
             var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
             var midLayout = CreateHorizontalLayout("MidLayout", mid, 12f, true);
@@ -136,16 +138,6 @@ namespace TiraWantToCross.UI
             bottomLayoutGroup.childForceExpandHeight = false;
             bottomLayoutGroup.childForceExpandWidth = true;
 
-            stageRowTransform = CreateHorizontalLayout("StageRow", bottom, 10f, false);
-            var stageRowLayout = stageRowTransform.gameObject.AddComponent<LayoutElement>();
-            stageRowLayout.preferredHeight = 116f;
-            stageRowLayout.minHeight = 96f;
-            for (var i = 0; i < 4; i++)
-            {
-                var button = CreateButton($"Stage{i + 1}", stageRowTransform, $"Stage{i + 1}", () => { }, 92, 36);
-                stageButtons.Add(button);
-            }
-
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             var routeRowLayout = routeRowTransform.gameObject.AddComponent<LayoutElement>();
             routeRowLayout.preferredHeight = 122f;
@@ -164,30 +156,19 @@ namespace TiraWantToCross.UI
             restartButton = CreateButton("Restart", actionRowTransform, "Restart", () => onRestart?.Invoke(), 90, 34);
             nextStageButton = CreateButton("NextStage", actionRowTransform, "NextStage", () => onNextStage?.Invoke(), 90, 32);
 
-            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 130f, 100f);
-            resultText = CreateText("Result", resultPanel, "", 40, TextAnchor.MiddleCenter, 60);
-            messageText = CreateText("Message", resultPanel, "", 32, TextAnchor.MiddleCenter, 54);
+            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 180f, 140f);
+            var resultLayout = resultPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            resultLayout.spacing = 6f;
+            resultLayout.padding = new RectOffset(16, 16, 12, 12);
+            resultLayout.childControlHeight = true;
+            resultLayout.childControlWidth = true;
+            resultLayout.childForceExpandHeight = false;
+            resultLayout.childForceExpandWidth = true;
+            resultLayout.childAlignment = TextAnchor.UpperCenter;
+            resultText = CreateText("Result", resultPanel, "", 38, TextAnchor.MiddleCenter, 74);
+            messageText = CreateText("Message", resultPanel, "", 30, TextAnchor.MiddleCenter, 64);
 
             ApplyResponsiveLayout();
-        }
-
-        private void RenderStageButtons(StageUIViewContext context)
-        {
-            for (var i = 0; i < stageButtons.Count; i++)
-            {
-                if (i >= context.StageIds.Count)
-                {
-                    stageButtons[i].gameObject.SetActive(false);
-                    continue;
-                }
-
-                var stageId = context.StageIds[i];
-                stageButtons[i].gameObject.SetActive(true);
-                stageButtons[i].GetComponentInChildren<Text>().text = stageId;
-                stageButtons[i].image.color = stageId == context.ActiveStageId ? new Color(0.3f, 0.8f, 0.4f, 1f) : Color.white;
-                stageButtons[i].onClick.RemoveAllListeners();
-                stageButtons[i].onClick.AddListener(() => onStageSelected?.Invoke(stageId));
-            }
         }
 
         private void RenderEntities(StageUIViewContext context)
@@ -207,7 +188,10 @@ namespace TiraWantToCross.UI
                 entityParents.Remove(staleId);
             }
 
-            foreach (var entity in entities.OrderBy(x => x.entityId))
+            var leftSiblingIndex = 1;
+            var rightSiblingIndex = 1;
+
+            foreach (var entity in entities)
             {
                 var entityId = entity.entityId;
                 if (!context.GameState.EntityLocations.TryGetValue(entityId, out var location))
@@ -217,6 +201,7 @@ namespace TiraWantToCross.UI
 
                 var parent = location == "left" ? leftContainer : rightContainer;
                 var parentKey = location == "left" ? "left" : "right";
+                var siblingIndex = parentKey == "left" ? leftSiblingIndex++ : rightSiblingIndex++;
                 var isAtBoatLocation = location == context.GameState.BoatLocation;
 
                 if (!entityButtons.TryGetValue(entityId, out var button) || button == null)
@@ -230,6 +215,8 @@ namespace TiraWantToCross.UI
                     button.transform.SetParent(parent, false);
                     entityParents[entityId] = parentKey;
                 }
+
+                button.transform.SetSiblingIndex(siblingIndex);
 
                 var label = button.GetComponentInChildren<Text>();
                 if (label != null)

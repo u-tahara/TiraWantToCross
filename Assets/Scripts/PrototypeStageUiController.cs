@@ -137,7 +137,6 @@ namespace TiraWantToCross.Prototype
 
             stageCanvasView = new StageCanvasView();
             stageCanvasView.Initialize(canvas.transform,
-                stageId => InitializeStage(stageId),
                 entityId => TogglePassengerSelection(entityId),
                 ExecuteMoveFromSelectedRoute,
                 ClearSelection,
