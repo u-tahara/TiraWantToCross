@@ -178,11 +178,21 @@ namespace TiraWantToCross.UI
             {
                 var location = context.GameState.EntityLocations[entity.entityId];
                 var parent = location == "left" ? leftContainer : rightContainer;
+                var isAtBoatLocation = location == context.GameState.BoatLocation;
 
-                var button = CreateButton(entity.entityId, parent, entity.entityId, () => onEntitySelected?.Invoke(entity.entityId));
+                var buttonText = isAtBoatLocation ? entity.entityId : $"{entity.entityId}（反対岸）";
+                var button = CreateButton(entity.entityId, parent, buttonText, () => onEntitySelected?.Invoke(entity.entityId));
+                button.interactable = isAtBoatLocation;
+
                 if (context.SelectedEntities.Contains(entity.entityId))
                 {
                     button.image.color = new Color(1f, 0.9f, 0.3f, 1f);
+                    continue;
+                }
+
+                if (!isAtBoatLocation)
+                {
+                    button.image.color = new Color(0.55f, 0.55f, 0.55f, 0.8f);
                 }
             }
         }
@@ -203,8 +213,20 @@ namespace TiraWantToCross.UI
                 routeButtons[i].GetComponentInChildren<Text>().text = $"{BuildLocationDisplayName(destination)}へ移動";
                 routeButtons[i].onClick.RemoveAllListeners();
                 routeButtons[i].onClick.AddListener(() => onMove?.Invoke(route.routeId));
-                routeButtons[i].interactable = context.SelectedEntities.Count > 0;
+                routeButtons[i].interactable = CanMoveSelectedEntities(context);
             }
+        }
+
+        private static bool CanMoveSelectedEntities(StageUIViewContext context)
+        {
+            if (context.SelectedEntities.Count == 0)
+            {
+                return false;
+            }
+
+            return context.SelectedEntities.All(entityId =>
+                context.GameState.EntityLocations.TryGetValue(entityId, out var location) &&
+                location == context.GameState.BoatLocation);
         }
 
         private static string BuildLocationDisplayName(string locationId)
