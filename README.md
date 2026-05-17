@@ -20,6 +20,12 @@
 - `docs/codex_instructions.md` : Codexが今後実装を進める際の具体的な手順
 - `AGENTS.md` : リポジトリ全体で守る開発ルール
 
+
+## 画面向き要件
+- 本ゲームは**縦画面（Portrait）専用**です。
+- 自動回転は無効化し、Landscape（横画面）はサポートしません。
+- UIは縦画面前提で設計・検証を行ってください。
+
 ## 主要ディレクトリ
 - `Assets/Scripts/` : C#スクリプト配置先（今後実装）
 - `Assets/Data/Stages/` : ステージJSON配置先
