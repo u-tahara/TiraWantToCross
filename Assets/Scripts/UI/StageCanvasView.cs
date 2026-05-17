@@ -37,7 +37,7 @@ namespace TiraWantToCross.UI
         private Action<string> onEntitySelected;
         private Action onBoard;
         private Action onUnboard;
-        private Action onMove;
+        private Action<string> onMove;
         private Action onRestart;
         private Action onNextStage;
 
@@ -46,7 +46,7 @@ namespace TiraWantToCross.UI
             Action<string> onEntitySelected,
             Action onBoard,
             Action onUnboard,
-            Action onMove,
+            Action<string> onMove,
             Action onRestart,
             Action onNextStage)
         {
@@ -139,7 +139,7 @@ namespace TiraWantToCross.UI
             var actionRow = CreateHorizontalLayout("ActionRow", bottom, 8f);
             boardButton = CreateButton("Board", actionRow, "乗船", () => onBoard?.Invoke());
             unboardButton = CreateButton("Unboard", actionRow, "降船", () => onUnboard?.Invoke());
-            moveButton = CreateButton("Move", actionRow, "移動", () => onMove?.Invoke());
+            moveButton = CreateButton("Move", actionRow, "移動", () => onMove?.Invoke(null));
             restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke());
             nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke());
 
@@ -204,7 +204,7 @@ namespace TiraWantToCross.UI
                 routeButtons[i].gameObject.SetActive(true);
                 routeButtons[i].GetComponentInChildren<Text>().text = $"{context.GameState.BoatLocation}→{destination}";
                 routeButtons[i].onClick.RemoveAllListeners();
-                routeButtons[i].onClick.AddListener(() => onMove?.Invoke());
+                routeButtons[i].onClick.AddListener(() => onMove?.Invoke(route.routeId));
             }
 
             moveButton.interactable = context.OnboardPassengers.Count > 0 && context.AvailableRoutes.Count > 0;

@@ -164,8 +164,13 @@ namespace TiraWantToCross.Prototype
             stageCanvasView.Render(context);
         }
 
-        private void ExecuteMoveFromSelectedRoute()
+        private void ExecuteMoveFromSelectedRoute(string routeId)
         {
+            if (!string.IsNullOrEmpty(routeId))
+            {
+                selectedRouteId = routeId;
+            }
+
             var available = ResolveAvailableRoutes();
             if (available.Count == 0)
             {
