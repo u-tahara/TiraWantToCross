@@ -29,34 +29,28 @@ namespace TiraWantToCross.UI
         private HorizontalLayoutGroup midLayoutGroup;
         private VerticalLayoutGroup mainLayoutGroup;
 
-        private Button boardButton;
-        private Button unboardButton;
-        private Button moveButton;
         private Button restartButton;
         private Button nextStageButton;
 
         private Action<string> onStageSelected;
         private Action<string> onEntitySelected;
-        private Action onBoard;
-        private Action onUnboard;
         private Action<string> onMove;
+        private Action onClearSelection;
         private Action onRestart;
         private Action onNextStage;
 
         public void Initialize(Transform parent,
             Action<string> onStageSelected,
             Action<string> onEntitySelected,
-            Action onBoard,
-            Action onUnboard,
             Action<string> onMove,
+            Action onClearSelection,
             Action onRestart,
             Action onNextStage)
         {
             this.onStageSelected = onStageSelected;
             this.onEntitySelected = onEntitySelected;
-            this.onBoard = onBoard;
-            this.onUnboard = onUnboard;
             this.onMove = onMove;
+            this.onClearSelection = onClearSelection;
             this.onRestart = onRestart;
             this.onNextStage = onNextStage;
 
@@ -143,9 +137,7 @@ namespace TiraWantToCross.UI
             }
 
             var actionRow = CreateHorizontalLayout("ActionRow", bottom, 12f, true);
-            boardButton = CreateButton("Board", actionRow, "乗船", () => onBoard?.Invoke(), 110, 38);
-            unboardButton = CreateButton("Unboard", actionRow, "降船", () => onUnboard?.Invoke(), 110, 38);
-            moveButton = CreateButton("Move", actionRow, "移動", () => onMove?.Invoke(null), 110, 38);
+            CreateButton("ClearSelection", actionRow, "選択解除", () => onClearSelection?.Invoke(), 110, 34);
             restartButton = CreateButton("Restart", actionRow, "Restart", () => onRestart?.Invoke(), 110, 36);
             nextStageButton = CreateButton("NextStage", actionRow, "NextStage", () => onNextStage?.Invoke(), 110, 34);
 
@@ -185,9 +177,7 @@ namespace TiraWantToCross.UI
             foreach (var entity in entities.OrderBy(x => x.entityId))
             {
                 var location = context.GameState.EntityLocations[entity.entityId];
-                var parent = context.OnboardPassengers.Contains(entity.entityId)
-                    ? boatContainer
-                    : location == "left" ? leftContainer : rightContainer;
+                var parent = location == "left" ? leftContainer : rightContainer;
 
                 var button = CreateButton(entity.entityId, parent, entity.entityId, () => onEntitySelected?.Invoke(entity.entityId));
                 if (context.SelectedEntities.Contains(entity.entityId))
@@ -210,12 +200,21 @@ namespace TiraWantToCross.UI
                 var route = context.AvailableRoutes[i];
                 var destination = route.from == context.GameState.BoatLocation ? route.to : route.from;
                 routeButtons[i].gameObject.SetActive(true);
-                routeButtons[i].GetComponentInChildren<Text>().text = $"{context.GameState.BoatLocation}→{destination}";
+                routeButtons[i].GetComponentInChildren<Text>().text = $"{BuildLocationDisplayName(destination)}へ移動";
                 routeButtons[i].onClick.RemoveAllListeners();
                 routeButtons[i].onClick.AddListener(() => onMove?.Invoke(route.routeId));
+                routeButtons[i].interactable = context.SelectedEntities.Count > 0;
             }
+        }
 
-            moveButton.interactable = context.OnboardPassengers.Count > 0 && context.AvailableRoutes.Count > 0;
+        private static string BuildLocationDisplayName(string locationId)
+        {
+            return locationId switch
+            {
+                "left" => "左岸",
+                "right" => "右岸",
+                _ => locationId
+            };
         }
 
         private static string BuildResultText(RiverCrossingGameState gameState)
