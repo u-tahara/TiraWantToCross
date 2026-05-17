@@ -88,15 +88,11 @@ namespace TiraWantToCross.UI
         private void BuildRoot(Transform parent)
         {
             var root = CreateRect("CanvasRoot", parent, new Color(0f, 0f, 0f, 0f));
-            root.anchorMin = Vector2.zero;
-            root.anchorMax = Vector2.one;
-            root.offsetMin = Vector2.zero;
-            root.offsetMax = Vector2.zero;
+            ApplyFullStretch(root);
 
             var main = CreateVerticalLayout("Main", root, 18f);
+            ApplyFullStretch(main, 24f, 24f, 24f, 24f);
             mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
-            main.offsetMin = new Vector2(24, 24);
-            main.offsetMax = new Vector2(-24, -24);
 
             var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 220f, 180f);
             stageTitleText = CreateText("Title", top, "", 48, TextAnchor.UpperCenter, 64);
@@ -229,13 +225,35 @@ namespace TiraWantToCross.UI
             return "PLAYING";
         }
 
+
+        private static void ApplyCenterDefaults(RectTransform rect)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.localScale = Vector3.one;
+        }
+
+        private static void ApplyFullStretch(RectTransform rect, float left = 0f, float right = 0f, float top = 0f, float bottom = 0f)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(left, bottom);
+            rect.offsetMax = new Vector2(-right, -top);
+            rect.anchoredPosition = Vector2.zero;
+            rect.localScale = Vector3.one;
+        }
         private static RectTransform CreateRect(string name, Transform parent, Color color)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
             var image = go.GetComponent<Image>();
             image.color = color;
-            return go.GetComponent<RectTransform>();
+            var rect = go.GetComponent<RectTransform>();
+            ApplyCenterDefaults(rect);
+            return rect;
         }
 
         private static RectTransform CreatePanel(string name, Transform parent, Color color, float preferredHeight, float minHeight = -1f, float flexibleHeight = 0f)
@@ -260,6 +278,7 @@ namespace TiraWantToCross.UI
         {
             var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
             rect.SetParent(parent, false);
+            ApplyCenterDefaults(rect);
             var layout = rect.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = spacing;
             layout.childControlHeight = true;
@@ -273,6 +292,7 @@ namespace TiraWantToCross.UI
         {
             var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
             rect.SetParent(parent, false);
+            ApplyCenterDefaults(rect);
             var layout = rect.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = spacing;
             layout.childControlHeight = true;
