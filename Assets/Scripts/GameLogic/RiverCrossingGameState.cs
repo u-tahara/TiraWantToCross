@@ -212,7 +212,8 @@ namespace TiraWantToCross.GameLogic
                 }
             }
 
-            return 2;
+            var stageId = string.IsNullOrWhiteSpace(stageData?.stageId) ? "(unknown)" : stageData.stageId;
+            throw new InvalidOperationException($"ステージ {stageId} の最大乗船人数が未設定または不正です。boat.capacity / boat.maxPassengers / maxPassengers / capacity のいずれかに1以上の値を設定してください。");
         }
     }
 
