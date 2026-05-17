@@ -188,8 +188,8 @@ namespace TiraWantToCross.UI
                 entityParents.Remove(staleId);
             }
 
-            var leftSiblingIndex = 0;
-            var rightSiblingIndex = 0;
+            var leftSiblingIndex = 1;
+            var rightSiblingIndex = 1;
 
             foreach (var entity in entities)
             {
