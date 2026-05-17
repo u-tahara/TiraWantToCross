@@ -26,6 +26,8 @@ namespace TiraWantToCross.UI
         private Text resultText;
         private Text messageText;
         private Text boatLocationText;
+        private HorizontalLayoutGroup midLayoutGroup;
+        private VerticalLayoutGroup mainLayoutGroup;
 
         private Button boardButton;
         private Button unboardButton;
@@ -92,6 +94,7 @@ namespace TiraWantToCross.UI
             root.offsetMax = Vector2.zero;
 
             var main = CreateVerticalLayout("Main", root, 18f);
+            mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
             main.offsetMin = new Vector2(24, 24);
             main.offsetMax = new Vector2(-24, -24);
 
@@ -102,6 +105,7 @@ namespace TiraWantToCross.UI
 
             var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
             var midLayout = CreateHorizontalLayout("MidLayout", mid, 10f);
+            midLayoutGroup = midLayout.GetComponent<HorizontalLayoutGroup>();
 
             var left = CreateLocationArea("左岸", midLayout, "left");
             leftContainer = left;
@@ -151,6 +155,8 @@ namespace TiraWantToCross.UI
             var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 130f, 100f);
             resultText = CreateText("Result", resultPanel, "", 40, TextAnchor.MiddleCenter, 60);
             messageText = CreateText("Message", resultPanel, "", 32, TextAnchor.MiddleCenter, 54);
+
+            ApplyResponsiveLayout();
         }
 
         private void RenderStageButtons(StageUIViewContext context)
@@ -279,7 +285,10 @@ namespace TiraWantToCross.UI
         private static Transform CreateLocationArea(string label, Transform parent, string key)
         {
             var panel = CreateRect($"{key}Panel", parent, new Color(0.22f, 0.22f, 0.3f, 0.8f));
-            panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 300;
+            var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
+            layoutElement.preferredWidth = 0f;
+            layoutElement.minWidth = 220f;
+            layoutElement.flexibleWidth = 1f;
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 12f;
             layout.padding = new RectOffset(14, 14, 14, 14);
@@ -288,6 +297,56 @@ namespace TiraWantToCross.UI
             layout.childForceExpandHeight = false;
             CreateText("Label", panel, label, 38, TextAnchor.MiddleCenter, 56);
             return panel;
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            var logicalWidth = Screen.width;
+            var logicalHeight = Screen.height;
+            var aspect = logicalHeight > 0 ? (float)logicalWidth / logicalHeight : 1f;
+            var compact = logicalWidth < 1100f || aspect < 0.58f;
+
+            if (mainLayoutGroup != null)
+            {
+                mainLayoutGroup.spacing = compact ? 12f : 18f;
+                mainLayoutGroup.padding = compact ? new RectOffset(12, 12, 12, 12) : new RectOffset(24, 24, 24, 24);
+            }
+
+            if (midLayoutGroup != null)
+            {
+                midLayoutGroup.spacing = compact ? 6f : 10f;
+                midLayoutGroup.padding = compact ? new RectOffset(4, 4, 4, 4) : new RectOffset(0, 0, 0, 0);
+            }
+
+            foreach (var panel in locationPanels.Values)
+            {
+                var le = panel.GetComponent<LayoutElement>();
+                if (le == null)
+                {
+                    continue;
+                }
+
+                le.minWidth = compact ? 170f : 220f;
+                le.preferredWidth = 0f;
+                le.flexibleWidth = 1f;
+            }
+
+            ScaleText(stageTitleText, compact ? 38 : 48);
+            ScaleText(stageNameText, compact ? 42 : 52);
+            ScaleText(movesText, compact ? 32 : 40);
+            ScaleText(resultText, compact ? 34 : 40);
+            ScaleText(messageText, compact ? 26 : 32);
+            ScaleText(boatLocationText, compact ? 26 : 32);
+        }
+
+        private void ScaleText(Text text, int fontSize)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.fontSize = fontSize;
         }
 
         private static Text CreateText(string name, Transform parent, string text, int fontSize, TextAnchor anchor, float preferredHeight = 40f)
