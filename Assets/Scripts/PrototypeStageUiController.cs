@@ -4,6 +4,9 @@ using System.Linq;
 using TiraWantToCross.GameLogic;
 using TiraWantToCross.Stage;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TiraWantToCross.UI;
 
 namespace TiraWantToCross.Prototype
 {
@@ -19,6 +22,9 @@ namespace TiraWantToCross.Prototype
         private string activeStageId;
         private string lastMessage = "未実行";
         private StageUIView stageUIView;
+        private StageCanvasView stageCanvasView;
+        private string selectedRouteId;
+        [SerializeField] private bool useLegacyOnGui;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -51,6 +57,7 @@ namespace TiraWantToCross.Prototype
         private void Start()
         {
             stageUIView = new StageUIView();
+            SetupCanvasUI();
             ReloadStageList();
 
             if (stageIds.Count == 0)
@@ -108,12 +115,75 @@ namespace TiraWantToCross.Prototype
             gameState = new RiverCrossingGameState(stageData);
             selectedEntities.Clear();
             onboardPassengers.Clear();
+            selectedRouteId = null;
             lastMessage = $"初期化完了: {stageData.stageId} ({stageData.title})";
+        }
+
+
+        private void SetupCanvasUI()
+        {
+            var canvasGo = new GameObject("PrototypeCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            DontDestroyOnLoad(canvasGo);
+            var canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080, 1920);
+            scaler.matchWidthOrHeight = 1f;
+
+            if (FindAnyObjectByType<EventSystem>() == null)
+            {
+                var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+                DontDestroyOnLoad(eventSystemGo);
+            }
+
+            stageCanvasView = new StageCanvasView();
+            stageCanvasView.Initialize(canvas.transform,
+                stageId => InitializeStage(stageId),
+                entityId => TogglePassengerSelection(entityId),
+                BoardSelectedEntities,
+                UnboardSelectedEntities,
+                ExecuteMoveFromSelectedRoute,
+                () => InitializeStage(activeStageId),
+                TryLoadNextStage);
+        }
+
+        private void Update()
+        {
+            if (stageCanvasView == null)
+            {
+                return;
+            }
+
+            var context = BuildViewContext();
+            if (string.IsNullOrEmpty(selectedRouteId) && context.AvailableRoutes.Count > 0)
+            {
+                selectedRouteId = context.AvailableRoutes[0].routeId;
+            }
+
+            stageCanvasView.Render(context);
+        }
+
+        private void ExecuteMoveFromSelectedRoute()
+        {
+            var available = ResolveAvailableRoutes();
+            if (available.Count == 0)
+            {
+                lastMessage = "利用可能なルートがありません。";
+                return;
+            }
+
+            if (string.IsNullOrEmpty(selectedRouteId) || available.All(x => x.routeId != selectedRouteId))
+            {
+                selectedRouteId = available[0].routeId;
+            }
+
+            ExecuteMove(selectedRouteId);
         }
 
         private void OnGUI()
         {
-            if (stageUIView == null)
+            if (!useLegacyOnGui || stageUIView == null)
             {
                 return;
             }
