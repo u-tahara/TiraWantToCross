@@ -18,6 +18,7 @@
 - `docs/game_design.md` : ゲーム全体の目的・コアループ・失敗/成功条件
 - `docs/stage_data_design.md` : ステージデータ(JSON)の構造とバリデーション方針
 - `docs/codex_instructions.md` : Codexが今後実装を進める際の具体的な手順
+- `docs/sprite_asset_placement.md` : Sprite素材の配置先・命名ルール・Import設定
 - `AGENTS.md` : リポジトリ全体で守る開発ルール
 
 
@@ -31,7 +32,7 @@
 - `Assets/Data/Stages/` : ステージJSON配置先
 - `Assets/Prefabs/` : プレハブ配置先
 - `Assets/Scenes/` : シーン配置先
-- `Assets/Sprites/` : スプライト配置先
+- `Assets/Resources/Sprites/` : Resources.Load対象のスプライト配置先
 
 ## サンプルステージ
 - `Assets/Data/Stages/stage_001.json` : 2匹を左から右へ移動
