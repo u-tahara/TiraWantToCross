@@ -34,6 +34,7 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, LocationVisualTheme> locationThemes = new Dictionary<string, LocationVisualTheme>();
         private readonly List<Button> routeButtons = new List<Button>();
+        private readonly Dictionary<string, Sprite> portraitSpriteCache = new Dictionary<string, Sprite>();
 
         private Transform leftContainer;
         private Transform rightContainer;
@@ -328,14 +329,18 @@ namespace TiraWantToCross.UI
             }
         }
 
-        private static void TryApplyPortraitSprite(string entityId, EntityVisualRefs visuals)
+        private void TryApplyPortraitSprite(string entityId, EntityVisualRefs visuals)
         {
             if (visuals == null || visuals.PortraitImage == null)
             {
                 return;
             }
 
-            var sprite = Resources.Load<Sprite>($"Sprites/Characters/{entityId}");
+            if (!portraitSpriteCache.TryGetValue(entityId, out var sprite))
+            {
+                sprite = Resources.Load<Sprite>($"Sprites/Characters/{entityId}");
+                portraitSpriteCache[entityId] = sprite;
+            }
             if (sprite == null)
             {
                 visuals.HasPortraitSprite = false;
