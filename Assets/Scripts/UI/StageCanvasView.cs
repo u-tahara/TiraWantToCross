@@ -11,9 +11,26 @@ namespace TiraWantToCross.UI
 {
     public sealed class StageCanvasView
     {
-        private readonly Dictionary<string, Button> entityButtons = new Dictionary<string, Button>();
+        private sealed class EntityVisualRefs
+        {
+            public Button Button;
+            public Image PortraitImage;
+            public Image SelectionFrame;
+            public Text Label;
+        }
+
+        private sealed class LocationVisualTheme
+        {
+            public string LocationId;
+            public Image BackgroundImage;
+            public Text LabelText;
+            public Color BaseColor;
+        }
+
+        private readonly Dictionary<string, EntityVisualRefs> entityVisuals = new Dictionary<string, EntityVisualRefs>();
         private readonly Dictionary<string, string> entityParents = new Dictionary<string, string>();
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
+        private readonly Dictionary<string, LocationVisualTheme> locationThemes = new Dictionary<string, LocationVisualTheme>();
         private readonly List<Button> routeButtons = new List<Button>();
 
         private Transform leftContainer;
@@ -26,6 +43,8 @@ namespace TiraWantToCross.UI
         private Text resultText;
         private Text messageText;
         private Text boatLocationText;
+        private Image boatImage;
+        private Text boatLabelText;
         private HorizontalLayoutGroup midLayoutGroup;
         private VerticalLayoutGroup mainLayoutGroup;
         private VerticalLayoutGroup bottomLayoutGroup;
@@ -105,9 +124,9 @@ namespace TiraWantToCross.UI
             var midLayout = CreateHorizontalLayout("MidLayout", mid, 12f, true);
             midLayoutGroup = midLayout.GetComponent<HorizontalLayoutGroup>();
 
-            var left = CreateLocationArea("左岸", midLayout, "left");
+            var left = CreateLocationArea("左岸", midLayout, "left", new Color(0.3f, 0.38f, 0.26f, 0.9f));
             leftContainer = left;
-            var river = CreateLocationArea("川", midLayout, "river");
+            var river = CreateLocationArea("川", midLayout, "river", new Color(0.2f, 0.35f, 0.55f, 0.9f));
             boatContainer = CreateRect("BoatContainer", river, new Color(0.6f, 0.5f, 0.2f, 0.9f));
             var boatLayout = boatContainer.gameObject.AddComponent<VerticalLayoutGroup>();
             boatLayout.childControlHeight = true;
@@ -120,9 +139,15 @@ namespace TiraWantToCross.UI
             var boatAreaLayout = boatContainer.gameObject.AddComponent<LayoutElement>();
             boatAreaLayout.minHeight = 240f;
             boatAreaLayout.flexibleHeight = 1f;
+            boatImage = CreateRect("BoatImage", boatContainer, new Color(0.75f, 0.55f, 0.2f, 1f)).GetComponent<Image>();
+            var boatImageLayout = boatImage.gameObject.AddComponent<LayoutElement>();
+            boatImageLayout.preferredHeight = 150f;
+            boatImageLayout.minHeight = 100f;
+            boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "Boat << LEFT", 28, TextAnchor.MiddleCenter, 150f);
+            boatLabelText.color = new Color(0.15f, 0.1f, 0.08f, 1f);
             boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
 
-            var right = CreateLocationArea("右岸", midLayout, "right");
+            var right = CreateLocationArea("右岸", midLayout, "right", new Color(0.4f, 0.3f, 0.2f, 0.9f));
             rightContainer = right;
 
             locationPanels["left"] = left as RectTransform;
@@ -176,15 +201,15 @@ namespace TiraWantToCross.UI
             var entities = context.StageData.entities ?? Array.Empty<EntityData>();
             var activeIds = new HashSet<string>(entities.Select(x => x.entityId));
 
-            var staleIds = entityButtons.Keys.Where(id => !activeIds.Contains(id)).ToList();
+            var staleIds = entityVisuals.Keys.Where(id => !activeIds.Contains(id)).ToList();
             foreach (var staleId in staleIds)
             {
-                if (entityButtons.TryGetValue(staleId, out var staleButton) && staleButton != null)
+                if (entityVisuals.TryGetValue(staleId, out var staleVisuals) && staleVisuals?.Button != null)
                 {
-                    GameObject.Destroy(staleButton.gameObject);
+                    GameObject.Destroy(staleVisuals.Button.gameObject);
                 }
 
-                entityButtons.Remove(staleId);
+                entityVisuals.Remove(staleId);
                 entityParents.Remove(staleId);
             }
 
@@ -204,40 +229,42 @@ namespace TiraWantToCross.UI
                 var siblingIndex = parentKey == "left" ? leftSiblingIndex++ : rightSiblingIndex++;
                 var isAtBoatLocation = location == context.GameState.BoatLocation;
 
-                if (!entityButtons.TryGetValue(entityId, out var button) || button == null)
+                if (!entityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    button = CreateButton(entityId, parent, entityId, () => onEntitySelected?.Invoke(entityId));
-                    entityButtons[entityId] = button;
+                    visuals = CreateEntityVisual(entityId, parent, () => onEntitySelected?.Invoke(entityId));
+                    entityVisuals[entityId] = visuals;
                     entityParents[entityId] = parentKey;
                 }
                 else if (!entityParents.TryGetValue(entityId, out var currentParentKey) || currentParentKey != parentKey)
                 {
-                    button.transform.SetParent(parent, false);
+                    visuals.Button.transform.SetParent(parent, false);
                     entityParents[entityId] = parentKey;
                 }
 
-                button.transform.SetSiblingIndex(siblingIndex);
-
-                var label = button.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
-                }
-
-                button.interactable = isAtBoatLocation;
+                visuals.Button.transform.SetSiblingIndex(siblingIndex);
+                visuals.Label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
+                visuals.Button.interactable = isAtBoatLocation;
                 if (context.SelectedEntities.Contains(entityId))
                 {
-                    button.image.color = new Color(1f, 0.9f, 0.3f, 1f);
+                    visuals.Button.image.color = new Color(0.9f, 0.82f, 0.3f, 1f);
+                    visuals.PortraitImage.color = new Color(0.98f, 0.95f, 0.6f, 1f);
+                    visuals.SelectionFrame.enabled = true;
+                    visuals.SelectionFrame.color = new Color(1f, 0.96f, 0.45f, 1f);
                 }
                 else if (!isAtBoatLocation)
                 {
-                    button.image.color = new Color(0.55f, 0.55f, 0.55f, 0.8f);
+                    visuals.Button.image.color = new Color(0.45f, 0.45f, 0.5f, 0.9f);
+                    visuals.PortraitImage.color = new Color(0.64f, 0.64f, 0.64f, 1f);
+                    visuals.SelectionFrame.enabled = false;
                 }
                 else
                 {
-                    button.image.color = Color.white;
+                    visuals.Button.image.color = new Color(0.88f, 0.88f, 0.94f, 1f);
+                    visuals.PortraitImage.color = new Color(0.7f, 0.85f, 0.95f, 1f);
+                    visuals.SelectionFrame.enabled = false;
                 }
             }
+            UpdateLocationVisualTheme(context.GameState.BoatLocation);
         }
 
         private void RenderRoutes(StageUIViewContext context)
@@ -257,6 +284,34 @@ namespace TiraWantToCross.UI
                 routeButtons[i].onClick.RemoveAllListeners();
                 routeButtons[i].onClick.AddListener(() => onMove?.Invoke(route.routeId));
                 routeButtons[i].interactable = CanMoveSelectedEntities(context);
+            }
+
+            UpdateBoatVisual(context.GameState.BoatLocation);
+        }
+
+
+        private void UpdateBoatVisual(string boatLocation)
+        {
+            if (boatImage != null)
+            {
+                boatImage.color = boatLocation == "left" ? new Color(0.75f, 0.55f, 0.2f, 1f) : new Color(0.55f, 0.75f, 0.25f, 1f);
+            }
+
+            if (boatLabelText != null)
+            {
+                boatLabelText.text = boatLocation == "left" ? "Boat << LEFT" : "Boat RIGHT >>";
+            }
+        }
+
+        private void UpdateLocationVisualTheme(string boatLocation)
+        {
+            foreach (var theme in locationThemes.Values)
+            {
+                var isBoatHere = theme.LocationId == boatLocation;
+                var color = isBoatHere ? theme.BaseColor * 1.2f : theme.BaseColor;
+                color.a = theme.BaseColor.a;
+                theme.BackgroundImage.color = color;
+                theme.LabelText.color = isBoatHere ? new Color(1f, 0.96f, 0.65f, 1f) : Color.white;
             }
         }
 
@@ -381,9 +436,9 @@ namespace TiraWantToCross.UI
             return rect;
         }
 
-        private static Transform CreateLocationArea(string label, Transform parent, string key)
+        private Transform CreateLocationArea(string label, Transform parent, string key, Color baseColor)
         {
-            var panel = CreateRect($"{key}Panel", parent, new Color(0.22f, 0.22f, 0.3f, 0.8f));
+            var panel = CreateRect($"{key}Panel", parent, baseColor);
             var layoutElement = panel.gameObject.AddComponent<LayoutElement>();
             layoutElement.preferredWidth = 0f;
             layoutElement.minWidth = 220f;
@@ -395,8 +450,46 @@ namespace TiraWantToCross.UI
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
-            CreateText("Label", panel, label, 34, TextAnchor.MiddleCenter, 52);
+            var labelText = CreateText("Label", panel, label, 34, TextAnchor.MiddleCenter, 52);
+            locationThemes[key] = new LocationVisualTheme
+            {
+                LocationId = key,
+                BackgroundImage = panel.GetComponent<Image>(),
+                LabelText = labelText,
+                BaseColor = baseColor
+            };
             return panel;
+        }
+
+
+        private static EntityVisualRefs CreateEntityVisual(string entityId, Transform parent, Action onClick)
+        {
+            var button = CreateButton(entityId, parent, string.Empty, onClick, 90f, 20);
+            var text = button.GetComponentInChildren<Text>();
+            text.alignment = TextAnchor.LowerCenter;
+
+            var portrait = CreateRect("Portrait", button.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
+            portrait.transform.SetSiblingIndex(0);
+            var portraitLayout = portrait.gameObject.AddComponent<LayoutElement>();
+            portraitLayout.preferredHeight = 50f;
+            portraitLayout.minHeight = 40f;
+
+            var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, 50f);
+            portraitText.color = new Color(0.15f, 0.2f, 0.25f, 0.9f);
+
+            var frame = CreateRect("SelectionFrame", button.transform, new Color(1f, 0.95f, 0.45f, 0.95f));
+            frame.transform.SetAsLastSibling();
+            var frameImage = frame.GetComponent<Image>();
+            frameImage.raycastTarget = false;
+            frameImage.enabled = false;
+
+            return new EntityVisualRefs
+            {
+                Button = button,
+                PortraitImage = portrait.GetComponent<Image>(),
+                SelectionFrame = frameImage,
+                Label = text
+            };
         }
 
         private void ApplyResponsiveLayout()
