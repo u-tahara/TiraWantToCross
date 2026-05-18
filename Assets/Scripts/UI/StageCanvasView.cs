@@ -17,6 +17,8 @@ namespace TiraWantToCross.UI
             public Image PortraitImage;
             public Image SelectionFrame;
             public Text Label;
+            public Text PortraitPlaceholderText;
+            public bool HasPortraitSprite;
         }
 
         private sealed class LocationVisualTheme
@@ -32,6 +34,7 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, LocationVisualTheme> locationThemes = new Dictionary<string, LocationVisualTheme>();
         private readonly List<Button> routeButtons = new List<Button>();
+        private readonly Dictionary<string, Sprite> portraitSpriteCache = new Dictionary<string, Sprite>();
 
         private Transform leftContainer;
         private Transform rightContainer;
@@ -45,6 +48,7 @@ namespace TiraWantToCross.UI
         private Text boatLocationText;
         private Image boatImage;
         private Text boatLabelText;
+        private Sprite boatSprite;
         private HorizontalLayoutGroup midLayoutGroup;
         private VerticalLayoutGroup mainLayoutGroup;
         private VerticalLayoutGroup bottomLayoutGroup;
@@ -146,6 +150,7 @@ namespace TiraWantToCross.UI
             boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "Boat << LEFT", 28, TextAnchor.MiddleCenter, 150f);
             boatLabelText.color = new Color(0.15f, 0.1f, 0.08f, 1f);
             boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
+            boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
 
             var right = CreateLocationArea("右岸", midLayout, "right", new Color(0.4f, 0.3f, 0.2f, 0.9f));
             rightContainer = right;
@@ -242,25 +247,32 @@ namespace TiraWantToCross.UI
                 }
 
                 visuals.Button.transform.SetSiblingIndex(siblingIndex);
+                TryApplyPortraitSprite(entityId, visuals);
                 visuals.Label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
                 visuals.Button.interactable = isAtBoatLocation;
                 if (context.SelectedEntities.Contains(entityId))
                 {
                     visuals.Button.image.color = new Color(0.9f, 0.82f, 0.3f, 1f);
-                    visuals.PortraitImage.color = new Color(0.98f, 0.95f, 0.6f, 1f);
+                    visuals.PortraitImage.color = visuals.HasPortraitSprite
+                        ? Color.white
+                        : new Color(0.98f, 0.95f, 0.6f, 1f);
                     visuals.SelectionFrame.enabled = true;
                     visuals.SelectionFrame.color = new Color(1f, 0.96f, 0.45f, 1f);
                 }
                 else if (!isAtBoatLocation)
                 {
                     visuals.Button.image.color = new Color(0.45f, 0.45f, 0.5f, 0.9f);
-                    visuals.PortraitImage.color = new Color(0.64f, 0.64f, 0.64f, 1f);
+                    visuals.PortraitImage.color = visuals.HasPortraitSprite
+                        ? new Color(0.72f, 0.72f, 0.72f, 1f)
+                        : new Color(0.64f, 0.64f, 0.64f, 1f);
                     visuals.SelectionFrame.enabled = false;
                 }
                 else
                 {
                     visuals.Button.image.color = new Color(0.88f, 0.88f, 0.94f, 1f);
-                    visuals.PortraitImage.color = new Color(0.7f, 0.85f, 0.95f, 1f);
+                    visuals.PortraitImage.color = visuals.HasPortraitSprite
+                        ? Color.white
+                        : new Color(0.7f, 0.85f, 0.95f, 1f);
                     visuals.SelectionFrame.enabled = false;
                 }
             }
@@ -294,12 +306,62 @@ namespace TiraWantToCross.UI
         {
             if (boatImage != null)
             {
-                boatImage.color = boatLocation == "left" ? new Color(0.75f, 0.55f, 0.2f, 1f) : new Color(0.55f, 0.75f, 0.25f, 1f);
+                if (boatSprite != null)
+                {
+                    boatImage.sprite = boatSprite;
+                    boatImage.type = Image.Type.Simple;
+                    boatImage.preserveAspect = true;
+                    boatImage.color = Color.white;
+                }
+                else
+                {
+                    boatImage.sprite = null;
+                    boatImage.color = boatLocation == "left"
+                        ? new Color(0.75f, 0.55f, 0.2f, 1f)
+                        : new Color(0.55f, 0.75f, 0.25f, 1f);
+                }
             }
 
             if (boatLabelText != null)
             {
+                boatLabelText.enabled = boatSprite == null;
                 boatLabelText.text = boatLocation == "left" ? "Boat << LEFT" : "Boat RIGHT >>";
+            }
+        }
+
+        private void TryApplyPortraitSprite(string entityId, EntityVisualRefs visuals)
+        {
+            if (visuals == null || visuals.PortraitImage == null)
+            {
+                return;
+            }
+
+            if (!portraitSpriteCache.TryGetValue(entityId, out var sprite))
+            {
+                sprite = Resources.Load<Sprite>($"Sprites/Characters/{entityId}");
+                portraitSpriteCache[entityId] = sprite;
+            }
+            if (sprite == null)
+            {
+                visuals.HasPortraitSprite = false;
+                visuals.PortraitImage.sprite = null;
+                visuals.PortraitImage.type = Image.Type.Simple;
+                visuals.PortraitImage.preserveAspect = true;
+                if (visuals.PortraitPlaceholderText != null)
+                {
+                    visuals.PortraitPlaceholderText.enabled = true;
+                }
+
+                return;
+            }
+
+            visuals.HasPortraitSprite = true;
+            visuals.PortraitImage.sprite = sprite;
+            visuals.PortraitImage.type = Image.Type.Simple;
+            visuals.PortraitImage.preserveAspect = true;
+            if (visuals.PortraitPlaceholderText != null)
+            {
+                visuals.PortraitPlaceholderText.enabled = false;
             }
         }
 
@@ -488,7 +550,8 @@ namespace TiraWantToCross.UI
                 Button = button,
                 PortraitImage = portrait.GetComponent<Image>(),
                 SelectionFrame = frameImage,
-                Label = text
+                Label = text,
+                PortraitPlaceholderText = portraitText
             };
         }
 
