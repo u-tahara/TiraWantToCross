@@ -31,6 +31,7 @@ namespace TiraWantToCross.Prototype
         private string selectedRouteId;
         private ViewMode currentViewMode = ViewMode.StageSelect;
         private int highestUnlockedStageIndex;
+        private const string HighestUnlockedStageIndexKey = "TiraWantToCross.HighestUnlockedStageIndex";
         [SerializeField] private bool useLegacyOnGui;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -59,7 +60,7 @@ namespace TiraWantToCross.Prototype
             stageUIView = new StageUIView();
             SetupCanvasUI();
             ReloadStageList();
-            highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
+            highestUnlockedStageIndex = LoadHighestUnlockedStageIndex();
 
             if (stageIds.Count == 0)
             {
@@ -136,7 +137,8 @@ namespace TiraWantToCross.Prototype
                 () => InitializeStage(activeStageId),
                 TryLoadNextStage,
                 OpenStageSelect,
-                TrySelectStageFromList);
+                TrySelectStageFromList,
+                ResetProgress);
         }
 
         private void Update()
@@ -211,6 +213,7 @@ namespace TiraWantToCross.Prototype
             if (nextIndex >= 0 && nextIndex < stageIds.Count && highestUnlockedStageIndex < nextIndex)
             {
                 highestUnlockedStageIndex = nextIndex;
+                SaveHighestUnlockedStageIndex();
             }
         }
 
@@ -245,6 +248,40 @@ namespace TiraWantToCross.Prototype
             return list;
         }
 
+
+        private int LoadHighestUnlockedStageIndex()
+        {
+            if (stageIds.Count == 0) return -1;
+
+            var defaultValue = 0;
+            var savedIndex = PlayerPrefs.GetInt(HighestUnlockedStageIndexKey, defaultValue);
+            var clampedIndex = Mathf.Clamp(savedIndex, defaultValue, stageIds.Count - 1);
+            if (clampedIndex != savedIndex)
+            {
+                PlayerPrefs.SetInt(HighestUnlockedStageIndexKey, clampedIndex);
+                PlayerPrefs.Save();
+            }
+
+            return clampedIndex;
+        }
+
+        private void SaveHighestUnlockedStageIndex()
+        {
+            if (stageIds.Count == 0) return;
+
+            var clampedIndex = Mathf.Clamp(highestUnlockedStageIndex, 0, stageIds.Count - 1);
+            highestUnlockedStageIndex = clampedIndex;
+            PlayerPrefs.SetInt(HighestUnlockedStageIndexKey, clampedIndex);
+            PlayerPrefs.Save();
+        }
+
+        private void ResetProgress()
+        {
+            PlayerPrefs.DeleteKey(HighestUnlockedStageIndexKey);
+            PlayerPrefs.Save();
+            highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
+            lastMessage = "進行状況をリセットしました。Stage 1のみ解放しています。";
+        }
         private static string ResolveDestination(RouteData route, string currentBoatLocation)
         {
             if (route.from == currentBoatLocation) return route.to;

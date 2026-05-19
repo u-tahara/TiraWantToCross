@@ -77,6 +77,7 @@ namespace TiraWantToCross.UI
         private Action onNextStage;
         private Action onOpenStageSelect;
         private Action<string> onSelectStage;
+        private Action onResetProgress;
 
         private enum PopupResultState
         {
@@ -94,7 +95,8 @@ namespace TiraWantToCross.UI
             Action onRestart,
             Action onNextStage,
             Action onOpenStageSelect,
-            Action<string> onSelectStage)
+            Action<string> onSelectStage,
+            Action onResetProgress)
         {
             this.onEntitySelected = onEntitySelected;
             this.onMove = onMove;
@@ -103,6 +105,7 @@ namespace TiraWantToCross.UI
             this.onNextStage = onNextStage;
             this.onOpenStageSelect = onOpenStageSelect;
             this.onSelectStage = onSelectStage;
+            this.onResetProgress = onResetProgress;
 
             BuildRoot(parent);
         }
@@ -607,6 +610,8 @@ namespace TiraWantToCross.UI
             stageSelectListLayout.childControlWidth = true;
             stageSelectListLayout.childForceExpandHeight = false;
             stageSelectListLayout.childForceExpandWidth = true;
+
+            CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28f);
         }
 
         private void EnsureStageSelectButtons(int requiredCount)
