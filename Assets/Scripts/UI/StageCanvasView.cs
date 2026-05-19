@@ -59,11 +59,26 @@ namespace TiraWantToCross.UI
         private Button restartButton;
         private Button nextStageButton;
 
+        private RectTransform popupOverlay;
+        private Text popupTitleText;
+        private Text popupMessageText;
+        private Button popupPrimaryButton;
+        private Button popupSecondaryButton;
+
         private Action<string> onEntitySelected;
         private Action<string> onMove;
         private Action onClearSelection;
         private Action onRestart;
         private Action onNextStage;
+
+        private enum PopupResultState
+        {
+            Playing,
+            ClearOptimal,
+            ClearNotOptimal,
+            Failed,
+            AllStagesCleared
+        }
 
         public void Initialize(Transform parent,
             Action<string> onEntitySelected,
@@ -99,7 +114,12 @@ namespace TiraWantToCross.UI
 
             RenderEntities(context);
             RenderRoutes(context);
-            nextStageButton.interactable = context.GameState.IsCleared && !context.GameState.IsFailed && context.GameState.IsExactlyOptimalMoves();
+
+            var popupState = ResolvePopupState(context);
+            RenderPopup(context, popupState);
+
+            nextStageButton.gameObject.SetActive(false);
+            nextStageButton.interactable = false;
         }
 
         private void BuildRoot(Transform parent)
@@ -198,6 +218,7 @@ namespace TiraWantToCross.UI
             resultText = CreateText("Result", resultPanel, "", 38, TextAnchor.MiddleCenter, 74);
             messageText = CreateText("Message", resultPanel, "", 30, TextAnchor.MiddleCenter, 64);
 
+            BuildPopupOverlay(root);
             ApplyResponsiveLayout();
         }
 
@@ -426,6 +447,120 @@ namespace TiraWantToCross.UI
             return "PLAYING";
         }
 
+
+
+        private PopupResultState ResolvePopupState(StageUIViewContext context)
+        {
+            if (context?.GameState == null || context.StageData == null)
+            {
+                return PopupResultState.Playing;
+            }
+
+            if (context.GameState.IsFailed)
+            {
+                return PopupResultState.Failed;
+            }
+
+            if (!context.GameState.IsCleared)
+            {
+                return PopupResultState.Playing;
+            }
+
+            if (!context.GameState.IsExactlyOptimalMoves())
+            {
+                return PopupResultState.ClearNotOptimal;
+            }
+
+            return IsLastStage(context) ? PopupResultState.AllStagesCleared : PopupResultState.ClearOptimal;
+        }
+
+        private static bool IsLastStage(StageUIViewContext context)
+        {
+            if (context.StageIds == null || context.StageIds.Count == 0)
+            {
+                return false;
+            }
+
+            return context.ActiveStageId == context.StageIds[context.StageIds.Count - 1];
+        }
+
+        private void RenderPopup(StageUIViewContext context, PopupResultState state)
+        {
+            if (popupOverlay == null)
+            {
+                return;
+            }
+
+            var showPopup = state != PopupResultState.Playing;
+            popupOverlay.gameObject.SetActive(showPopup);
+            if (!showPopup)
+            {
+                return;
+            }
+
+            popupSecondaryButton.gameObject.SetActive(false);
+
+            switch (state)
+            {
+                case PopupResultState.ClearOptimal:
+                    popupTitleText.text = "クリア！";
+                    popupMessageText.text = "最短手数でクリアしました！";
+                    ConfigurePopupButton(popupPrimaryButton, "次のステージへ", () => onNextStage?.Invoke());
+                    break;
+                case PopupResultState.ClearNotOptimal:
+                    popupTitleText.text = "手数オーバー";
+                    popupMessageText.text = "最短手数ではありません。もう一度挑戦しましょう。";
+                    ConfigurePopupButton(popupPrimaryButton, "リスタート", () => onRestart?.Invoke());
+                    break;
+                case PopupResultState.Failed:
+                    popupTitleText.text = "失敗";
+                    popupMessageText.text = string.IsNullOrWhiteSpace(context.LastMessage)
+                        ? "条件違反です。もう一度挑戦しましょう。"
+                        : $"条件違反です。もう一度挑戦しましょう。\n{context.LastMessage}";
+                    ConfigurePopupButton(popupPrimaryButton, "リスタート", () => onRestart?.Invoke());
+                    break;
+                case PopupResultState.AllStagesCleared:
+                    popupTitleText.text = "全ステージクリア！";
+                    popupMessageText.text = "ここまでのステージをすべてクリアしました！";
+                    ConfigurePopupButton(popupPrimaryButton, "もう一度遊ぶ", () => onNextStage?.Invoke());
+                    break;
+            }
+        }
+
+        private static void ConfigurePopupButton(Button button, string label, Action onClick)
+        {
+            button.GetComponentInChildren<Text>().text = label;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => onClick?.Invoke());
+        }
+
+        private void BuildPopupOverlay(Transform parent)
+        {
+            popupOverlay = CreateRect("PopupOverlay", parent, new Color(0f, 0f, 0f, 0.66f));
+            ApplyFullStretch(popupOverlay);
+            popupOverlay.SetAsLastSibling();
+
+            var popupPanel = CreateRect("PopupPanel", popupOverlay, new Color(0.15f, 0.17f, 0.23f, 0.97f));
+            var panelRect = popupPanel.GetComponent<RectTransform>();
+            panelRect.sizeDelta = new Vector2(860f, 760f);
+
+            var panelLayout = popupPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            panelLayout.spacing = 24f;
+            panelLayout.padding = new RectOffset(32, 32, 32, 32);
+            panelLayout.childControlWidth = true;
+            panelLayout.childControlHeight = true;
+            panelLayout.childForceExpandWidth = true;
+            panelLayout.childForceExpandHeight = false;
+
+            popupTitleText = CreateText("PopupTitle", popupPanel, "", 52, TextAnchor.MiddleCenter, 120f);
+            popupMessageText = CreateText("PopupMessage", popupPanel, "", 34, TextAnchor.MiddleCenter, 280f);
+            popupMessageText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            popupMessageText.verticalOverflow = VerticalWrapMode.Truncate;
+
+            popupPrimaryButton = CreateButton("PopupPrimaryButton", popupPanel, "", () => { }, 110f, 34);
+            popupSecondaryButton = CreateButton("PopupSecondaryButton", popupPanel, "", () => { }, 96f, 30);
+            popupOverlay.gameObject.SetActive(false);
+        }
 
         private static void ApplyCenterDefaults(RectTransform rect)
         {
