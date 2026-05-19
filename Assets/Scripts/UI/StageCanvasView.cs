@@ -58,6 +58,11 @@ namespace TiraWantToCross.UI
 
         private Button restartButton;
         private Button nextStageButton;
+        private Button stageListButton;
+
+        private RectTransform stageSelectRoot;
+        private VerticalLayoutGroup stageSelectListLayout;
+        private readonly List<Button> stageSelectButtons = new List<Button>();
 
         private RectTransform popupOverlay;
         private Text popupTitleText;
@@ -70,6 +75,8 @@ namespace TiraWantToCross.UI
         private Action onClearSelection;
         private Action onRestart;
         private Action onNextStage;
+        private Action onOpenStageSelect;
+        private Action<string> onSelectStage;
 
         private enum PopupResultState
         {
@@ -85,19 +92,30 @@ namespace TiraWantToCross.UI
             Action<string> onMove,
             Action onClearSelection,
             Action onRestart,
-            Action onNextStage)
+            Action onNextStage,
+            Action onOpenStageSelect,
+            Action<string> onSelectStage)
         {
             this.onEntitySelected = onEntitySelected;
             this.onMove = onMove;
             this.onClearSelection = onClearSelection;
             this.onRestart = onRestart;
             this.onNextStage = onNextStage;
+            this.onOpenStageSelect = onOpenStageSelect;
+            this.onSelectStage = onSelectStage;
 
             BuildRoot(parent);
         }
 
         public void Render(StageUIViewContext context)
         {
+            stageSelectRoot.gameObject.SetActive(context.IsStageSelectMode);
+            if (context.IsStageSelectMode)
+            {
+                RenderStageSelect(context);
+                return;
+            }
+
             if (context.GameState == null || context.StageData == null)
             {
                 stageNameText.text = "ステージ未読込";
@@ -205,6 +223,7 @@ namespace TiraWantToCross.UI
             CreateButton("ClearSelection", actionRowTransform, "選択解除", () => onClearSelection?.Invoke(), 90, 32);
             restartButton = CreateButton("Restart", actionRowTransform, "Restart", () => onRestart?.Invoke(), 90, 34);
             nextStageButton = CreateButton("NextStage", actionRowTransform, "NextStage", () => onNextStage?.Invoke(), 90, 32);
+            stageListButton = CreateButton("StageSelect", actionRowTransform, "ステージ一覧へ", () => onOpenStageSelect?.Invoke(), 90, 30);
 
             var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 180f, 140f);
             var resultLayout = resultPanel.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -219,6 +238,7 @@ namespace TiraWantToCross.UI
             messageText = CreateText("Message", resultPanel, "", 30, TextAnchor.MiddleCenter, 64);
 
             BuildPopupOverlay(root);
+            BuildStageSelect(root);
             ApplyResponsiveLayout();
         }
 
@@ -522,7 +542,7 @@ namespace TiraWantToCross.UI
                 case PopupResultState.AllStagesCleared:
                     popupTitleText.text = "全ステージクリア！";
                     popupMessageText.text = "ここまでのステージをすべてクリアしました！";
-                    ConfigurePopupButton(popupPrimaryButton, "もう一度遊ぶ", () => onNextStage?.Invoke());
+                    ConfigurePopupButton(popupPrimaryButton, "ステージ一覧へ", () => onOpenStageSelect?.Invoke());
                     break;
             }
         }
@@ -534,6 +554,70 @@ namespace TiraWantToCross.UI
             button.onClick.AddListener(() => onClick?.Invoke());
         }
 
+
+        private void RenderStageSelect(StageUIViewContext context)
+        {
+            popupOverlay.gameObject.SetActive(false);
+            EnsureStageSelectButtons(context.StageIds.Count);
+            for (var i = 0; i < stageSelectButtons.Count; i++)
+            {
+                var button = stageSelectButtons[i];
+                if (i >= context.StageIds.Count)
+                {
+                    button.gameObject.SetActive(false);
+                    continue;
+                }
+
+                var stageId = context.StageIds[i];
+                var unlocked = i <= context.HighestUnlockedStageIndex;
+                context.StageDataById.TryGetValue(stageId, out var stageData);
+                var stageName = stageData?.title ?? "(名称未設定)";
+                var optimal = stageData?.optimalMoves ?? 0;
+                button.gameObject.SetActive(true);
+                button.interactable = unlocked;
+                var label = button.GetComponentInChildren<Text>();
+                label.text = $"Stage {i + 1}：{stageName} / 最短{optimal}手 / {(unlocked ? "解放済み" : "ロック中")}";
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => onSelectStage?.Invoke(stageId));
+            }
+        }
+
+        private void BuildStageSelect(Transform parent)
+        {
+            stageSelectRoot = CreateRect("StageSelectRoot", parent, new Color(0.08f, 0.1f, 0.15f, 0.97f));
+            ApplyFullStretch(stageSelectRoot);
+            stageSelectRoot.SetAsLastSibling();
+
+            var layout = stageSelectRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 16f;
+            layout.padding = new RectOffset(24, 24, 24, 24);
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+
+            CreateText("StageSelectTitle", stageSelectRoot, "ステージ一覧", 54, TextAnchor.MiddleCenter, 110f);
+            var list = CreateRect("StageSelectList", stageSelectRoot, new Color(0.12f, 0.16f, 0.24f, 0.95f));
+            var listElement = list.gameObject.AddComponent<LayoutElement>();
+            listElement.flexibleHeight = 1f;
+            stageSelectListLayout = list.gameObject.AddComponent<VerticalLayoutGroup>();
+            stageSelectListLayout.spacing = 12f;
+            stageSelectListLayout.padding = new RectOffset(12, 12, 12, 12);
+            stageSelectListLayout.childControlHeight = true;
+            stageSelectListLayout.childControlWidth = true;
+            stageSelectListLayout.childForceExpandHeight = false;
+            stageSelectListLayout.childForceExpandWidth = true;
+        }
+
+        private void EnsureStageSelectButtons(int requiredCount)
+        {
+            while (stageSelectButtons.Count < requiredCount)
+            {
+                var index = stageSelectButtons.Count;
+                var button = CreateButton($"StageSelectButton{index + 1}", stageSelectListLayout.transform, "", () => { }, 90f, 28);
+                stageSelectButtons.Add(button);
+            }
+        }
         private void BuildPopupOverlay(Transform parent)
         {
             popupOverlay = CreateRect("PopupOverlay", parent, new Color(0f, 0f, 0f, 0.66f));
