@@ -701,11 +701,29 @@ namespace TiraWantToCross.UI
                 stageStartButton.interactable = false;
                 return;
             }
-            var index = context.StageIds.IndexOf(stageId);
+            var index = FindStageIndex(context.StageIds, stageId);
             var unlocked = index >= 0 && index <= context.HighestUnlockedStageIndex;
             stageDetailText.text = $"ステージ{index + 1}\n{stageData.title}\n{ResolveStageDescription(stageId)}\nクリア条件: 全員を右岸へ運ぶ";
             stageDetailMetaText.text = $"最短手数: {stageData.optimalMoves}手\n評価: {(IsStageCleared(stageId, stageData) ? "CLEAR" : "未クリア")}";
             stageStartButton.interactable = unlocked;
+        }
+
+        private static int FindStageIndex(IReadOnlyList<string> stageIds, string stageId)
+        {
+            if (stageIds == null || string.IsNullOrEmpty(stageId))
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < stageIds.Count; i++)
+            {
+                if (stageIds[i] == stageId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private static string ResolveStageDescription(string stageId)
