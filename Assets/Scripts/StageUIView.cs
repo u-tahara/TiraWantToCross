@@ -238,6 +238,7 @@ namespace TiraWantToCross.Prototype
         public IReadOnlyList<RouteData> AvailableRoutes { get; }
         public bool IsStageSelectMode { get; }
         public int HighestUnlockedStageIndex { get; }
+        public string SelectedStageIdInSelect { get; }
 
         public StageUIViewContext(
             IReadOnlyList<string> stageIds,
@@ -249,7 +250,8 @@ namespace TiraWantToCross.Prototype
             string lastMessage,
             IReadOnlyList<RouteData> availableRoutes,
             bool isStageSelectMode,
-            int highestUnlockedStageIndex)
+            int highestUnlockedStageIndex,
+            string selectedStageIdInSelect)
         {
             StageIds = stageIds;
             ActiveStageId = activeStageId;
@@ -261,6 +263,7 @@ namespace TiraWantToCross.Prototype
             AvailableRoutes = availableRoutes;
             IsStageSelectMode = isStageSelectMode;
             HighestUnlockedStageIndex = highestUnlockedStageIndex;
+            SelectedStageIdInSelect = selectedStageIdInSelect;
         }
     }
 

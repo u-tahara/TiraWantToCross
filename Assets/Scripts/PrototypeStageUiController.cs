@@ -25,6 +25,7 @@ namespace TiraWantToCross.Prototype
         private RiverCrossingGameState gameState;
         private StageData stageData;
         private string activeStageId;
+        private string selectedStageIdInSelect;
         private string lastMessage = "未実行";
         private StageUIView stageUIView;
         private StageCanvasView stageCanvasView;
@@ -32,6 +33,7 @@ namespace TiraWantToCross.Prototype
         private ViewMode currentViewMode = ViewMode.StageSelect;
         private int highestUnlockedStageIndex;
         private const string HighestUnlockedStageIndexKey = "TiraWantToCross.HighestUnlockedStageIndex";
+        private const string ClearedStageKeyPrefix = "TiraWantToCross.Cleared.";
         [SerializeField] private bool useLegacyOnGui;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -70,6 +72,10 @@ namespace TiraWantToCross.Prototype
             }
 
             currentViewMode = ViewMode.StageSelect;
+            if (stageIds.Count > 0)
+            {
+                selectedStageIdInSelect = stageIds[Mathf.Clamp(highestUnlockedStageIndex, 0, stageIds.Count - 1)];
+            }
         }
 
         private void ReloadStageList()
@@ -138,6 +144,7 @@ namespace TiraWantToCross.Prototype
                 TryLoadNextStage,
                 OpenStageSelect,
                 TrySelectStageFromList,
+                StartSelectedStage,
                 ResetProgress);
         }
 
@@ -151,12 +158,16 @@ namespace TiraWantToCross.Prototype
 
         private StageUIViewContext BuildViewContext()
         {
-            return new StageUIViewContext(stageIds, activeStageId, stageData, stageDataById, gameState, selectedEntities, lastMessage, ResolveAvailableRoutes(), currentViewMode == ViewMode.StageSelect, highestUnlockedStageIndex);
+            return new StageUIViewContext(stageIds, activeStageId, stageData, stageDataById, gameState, selectedEntities, lastMessage, ResolveAvailableRoutes(), currentViewMode == ViewMode.StageSelect, highestUnlockedStageIndex, selectedStageIdInSelect);
         }
 
         private void OpenStageSelect()
         {
             currentViewMode = ViewMode.StageSelect;
+            if (!string.IsNullOrEmpty(activeStageId))
+            {
+                selectedStageIdInSelect = activeStageId;
+            }
             selectedEntities.Clear();
             selectedRouteId = null;
             lastMessage = "ステージ一覧を表示しています。";
@@ -171,7 +182,28 @@ namespace TiraWantToCross.Prototype
                 lastMessage = "このステージはまだロック中です。";
                 return;
             }
-            InitializeStage(stageId);
+            selectedStageIdInSelect = stageId;
+            stageDataById.TryGetValue(stageId, out var selectedData);
+            var title = selectedData?.title ?? stageId;
+            lastMessage = $"選択中: {title}。下の「スタート」ボタンで開始します。";
+        }
+
+        private void StartSelectedStage()
+        {
+            if (string.IsNullOrEmpty(selectedStageIdInSelect))
+            {
+                lastMessage = "開始するステージを選択してください。";
+                return;
+            }
+
+            var index = stageIds.IndexOf(selectedStageIdInSelect);
+            if (index < 0 || index > highestUnlockedStageIndex)
+            {
+                lastMessage = "選択中ステージは未解放です。";
+                return;
+            }
+
+            InitializeStage(selectedStageIdInSelect);
         }
 
         private void ExecuteMoveFromSelectedRoute(string routeId)
@@ -231,6 +263,11 @@ namespace TiraWantToCross.Prototype
 
             selectedEntities.Clear();
             if (CanGoToNextStage()) UnlockNextStageIfNeeded();
+            if (CanGoToNextStage() && !string.IsNullOrEmpty(activeStageId))
+            {
+                PlayerPrefs.SetInt($"{ClearedStageKeyPrefix}{activeStageId}", 1);
+                PlayerPrefs.Save();
+            }
             lastMessage = $"Move成功: destination={result.Destination}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, moves={gameState.MoveCount}, exactOptimal={gameState.IsExactlyOptimalMoves()} / 移動後、自動で降船しました。";
             Debug.Log($"[PrototypeUI] {lastMessage}");
         }
@@ -278,8 +315,13 @@ namespace TiraWantToCross.Prototype
         private void ResetProgress()
         {
             PlayerPrefs.DeleteKey(HighestUnlockedStageIndexKey);
+            foreach (var stageId in stageIds)
+            {
+                PlayerPrefs.DeleteKey($"{ClearedStageKeyPrefix}{stageId}");
+            }
             PlayerPrefs.Save();
             highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
+            selectedStageIdInSelect = stageIds.Count > 0 ? stageIds[0] : null;
             lastMessage = "進行状況をリセットしました。Stage 1のみ解放しています。";
         }
         private static string ResolveDestination(RouteData route, string currentBoatLocation)

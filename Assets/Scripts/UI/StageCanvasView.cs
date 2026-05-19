@@ -78,6 +78,13 @@ namespace TiraWantToCross.UI
         private Action onOpenStageSelect;
         private Action<string> onSelectStage;
         private Action onResetProgress;
+        private Action onStartSelectedStage;
+        private Text stageSelectClearCountText;
+        private Image stageSelectProgressFill;
+        private Text stageDetailText;
+        private Text stageDetailMetaText;
+        private Button stageStartButton;
+        private readonly List<Button> stageSelectNavButtons = new List<Button>();
 
         private enum PopupResultState
         {
@@ -96,6 +103,7 @@ namespace TiraWantToCross.UI
             Action onNextStage,
             Action onOpenStageSelect,
             Action<string> onSelectStage,
+            Action onStartSelectedStage,
             Action onResetProgress)
         {
             this.onEntitySelected = onEntitySelected;
@@ -105,6 +113,7 @@ namespace TiraWantToCross.UI
             this.onNextStage = onNextStage;
             this.onOpenStageSelect = onOpenStageSelect;
             this.onSelectStage = onSelectStage;
+            this.onStartSelectedStage = onStartSelectedStage;
             this.onResetProgress = onResetProgress;
 
             BuildRoot(parent);
@@ -561,55 +570,113 @@ namespace TiraWantToCross.UI
         private void RenderStageSelect(StageUIViewContext context)
         {
             popupOverlay.gameObject.SetActive(false);
-            EnsureStageSelectButtons(context.StageIds.Count);
+            EnsureStageSelectButtons(8);
+            var clearCount = CountClearedStages(context);
+            var total = context.StageIds.Count;
+            stageSelectClearCountText.text = $"クリア数 {clearCount}/{Mathf.Max(total, 1)}";
+            if (stageSelectProgressFill != null)
+            {
+                stageSelectProgressFill.fillAmount = total > 0 ? (float)clearCount / total : 0f;
+            }
+
             for (var i = 0; i < stageSelectButtons.Count; i++)
             {
                 var button = stageSelectButtons[i];
-                if (i >= context.StageIds.Count)
+                if (i >= 8)
                 {
                     button.gameObject.SetActive(false);
                     continue;
                 }
 
+                if (i >= context.StageIds.Count)
+                {
+                    button.gameObject.SetActive(true);
+                    button.interactable = false;
+                    button.GetComponentInChildren<Text>().text = "Coming Soon";
+                    continue;
+                }
+
                 var stageId = context.StageIds[i];
                 var unlocked = i <= context.HighestUnlockedStageIndex;
+                var selected = stageId == context.SelectedStageIdInSelect;
                 context.StageDataById.TryGetValue(stageId, out var stageData);
-                var stageName = stageData?.title ?? "(名称未設定)";
                 var optimal = stageData?.optimalMoves ?? 0;
+                var cleared = IsStageCleared(stageId, stageData);
                 button.gameObject.SetActive(true);
                 button.interactable = unlocked;
                 var label = button.GetComponentInChildren<Text>();
-                label.text = $"Stage {i + 1}：{stageName} / 最短{optimal}手 / {(unlocked ? "解放済み" : "ロック中")}";
+                label.text = $"STAGE {i + 1}\n最短 {optimal}手  {(cleared ? "CLEAR" : unlocked ? "OPEN" : "LOCK")}";
+                button.image.color = !unlocked
+                    ? new Color(0.6f, 0.6f, 0.6f, 0.9f)
+                    : selected
+                        ? new Color(0.98f, 0.92f, 0.54f, 1f)
+                        : new Color(0.86f, 0.95f, 0.82f, 1f);
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => onSelectStage?.Invoke(stageId));
             }
+
+            foreach (var navButton in stageSelectNavButtons)
+            {
+                navButton.onClick.RemoveAllListeners();
+            }
+
+            RenderSelectedStageDetail(context);
         }
 
         private void BuildStageSelect(Transform parent)
         {
-            stageSelectRoot = CreateRect("StageSelectRoot", parent, new Color(0.08f, 0.1f, 0.15f, 0.97f));
+            stageSelectRoot = CreateRect("StageSelectRoot", parent, new Color(0.97f, 0.94f, 0.86f, 1f));
             ApplyFullStretch(stageSelectRoot);
             stageSelectRoot.SetAsLastSibling();
 
             var layout = stageSelectRoot.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 16f;
+            layout.spacing = 12f;
             layout.padding = new RectOffset(24, 24, 24, 24);
             layout.childControlHeight = true;
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
-            CreateText("StageSelectTitle", stageSelectRoot, "ステージ一覧", 54, TextAnchor.MiddleCenter, 110f);
-            var list = CreateRect("StageSelectList", stageSelectRoot, new Color(0.12f, 0.16f, 0.24f, 0.95f));
+            var header = CreateRect("StageSelectHeader", stageSelectRoot, new Color(0.85f, 0.94f, 0.78f, 1f));
+            header.gameObject.AddComponent<LayoutElement>().preferredHeight = 180f;
+            var headerLayout = header.gameObject.AddComponent<VerticalLayoutGroup>();
+            headerLayout.padding = new RectOffset(18, 18, 16, 16);
+            headerLayout.spacing = 8f;
+            stageSelectClearCountText = CreateText("ClearCount", header, "クリア数 0/0", 34, TextAnchor.MiddleLeft, 46f);
+            CreateText("StageSelectTitle", header, "ステージ選択", 52, TextAnchor.MiddleCenter, 62f);
+            var progressBg = CreateRect("ProgressBg", header, new Color(0.88f, 0.84f, 0.68f, 1f));
+            progressBg.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
+            stageSelectProgressFill = CreateRect("ProgressFill", progressBg, new Color(0.52f, 0.76f, 0.42f, 1f)).GetComponent<Image>();
+            stageSelectProgressFill.type = Image.Type.Filled;
+            stageSelectProgressFill.fillMethod = Image.FillMethod.Horizontal;
+            stageSelectProgressFill.fillAmount = 0f;
+            ApplyFullStretch(stageSelectProgressFill.rectTransform, 2f, 2f, 2f, 2f);
+
+            var tools = CreateHorizontalLayout("HeaderButtons", header, 10f, false);
+            stageSelectNavButtons.Add(CreateButton("BackButton", tools, "もどる", () => { }, 56f, 24f));
+            stageSelectNavButtons.Add(CreateButton("RuleButton", tools, "ルール", () => { }, 56f, 24f));
+            stageSelectNavButtons.Add(CreateButton("MenuButton", tools, "メニュー", () => { }, 56f, 24f));
+
+            var list = CreateRect("StageSelectList", stageSelectRoot, new Color(0.95f, 0.9f, 0.78f, 1f));
             var listElement = list.gameObject.AddComponent<LayoutElement>();
-            listElement.flexibleHeight = 1f;
+            listElement.preferredHeight = 700f;
             stageSelectListLayout = list.gameObject.AddComponent<VerticalLayoutGroup>();
             stageSelectListLayout.spacing = 12f;
-            stageSelectListLayout.padding = new RectOffset(12, 12, 12, 12);
+            stageSelectListLayout.padding = new RectOffset(18, 18, 18, 18);
             stageSelectListLayout.childControlHeight = true;
             stageSelectListLayout.childControlWidth = true;
             stageSelectListLayout.childForceExpandHeight = false;
             stageSelectListLayout.childForceExpandWidth = true;
+
+            var detail = CreateRect("StageDetail", stageSelectRoot, new Color(0.89f, 0.96f, 0.86f, 1f));
+            detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 360f;
+            var detailLayout = detail.gameObject.AddComponent<VerticalLayoutGroup>();
+            detailLayout.padding = new RectOffset(18, 18, 14, 14);
+            detailLayout.spacing = 8f;
+            stageDetailText = CreateText("StageDetailText", detail, "", 32, TextAnchor.UpperLeft, 190f);
+            stageDetailText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            stageDetailMetaText = CreateText("StageDetailMeta", detail, "", 30, TextAnchor.UpperLeft, 96f);
+            stageStartButton = CreateButton("StartButton", detail, "スタート", () => onStartSelectedStage?.Invoke(), 74f, 34f);
 
             CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28);
         }
@@ -619,9 +686,49 @@ namespace TiraWantToCross.UI
             while (stageSelectButtons.Count < requiredCount)
             {
                 var index = stageSelectButtons.Count;
-                var button = CreateButton($"StageSelectButton{index + 1}", stageSelectListLayout.transform, "", () => { }, 90f, 28);
+                var button = CreateButton($"StageSelectButton{index + 1}", stageSelectListLayout.transform, "", () => { }, 110f, 28);
                 stageSelectButtons.Add(button);
             }
+        }
+
+        private void RenderSelectedStageDetail(StageUIViewContext context)
+        {
+            var stageId = context.SelectedStageIdInSelect;
+            if (string.IsNullOrEmpty(stageId) || !context.StageDataById.TryGetValue(stageId, out var stageData))
+            {
+                stageDetailText.text = "ステージを選択してください。";
+                stageDetailMetaText.text = string.Empty;
+                stageStartButton.interactable = false;
+                return;
+            }
+            var index = context.StageIds.IndexOf(stageId);
+            var unlocked = index >= 0 && index <= context.HighestUnlockedStageIndex;
+            stageDetailText.text = $"ステージ{index + 1}\n{stageData.title}\n{ResolveStageDescription(stageId)}\nクリア条件: 全員を右岸へ運ぶ";
+            stageDetailMetaText.text = $"最短手数: {stageData.optimalMoves}手\n評価: {(IsStageCleared(stageId, stageData) ? "CLEAR" : "未クリア")}";
+            stageStartButton.interactable = unlocked;
+        }
+
+        private static string ResolveStageDescription(string stageId)
+        {
+            return stageId switch
+            {
+                "stage_001" => "2匹を最短手数で運ぼう",
+                "stage_002" => "3匹を上手に運ぼう",
+                "stage_003" => "漕げるチラだけで運ぼう",
+                "stage_004" => "4匹を最短手数で運ぼう",
+                _ => "最短手数を目指して川を渡ろう"
+            };
+        }
+
+        private static bool IsStageCleared(string stageId, StageData stageData)
+        {
+            if (stageData == null || string.IsNullOrWhiteSpace(stageId)) return false;
+            return PlayerPrefs.GetInt($"TiraWantToCross.Cleared.{stageId}", 0) == 1;
+        }
+
+        private static int CountClearedStages(StageUIViewContext context)
+        {
+            return context.StageIds.Count(id => context.StageDataById.TryGetValue(id, out var data) && IsStageCleared(id, data));
         }
         private void BuildPopupOverlay(Transform parent)
         {
