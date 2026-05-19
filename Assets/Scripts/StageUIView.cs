@@ -231,27 +231,36 @@ namespace TiraWantToCross.Prototype
         public IReadOnlyList<string> StageIds { get; }
         public string ActiveStageId { get; }
         public StageData StageData { get; }
+        public IReadOnlyDictionary<string, StageData> StageDataById { get; }
         public RiverCrossingGameState GameState { get; }
         public IReadOnlyCollection<string> SelectedEntities { get; }
         public string LastMessage { get; }
         public IReadOnlyList<RouteData> AvailableRoutes { get; }
+        public bool IsStageSelectMode { get; }
+        public int HighestUnlockedStageIndex { get; }
 
         public StageUIViewContext(
             IReadOnlyList<string> stageIds,
             string activeStageId,
             StageData stageData,
+            IReadOnlyDictionary<string, StageData> stageDataById,
             RiverCrossingGameState gameState,
             IReadOnlyCollection<string> selectedEntities,
             string lastMessage,
-            IReadOnlyList<RouteData> availableRoutes)
+            IReadOnlyList<RouteData> availableRoutes,
+            bool isStageSelectMode,
+            int highestUnlockedStageIndex)
         {
             StageIds = stageIds;
             ActiveStageId = activeStageId;
             StageData = stageData;
+            StageDataById = stageDataById;
             GameState = gameState;
             SelectedEntities = selectedEntities;
             LastMessage = lastMessage;
             AvailableRoutes = availableRoutes;
+            IsStageSelectMode = isStageSelectMode;
+            HighestUnlockedStageIndex = highestUnlockedStageIndex;
         }
     }
 

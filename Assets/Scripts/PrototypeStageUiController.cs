@@ -12,6 +12,12 @@ namespace TiraWantToCross.Prototype
 {
     public sealed class PrototypeStageUiController : MonoBehaviour
     {
+        private enum ViewMode
+        {
+            StageSelect,
+            Game
+        }
+
         private readonly List<string> stageIds = new List<string>();
         private readonly Dictionary<string, StageData> stageDataById = new Dictionary<string, StageData>();
         private readonly List<string> selectedEntities = new List<string>();
@@ -23,21 +29,16 @@ namespace TiraWantToCross.Prototype
         private StageUIView stageUIView;
         private StageCanvasView stageCanvasView;
         private string selectedRouteId;
+        private ViewMode currentViewMode = ViewMode.StageSelect;
+        private int highestUnlockedStageIndex;
         [SerializeField] private bool useLegacyOnGui;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (!ShouldBootstrap())
-            {
-                return;
-            }
-
+            if (!ShouldBootstrap()) return;
             var existing = FindAnyObjectByType<PrototypeStageUiController>();
-            if (existing != null)
-            {
-                return;
-            }
+            if (existing != null) return;
 
             var go = new GameObject(nameof(PrototypeStageUiController));
             DontDestroyOnLoad(go);
@@ -58,35 +59,27 @@ namespace TiraWantToCross.Prototype
             stageUIView = new StageUIView();
             SetupCanvasUI();
             ReloadStageList();
+            highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
 
             if (stageIds.Count == 0)
             {
                 gameState = null;
                 stageData = null;
                 lastMessage = "ステージが見つかりません。Resources/Data/Stages を確認してください。";
-                return;
             }
 
-            activeStageId = stageIds[0];
-            InitializeStage(activeStageId);
+            currentViewMode = ViewMode.StageSelect;
         }
 
         private void ReloadStageList()
         {
             stageIds.Clear();
             stageDataById.Clear();
-
-            var loadedStages = StageDataLoader.LoadAllStages();
-            foreach (var loadedStage in loadedStages)
+            foreach (var loadedStage in StageDataLoader.LoadAllStages())
             {
-                if (loadedStage == null || string.IsNullOrWhiteSpace(loadedStage.stageId))
-                {
-                    continue;
-                }
-
+                if (loadedStage == null || string.IsNullOrWhiteSpace(loadedStage.stageId)) continue;
                 stageDataById[loadedStage.stageId] = loadedStage;
             }
-
             stageIds.AddRange(stageDataById.Keys.OrderBy(stageId => stageId, StringComparer.Ordinal));
         }
 
@@ -102,7 +95,6 @@ namespace TiraWantToCross.Prototype
             stageData = stageDataById.TryGetValue(stageId, out var loadedStage)
                 ? loadedStage
                 : StageDataLoader.LoadByStageId(stageId);
-
             if (stageData == null)
             {
                 gameState = null;
@@ -114,9 +106,9 @@ namespace TiraWantToCross.Prototype
             gameState = new RiverCrossingGameState(stageData);
             selectedEntities.Clear();
             selectedRouteId = null;
+            currentViewMode = ViewMode.Game;
             lastMessage = $"初期化完了: {stageData.stageId} ({stageData.title})";
         }
-
 
         private void SetupCanvasUI()
         {
@@ -136,213 +128,127 @@ namespace TiraWantToCross.Prototype
             }
 
             stageCanvasView = new StageCanvasView();
-            stageCanvasView.Initialize(canvas.transform,
+            stageCanvasView.Initialize(
+                canvas.transform,
                 entityId => TogglePassengerSelection(entityId),
                 ExecuteMoveFromSelectedRoute,
                 ClearSelection,
                 () => InitializeStage(activeStageId),
-                TryLoadNextStage);
+                TryLoadNextStage,
+                OpenStageSelect,
+                TrySelectStageFromList);
         }
 
         private void Update()
         {
-            if (stageCanvasView == null)
-            {
-                return;
-            }
-
+            if (stageCanvasView == null) return;
             var context = BuildViewContext();
-            if (string.IsNullOrEmpty(selectedRouteId) && context.AvailableRoutes.Count > 0)
-            {
-                selectedRouteId = context.AvailableRoutes[0].routeId;
-            }
-
+            if (string.IsNullOrEmpty(selectedRouteId) && context.AvailableRoutes.Count > 0) selectedRouteId = context.AvailableRoutes[0].routeId;
             stageCanvasView.Render(context);
-        }
-
-        private void ExecuteMoveFromSelectedRoute(string routeId)
-        {
-            if (!string.IsNullOrEmpty(routeId))
-            {
-                selectedRouteId = routeId;
-            }
-
-            var available = ResolveAvailableRoutes();
-            if (available.Count == 0)
-            {
-                lastMessage = "利用可能なルートがありません。";
-                return;
-            }
-
-            if (string.IsNullOrEmpty(selectedRouteId) || available.All(x => x.routeId != selectedRouteId))
-            {
-                selectedRouteId = available[0].routeId;
-            }
-
-            ExecuteMove(selectedRouteId);
-        }
-
-        private void OnGUI()
-        {
-            if (!useLegacyOnGui || stageUIView == null)
-            {
-                return;
-            }
-
-            var context = BuildViewContext();
-            var actions = stageUIView.Refresh(context);
-
-            if (actions.StageToLoad != null)
-            {
-                InitializeStage(actions.StageToLoad);
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(actions.ToggleSelectEntityId))
-            {
-                TogglePassengerSelection(actions.ToggleSelectEntityId);
-            }
-
-            if (actions.ClearSelection)
-            {
-                ClearSelection();
-            }
-
-            if (!string.IsNullOrEmpty(actions.MoveRouteId))
-            {
-                ExecuteMove(actions.MoveRouteId);
-            }
-
-            if (actions.RestartStage)
-            {
-                InitializeStage(activeStageId);
-            }
-
-            if (actions.NextStage)
-            {
-                TryLoadNextStage();
-            }
         }
 
         private StageUIViewContext BuildViewContext()
         {
-            return new StageUIViewContext(
-                stageIds,
-                activeStageId,
-                stageData,
-                gameState,
-                selectedEntities,
-                lastMessage,
-                ResolveAvailableRoutes());
+            return new StageUIViewContext(stageIds, activeStageId, stageData, stageDataById, gameState, selectedEntities, lastMessage, ResolveAvailableRoutes(), currentViewMode == ViewMode.StageSelect, highestUnlockedStageIndex);
+        }
+
+        private void OpenStageSelect()
+        {
+            currentViewMode = ViewMode.StageSelect;
+            selectedEntities.Clear();
+            selectedRouteId = null;
+            lastMessage = "ステージ一覧を表示しています。";
+        }
+
+        private void TrySelectStageFromList(string stageId)
+        {
+            var index = stageIds.IndexOf(stageId);
+            if (index < 0) return;
+            if (index > highestUnlockedStageIndex)
+            {
+                lastMessage = "このステージはまだロック中です。";
+                return;
+            }
+            InitializeStage(stageId);
+        }
+
+        private void ExecuteMoveFromSelectedRoute(string routeId)
+        {
+            if (!string.IsNullOrEmpty(routeId)) selectedRouteId = routeId;
+            var available = ResolveAvailableRoutes();
+            if (available.Count == 0) { lastMessage = "利用可能なルートがありません。"; return; }
+            if (string.IsNullOrEmpty(selectedRouteId) || available.All(x => x.routeId != selectedRouteId)) selectedRouteId = available[0].routeId;
+            ExecuteMove(selectedRouteId);
         }
 
         private void TryLoadNextStage()
         {
-            if (!CanGoToNextStage())
-            {
-                lastMessage = "NextStageに進むには、最短手数でクリアする必要があります。";
-                return;
-            }
-
+            if (!CanGoToNextStage()) { lastMessage = "NextStageに進むには、最短手数でクリアする必要があります。"; return; }
+            UnlockNextStageIfNeeded();
             LoadNextStage();
         }
 
         private void LoadNextStage()
         {
-            if (stageIds.Count == 0)
-            {
-                lastMessage = "次に進めるステージがありません。";
-                return;
-            }
-
+            if (stageIds.Count == 0) { lastMessage = "次に進めるステージがありません。"; return; }
             var currentIndex = stageIds.IndexOf(activeStageId);
-            if (currentIndex < 0)
+            if (currentIndex < 0) { lastMessage = "現在のステージ位置を特定できません。"; return; }
+            var next = currentIndex + 1;
+            if (next >= stageIds.Count)
             {
-                InitializeStage(stageIds[0]);
+                lastMessage = "全ステージクリア済みです。ステージ一覧から遊ぶステージを選んでください。";
                 return;
             }
-
-            var next = (currentIndex + 1) % stageIds.Count;
             InitializeStage(stageIds[next]);
         }
 
-        private bool CanGoToNextStage()
+        private bool CanGoToNextStage() => gameState != null && gameState.IsCleared && !gameState.IsFailed && gameState.IsExactlyOptimalMoves();
+
+        private void UnlockNextStageIfNeeded()
         {
-            return gameState != null
-                && gameState.IsCleared
-                && !gameState.IsFailed
-                && gameState.IsExactlyOptimalMoves();
+            var currentIndex = stageIds.IndexOf(activeStageId);
+            var nextIndex = currentIndex + 1;
+            if (nextIndex >= 0 && nextIndex < stageIds.Count && highestUnlockedStageIndex < nextIndex)
+            {
+                highestUnlockedStageIndex = nextIndex;
+            }
         }
 
         private void TogglePassengerSelection(string entityId)
         {
-            if (selectedEntities.Contains(entityId))
-            {
-                selectedEntities.Remove(entityId);
-                return;
-            }
-
-            if (gameState != null && selectedEntities.Count >= gameState.BoatCapacity)
-            {
-                lastMessage = $"これ以上乗せられません。（定員: {gameState.BoatCapacity}）";
-                return;
-            }
-
+            if (selectedEntities.Contains(entityId)) { selectedEntities.Remove(entityId); return; }
+            if (gameState != null && selectedEntities.Count >= gameState.BoatCapacity) { lastMessage = $"これ以上乗せられません。（定員: {gameState.BoatCapacity}）"; return; }
             selectedEntities.Add(entityId);
         }
 
         private void ExecuteMove(string routeId)
         {
             var result = gameState.TryMove(routeId, selectedEntities);
-            if (!result.Succeeded)
-            {
-                lastMessage = $"Move失敗: {result.Message}";
-                Debug.LogWarning($"[PrototypeUI] {lastMessage}");
-                return;
-            }
+            if (!result.Succeeded) { lastMessage = $"Move失敗: {result.Message}"; Debug.LogWarning($"[PrototypeUI] {lastMessage}"); return; }
 
             selectedEntities.Clear();
+            if (CanGoToNextStage()) UnlockNextStageIfNeeded();
             lastMessage = $"Move成功: destination={result.Destination}, cleared={gameState.IsCleared}, failed={gameState.IsFailed}, moves={gameState.MoveCount}, exactOptimal={gameState.IsExactlyOptimalMoves()} / 移動後、自動で降船しました。";
             Debug.Log($"[PrototypeUI] {lastMessage}");
         }
 
-        private void ClearSelection()
-        {
-            selectedEntities.Clear();
-            lastMessage = "選択解除しました。";
-        }
+        private void ClearSelection() { selectedEntities.Clear(); lastMessage = "選択解除しました。"; }
 
         private List<RouteData> ResolveAvailableRoutes()
         {
             var list = new List<RouteData>();
-            if (gameState == null || stageData == null)
-            {
-                return list;
-            }
-
+            if (gameState == null || stageData == null) return list;
             foreach (var route in stageData.routes ?? Array.Empty<RouteData>())
             {
-                if (!string.IsNullOrEmpty(ResolveDestination(route, gameState.BoatLocation)))
-                {
-                    list.Add(route);
-                }
+                if (!string.IsNullOrEmpty(ResolveDestination(route, gameState.BoatLocation))) list.Add(route);
             }
-
             return list;
         }
 
         private static string ResolveDestination(RouteData route, string currentBoatLocation)
         {
-            if (route.from == currentBoatLocation)
-            {
-                return route.to;
-            }
-
-            if (route.bidirectional && route.to == currentBoatLocation)
-            {
-                return route.from;
-            }
-
+            if (route.from == currentBoatLocation) return route.to;
+            if (route.bidirectional && route.to == currentBoatLocation) return route.from;
             return null;
         }
     }
