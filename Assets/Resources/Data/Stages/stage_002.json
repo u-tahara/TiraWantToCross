@@ -29,19 +29,22 @@
       "entityId": "tira_1",
       "displayName": "チラ1",
       "startLocation": "left",
-      "canOperateBoat": true
+      "canOperateBoat": true,
+      "spriteId": "chinchilla_default"
     },
     {
       "entityId": "tira_2",
       "displayName": "チラ2",
       "startLocation": "left",
-      "canOperateBoat": true
+      "canOperateBoat": true,
+      "spriteId": "chinchilla_default"
     },
     {
       "entityId": "tira_3",
       "displayName": "チラ3",
       "startLocation": "left",
-      "canOperateBoat": true
+      "canOperateBoat": true,
+      "spriteId": "chinchilla_default"
     }
   ],
   "failConditions": [],
