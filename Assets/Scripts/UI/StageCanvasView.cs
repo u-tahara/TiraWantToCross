@@ -247,7 +247,7 @@ namespace TiraWantToCross.UI
                 }
 
                 visuals.Button.transform.SetSiblingIndex(siblingIndex);
-                TryApplyPortraitSprite(entityId, visuals);
+                TryApplyPortraitSprite(entity, visuals);
                 visuals.Label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
                 visuals.Button.interactable = isAtBoatLocation;
                 if (context.SelectedEntities.Contains(entityId))
@@ -329,29 +329,29 @@ namespace TiraWantToCross.UI
             }
         }
 
-        private void TryApplyPortraitSprite(string entityId, EntityVisualRefs visuals)
+        private void TryApplyPortraitSprite(EntityData entity, EntityVisualRefs visuals)
         {
             if (visuals == null || visuals.PortraitImage == null)
             {
                 return;
             }
 
-            if (!portraitSpriteCache.TryGetValue(entityId, out var sprite))
+            if (entity == null || string.IsNullOrEmpty(entity.entityId))
             {
-                sprite = Resources.Load<Sprite>($"Sprites/Characters/{entityId}");
-                portraitSpriteCache[entityId] = sprite;
+                ApplyPortraitFallback(visuals);
+                return;
+            }
+
+            var cacheKey = BuildPortraitCacheKey(entity);
+            if (!portraitSpriteCache.TryGetValue(cacheKey, out var sprite))
+            {
+                var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
+                sprite = Resources.Load<Sprite>($"Sprites/Characters/{spriteResourceId}");
+                portraitSpriteCache[cacheKey] = sprite;
             }
             if (sprite == null)
             {
-                visuals.HasPortraitSprite = false;
-                visuals.PortraitImage.sprite = null;
-                visuals.PortraitImage.type = Image.Type.Simple;
-                visuals.PortraitImage.preserveAspect = true;
-                if (visuals.PortraitPlaceholderText != null)
-                {
-                    visuals.PortraitPlaceholderText.enabled = true;
-                }
-
+                ApplyPortraitFallback(visuals);
                 return;
             }
 
@@ -362,6 +362,25 @@ namespace TiraWantToCross.UI
             if (visuals.PortraitPlaceholderText != null)
             {
                 visuals.PortraitPlaceholderText.enabled = false;
+            }
+        }
+
+
+        private static string BuildPortraitCacheKey(EntityData entity)
+        {
+            var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
+            return $"{entity.entityId}:{spriteResourceId}";
+        }
+
+        private static void ApplyPortraitFallback(EntityVisualRefs visuals)
+        {
+            visuals.HasPortraitSprite = false;
+            visuals.PortraitImage.sprite = null;
+            visuals.PortraitImage.type = Image.Type.Simple;
+            visuals.PortraitImage.preserveAspect = true;
+            if (visuals.PortraitPlaceholderText != null)
+            {
+                visuals.PortraitPlaceholderText.enabled = true;
             }
         }
 

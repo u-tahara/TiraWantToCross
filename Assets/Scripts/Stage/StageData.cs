@@ -49,6 +49,7 @@ namespace TiraWantToCross.Stage
         public string displayName;
         public string startLocation;
         public bool canOperateBoat;
+        public string spriteId;
     }
 
     [Serializable]

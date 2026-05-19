@@ -26,7 +26,8 @@
       "entityId": "a",
       "displayName": "A",
       "startLocation": "left",
-      "canOperateBoat": true
+      "canOperateBoat": true,
+      "spriteId": "chinchilla_default"
     }
   ],
   "clearConditions": [
@@ -57,10 +58,11 @@
   - `from` / `to` (string): 接続先ロケーションID。
   - `bidirectional` (bool): 双方向移動可否。
 - `entities` (array)
-  - `entityId` (string): キャラクター/アイテムID。
-  - `displayName` (string): 表示名。
+  - `entityId` (string): ゲームロジック上の個体識別ID。
+  - `displayName` (string): 画面表示名。
   - `startLocation` (string): 初期配置ロケーション。
   - `canOperateBoat` (bool): 操船可否。
+  - `spriteId` (string, optional): 画像指定用ID。設定時は `Assets/Resources/Sprites/Characters/{spriteId}.png` を優先して読み込む。未設定・空文字時は `entityId` を画像IDとして使用する。
 - `clearConditions` (array): クリア条件ルール。
   - `conditionType` (string): 条件種別。現時点は `all_entities_at_location` のみ対応。
   - `targetLocationId` (string): 全員到達先ロケーションID。
