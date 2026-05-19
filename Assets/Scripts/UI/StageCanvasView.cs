@@ -653,9 +653,9 @@ namespace TiraWantToCross.UI
             ApplyFullStretch(stageSelectProgressFill.rectTransform, 2f, 2f, 2f, 2f);
 
             var tools = CreateHorizontalLayout("HeaderButtons", header, 10f, false);
-            stageSelectNavButtons.Add(CreateButton("BackButton", tools, "もどる", () => { }, 56f, 24f));
-            stageSelectNavButtons.Add(CreateButton("RuleButton", tools, "ルール", () => { }, 56f, 24f));
-            stageSelectNavButtons.Add(CreateButton("MenuButton", tools, "メニュー", () => { }, 56f, 24f));
+            stageSelectNavButtons.Add(CreateButton("BackButton", tools, "もどる", () => { }, 56f, 24));
+            stageSelectNavButtons.Add(CreateButton("RuleButton", tools, "ルール", () => { }, 56f, 24));
+            stageSelectNavButtons.Add(CreateButton("MenuButton", tools, "メニュー", () => { }, 56f, 24));
 
             var list = CreateRect("StageSelectList", stageSelectRoot, new Color(0.95f, 0.9f, 0.78f, 1f));
             var listElement = list.gameObject.AddComponent<LayoutElement>();
@@ -676,7 +676,7 @@ namespace TiraWantToCross.UI
             stageDetailText = CreateText("StageDetailText", detail, "", 32, TextAnchor.UpperLeft, 190f);
             stageDetailText.horizontalOverflow = HorizontalWrapMode.Wrap;
             stageDetailMetaText = CreateText("StageDetailMeta", detail, "", 30, TextAnchor.UpperLeft, 96f);
-            stageStartButton = CreateButton("StartButton", detail, "スタート", () => onStartSelectedStage?.Invoke(), 74f, 34f);
+            stageStartButton = CreateButton("StartButton", detail, "スタート", () => onStartSelectedStage?.Invoke(), 74f, 34);
 
             CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28);
         }
