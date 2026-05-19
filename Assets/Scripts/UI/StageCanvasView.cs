@@ -611,7 +611,7 @@ namespace TiraWantToCross.UI
             stageSelectListLayout.childForceExpandHeight = false;
             stageSelectListLayout.childForceExpandWidth = true;
 
-            CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28f);
+            CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28);
         }
 
         private void EnsureStageSelectButtons(int requiredCount)
