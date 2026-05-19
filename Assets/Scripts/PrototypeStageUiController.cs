@@ -278,6 +278,7 @@ namespace TiraWantToCross.Prototype
         private void ResetProgress()
         {
             PlayerPrefs.DeleteKey(HighestUnlockedStageIndexKey);
+            PlayerPrefs.Save();
             highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
             lastMessage = "進行状況をリセットしました。Stage 1のみ解放しています。";
         }
