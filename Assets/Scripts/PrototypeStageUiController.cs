@@ -315,6 +315,10 @@ namespace TiraWantToCross.Prototype
         private void ResetProgress()
         {
             PlayerPrefs.DeleteKey(HighestUnlockedStageIndexKey);
+            foreach (var stageId in stageIds)
+            {
+                PlayerPrefs.DeleteKey($"{ClearedStageKeyPrefix}{stageId}");
+            }
             PlayerPrefs.Save();
             highestUnlockedStageIndex = stageIds.Count > 0 ? 0 : -1;
             selectedStageIdInSelect = stageIds.Count > 0 ? stageIds[0] : null;
