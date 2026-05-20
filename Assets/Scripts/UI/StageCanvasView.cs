@@ -461,6 +461,15 @@ namespace TiraWantToCross.UI
                 return null;
             }
 
+            var resourcePath = usage == CharacterSpriteUsage.Board
+                ? "Sprites/Characters/tira_board"
+                : "Sprites/Characters/tira_icon";
+            var resourceSprite = Resources.Load<Sprite>(resourcePath);
+            if (resourceSprite != null)
+            {
+                return resourceSprite;
+            }
+
 #if UNITY_EDITOR
             var assetPath = usage == CharacterSpriteUsage.Board
                 ? "Assets/Art/Characters/Tira/tira_board.png"
