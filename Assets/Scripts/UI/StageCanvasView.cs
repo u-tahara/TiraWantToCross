@@ -6,6 +6,9 @@ using TiraWantToCross.Stage;
 using TiraWantToCross.Prototype;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace TiraWantToCross.UI
 {
@@ -34,7 +37,8 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, LocationVisualTheme> locationThemes = new Dictionary<string, LocationVisualTheme>();
         private readonly List<Button> routeButtons = new List<Button>();
-        private readonly Dictionary<string, Sprite> portraitSpriteCache = new Dictionary<string, Sprite>();
+        private readonly Dictionary<string, Sprite> boardSpriteCache = new Dictionary<string, Sprite>();
+        private readonly Dictionary<string, Sprite> iconSpriteCache = new Dictionary<string, Sprite>();
 
         private Transform leftContainer;
         private Transform rightContainer;
@@ -93,6 +97,12 @@ namespace TiraWantToCross.UI
             ClearNotOptimal,
             Failed,
             AllStagesCleared
+        }
+
+        private enum CharacterSpriteUsage
+        {
+            Board,
+            Icon
         }
 
         public void Initialize(Transform parent,
@@ -300,7 +310,7 @@ namespace TiraWantToCross.UI
                 }
 
                 visuals.Button.transform.SetSiblingIndex(siblingIndex);
-                TryApplyPortraitSprite(entity, visuals);
+                TryApplyPortraitSprite(entity, visuals, isAtBoatLocation ? CharacterSpriteUsage.Icon : CharacterSpriteUsage.Board);
                 visuals.Label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
                 visuals.Button.interactable = isAtBoatLocation;
                 if (context.SelectedEntities.Contains(entityId))
@@ -382,7 +392,7 @@ namespace TiraWantToCross.UI
             }
         }
 
-        private void TryApplyPortraitSprite(EntityData entity, EntityVisualRefs visuals)
+        private void TryApplyPortraitSprite(EntityData entity, EntityVisualRefs visuals, CharacterSpriteUsage usage)
         {
             if (visuals == null || visuals.PortraitImage == null)
             {
@@ -395,13 +405,7 @@ namespace TiraWantToCross.UI
                 return;
             }
 
-            var cacheKey = BuildPortraitCacheKey(entity);
-            if (!portraitSpriteCache.TryGetValue(cacheKey, out var sprite))
-            {
-                var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
-                sprite = Resources.Load<Sprite>($"Sprites/Characters/{spriteResourceId}");
-                portraitSpriteCache[cacheKey] = sprite;
-            }
+            var sprite = ResolveCharacterSprite(entity, usage);
             if (sprite == null)
             {
                 ApplyPortraitFallback(visuals);
@@ -423,6 +427,57 @@ namespace TiraWantToCross.UI
         {
             var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
             return $"{entity.entityId}:{spriteResourceId}";
+        }
+
+        private Sprite ResolveCharacterSprite(EntityData entity, CharacterSpriteUsage usage)
+        {
+            if (entity == null || string.IsNullOrWhiteSpace(entity.entityId))
+            {
+                return null;
+            }
+
+            var cacheKey = BuildPortraitCacheKey(entity);
+            var cache = usage == CharacterSpriteUsage.Board ? boardSpriteCache : iconSpriteCache;
+            if (cache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            var sprite = TryLoadSpecialTiraSprite(entity.entityId, usage);
+            if (sprite == null)
+            {
+                var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
+                sprite = Resources.Load<Sprite>($"Sprites/Characters/{spriteResourceId}");
+            }
+
+            cache[cacheKey] = sprite;
+            return sprite;
+        }
+
+        private static Sprite TryLoadSpecialTiraSprite(string entityId, CharacterSpriteUsage usage)
+        {
+            if (string.IsNullOrWhiteSpace(entityId) || !entityId.StartsWith("tira_", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var resourcePath = usage == CharacterSpriteUsage.Board
+                ? "Sprites/Characters/tira_board"
+                : "Sprites/Characters/tira_icon";
+            var resourceSprite = Resources.Load<Sprite>(resourcePath);
+            if (resourceSprite != null)
+            {
+                return resourceSprite;
+            }
+
+#if UNITY_EDITOR
+            var assetPath = usage == CharacterSpriteUsage.Board
+                ? "Assets/Art/Characters/Tira/tira_board.png"
+                : "Assets/Art/Characters/Tira/tira_icon.png";
+            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+#else
+            return null;
+#endif
         }
 
         private static void ApplyPortraitFallback(EntityVisualRefs visuals)
