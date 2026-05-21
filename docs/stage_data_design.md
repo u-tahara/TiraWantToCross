@@ -62,7 +62,7 @@
   - `displayName` (string): 画面表示名。
   - `startLocation` (string): 初期配置ロケーション。
   - `canOperateBoat` (bool): 操船可否。
-  - `spriteId` (string, optional): 画像指定用ID。設定時は `Assets/Resources/Sprites/Characters/{spriteId}.png` を優先して読み込む。未設定・空文字時は `entityId` を画像IDとして使用する。
+  - `spriteId` (string, optional): 画像指定用ID。設定時は用途別画像（盤面: `Assets/Resources/Sprites/Characters/{spriteId}/{spriteId}_board.png`、アイコン: `Assets/Resources/Sprites/Characters/{spriteId}/{spriteId}_icon.png`）を優先して読み込む。用途別がない場合は `Assets/Resources/Sprites/Characters/{spriteId}/{spriteId}.png` と旧仕様互換パス（`Assets/Resources/Sprites/Characters/{spriteId}_*.png`）にフォールバックする。未設定・空文字時は同じ規則で `entityId` を画像IDとして使用する。
 - `clearConditions` (array): クリア条件ルール。
   - `conditionType` (string): 条件種別。現時点は `all_entities_at_location` のみ対応。
   - `targetLocationId` (string): 全員到達先ロケーションID。
