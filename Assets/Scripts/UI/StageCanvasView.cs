@@ -309,7 +309,7 @@ namespace TiraWantToCross.UI
                     continue;
                 }
 
-                var parent = ResolveBoardParent(location, context.GameState.BoatLocation);
+                var parent = ResolveBoardParent(location);
                 var parentKey = parent == leftBoardEntitiesContainer ? "left" : parent == rightBoardEntitiesContainer ? "right" : "boat";
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
@@ -370,12 +370,8 @@ namespace TiraWantToCross.UI
             }
         }
 
-        private Transform ResolveBoardParent(string entityLocation, string boatLocation)
+        private Transform ResolveBoardParent(string entityLocation)
         {
-            if (entityLocation == boatLocation)
-            {
-                return boatBoardEntitiesContainer;
-            }
             return entityLocation == "right" ? rightBoardEntitiesContainer : leftBoardEntitiesContainer;
         }
 
