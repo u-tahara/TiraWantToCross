@@ -27,24 +27,24 @@
   "entities": [
     {
       "entityId": "tira_1",
-      "displayName": "チラ1",
+      "displayName": "チラ",
+      "spriteId": "tira",
       "startLocation": "left",
-      "canOperateBoat": true,
-      "spriteId": "chinchilla_default"
+      "canOperateBoat": true
     },
     {
-      "entityId": "tira_2",
-      "displayName": "チラ2",
+      "entityId": "inko_1",
+      "displayName": "インコ",
+      "spriteId": "inko",
       "startLocation": "left",
-      "canOperateBoat": true,
-      "spriteId": "chinchilla_default"
+      "canOperateBoat": true
     },
     {
-      "entityId": "tira_3",
-      "displayName": "チラ3",
+      "entityId": "cat_1",
+      "displayName": "ネコ",
+      "spriteId": "cat",
       "startLocation": "left",
-      "canOperateBoat": true,
-      "spriteId": "chinchilla_default"
+      "canOperateBoat": true
     }
   ],
   "failConditions": [],

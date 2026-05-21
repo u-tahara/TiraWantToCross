@@ -63,7 +63,7 @@ namespace TiraWantToCross.DebugTools
             {
                 return new[]
                 {
-                    new DebugMoveCommand("lr", "tira_1", "tira_2")
+                    new DebugMoveCommand("lr", "tira_1", "inko_1")
                 };
             }
 
@@ -71,18 +71,18 @@ namespace TiraWantToCross.DebugTools
             {
                 return new[]
                 {
-                    new DebugMoveCommand("lr", "tira_1", "tira_2"),
+                    new DebugMoveCommand("lr", "tira_1", "inko_1"),
                     new DebugMoveCommand("lr", "tira_1"),
-                    new DebugMoveCommand("lr", "tira_1", "tira_3")
+                    new DebugMoveCommand("lr", "tira_1", "cat_1")
                 };
             }
 
             return new[]
             {
-                new DebugMoveCommand("lr", "tira_2"),
-                new DebugMoveCommand("lr", "tira_leader", "tira_2"),
+                new DebugMoveCommand("lr", "inko_1"),
+                new DebugMoveCommand("lr", "tira_leader", "inko_1"),
                 new DebugMoveCommand("lr", "tira_leader"),
-                new DebugMoveCommand("lr", "tira_leader", "tira_3")
+                new DebugMoveCommand("lr", "tira_leader", "cat_1")
             };
         }
 

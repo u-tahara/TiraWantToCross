@@ -27,17 +27,17 @@
   "entities": [
     {
       "entityId": "tira_1",
-      "displayName": "チラ1",
+      "displayName": "チラ",
+      "spriteId": "tira",
       "startLocation": "left",
-      "canOperateBoat": true,
-      "spriteId": "chinchilla_default"
+      "canOperateBoat": true
     },
     {
-      "entityId": "tira_2",
-      "displayName": "チラ2",
+      "entityId": "inko_1",
+      "displayName": "インコ",
+      "spriteId": "inko",
       "startLocation": "left",
-      "canOperateBoat": true,
-      "spriteId": "chinchilla_default"
+      "canOperateBoat": true
     }
   ],
   "failConditions": [],

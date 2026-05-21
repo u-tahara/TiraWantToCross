@@ -6,9 +6,6 @@ using TiraWantToCross.Stage;
 using TiraWantToCross.Prototype;
 using UnityEngine;
 using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace TiraWantToCross.UI
 {
@@ -458,8 +455,8 @@ namespace TiraWantToCross.UI
 
         private static string BuildPortraitCacheKey(EntityData entity)
         {
-            var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
-            return $"{entity.entityId}:{spriteResourceId}";
+            var spriteBaseId = ResolveSpriteBaseId(entity);
+            return $"{entity.entityId}:{spriteBaseId}";
         }
 
         private Sprite ResolveCharacterSprite(EntityData entity, CharacterSpriteUsage usage)
@@ -476,41 +473,68 @@ namespace TiraWantToCross.UI
                 return cached;
             }
 
-            var sprite = TryLoadSpecialTiraSprite(entity.entityId, usage);
-            if (sprite == null)
-            {
-                var spriteResourceId = !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
-                sprite = Resources.Load<Sprite>($"Sprites/Characters/{spriteResourceId}");
-            }
+            var sprite = TryLoadCharacterSprite(entity, usage);
 
             cache[cacheKey] = sprite;
             return sprite;
         }
 
-        private static Sprite TryLoadSpecialTiraSprite(string entityId, CharacterSpriteUsage usage)
+        private static Sprite TryLoadCharacterSprite(EntityData entity, CharacterSpriteUsage usage)
         {
-            if (string.IsNullOrWhiteSpace(entityId) || !entityId.StartsWith("tira_", StringComparison.Ordinal))
+            if (entity == null || string.IsNullOrWhiteSpace(entity.entityId))
             {
                 return null;
             }
 
-            var resourcePath = usage == CharacterSpriteUsage.Board
-                ? "Sprites/Characters/tira_board"
-                : "Sprites/Characters/tira_icon";
-            var resourceSprite = Resources.Load<Sprite>(resourcePath);
-            if (resourceSprite != null)
+            var spriteBaseId = ResolveSpriteBaseId(entity);
+            foreach (var path in BuildCharacterSpriteResourcePaths(spriteBaseId, usage))
             {
-                return resourceSprite;
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null)
+                {
+                    return sprite;
+                }
             }
 
-#if UNITY_EDITOR
-            var assetPath = usage == CharacterSpriteUsage.Board
-                ? "Assets/Art/Characters/Tira/tira_board.png"
-                : "Assets/Art/Characters/Tira/tira_icon.png";
-            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-#else
+            if (!string.IsNullOrWhiteSpace(entity.spriteId))
+            {
+                return null;
+            }
+
+            foreach (var path in BuildCharacterSpriteResourcePaths(entity.entityId, usage))
+            {
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null)
+                {
+                    return sprite;
+                }
+            }
+
             return null;
-#endif
+        }
+
+        private static string ResolveSpriteBaseId(EntityData entity)
+        {
+            if (entity == null)
+            {
+                return string.Empty;
+            }
+
+            return !string.IsNullOrWhiteSpace(entity.spriteId) ? entity.spriteId : entity.entityId;
+        }
+
+        private static IEnumerable<string> BuildCharacterSpriteResourcePaths(string baseId, CharacterSpriteUsage usage)
+        {
+            if (string.IsNullOrWhiteSpace(baseId))
+            {
+                yield break;
+            }
+
+            var usageSuffix = usage == CharacterSpriteUsage.Board ? "board" : "icon";
+            yield return $"Sprites/Characters/{baseId}/{baseId}_{usageSuffix}";
+            yield return $"Sprites/Characters/{baseId}/{baseId}";
+            yield return $"Sprites/Characters/{baseId}_{usageSuffix}";
+            yield return $"Sprites/Characters/{baseId}";
         }
 
         private static void ApplyPortraitFallback(EntityVisualRefs visuals)
