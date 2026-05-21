@@ -32,8 +32,9 @@ namespace TiraWantToCross.UI
             public Color BaseColor;
         }
 
-        private readonly Dictionary<string, EntityVisualRefs> entityVisuals = new Dictionary<string, EntityVisualRefs>();
-        private readonly Dictionary<string, string> entityParents = new Dictionary<string, string>();
+        private readonly Dictionary<string, EntityVisualRefs> boardEntityVisuals = new Dictionary<string, EntityVisualRefs>();
+        private readonly Dictionary<string, string> boardEntityParents = new Dictionary<string, string>();
+        private readonly Dictionary<string, EntityVisualRefs> selectionIconVisuals = new Dictionary<string, EntityVisualRefs>();
         private readonly Dictionary<string, RectTransform> locationPanels = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, LocationVisualTheme> locationThemes = new Dictionary<string, LocationVisualTheme>();
         private readonly List<Button> routeButtons = new List<Button>();
@@ -43,6 +44,10 @@ namespace TiraWantToCross.UI
         private Transform leftContainer;
         private Transform rightContainer;
         private Transform boatContainer;
+        private Transform leftBoardEntitiesContainer;
+        private Transform rightBoardEntitiesContainer;
+        private Transform boatBoardEntitiesContainer;
+        private Transform selectionIconsContainer;
 
         private Text stageTitleText;
         private Text stageNameText;
@@ -59,6 +64,8 @@ namespace TiraWantToCross.UI
 
         private RectTransform routeRowTransform;
         private RectTransform actionRowTransform;
+        private Text selectionCountText;
+        private Text objectiveText;
 
         private Button restartButton;
         private Button nextStageButton;
@@ -152,7 +159,8 @@ namespace TiraWantToCross.UI
             messageText.text = context.LastMessage;
             boatLocationText.text = $"ボート位置: {context.GameState.BoatLocation}";
 
-            RenderEntities(context);
+            RenderBoardEntities(context);
+            RenderSelectionIcons(context);
             RenderRoutes(context);
 
             var popupState = ResolvePopupState(context);
@@ -190,6 +198,7 @@ namespace TiraWantToCross.UI
 
             var left = CreateLocationArea("左岸", midLayout, "left", new Color(0.3f, 0.38f, 0.26f, 0.9f));
             leftContainer = left;
+            leftBoardEntitiesContainer = CreateVerticalLayout("LeftBoardEntities", left, 8f);
             var river = CreateLocationArea("川", midLayout, "river", new Color(0.2f, 0.35f, 0.55f, 0.9f));
             boatContainer = CreateRect("BoatContainer", river, new Color(0.6f, 0.5f, 0.2f, 0.9f));
             var boatLayout = boatContainer.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -209,11 +218,13 @@ namespace TiraWantToCross.UI
             boatImageLayout.minHeight = 100f;
             boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "Boat << LEFT", 28, TextAnchor.MiddleCenter, 150f);
             boatLabelText.color = new Color(0.15f, 0.1f, 0.08f, 1f);
+            boatBoardEntitiesContainer = CreateHorizontalLayout("BoatBoardEntities", boatContainer, 8f);
             boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
 
             var right = CreateLocationArea("右岸", midLayout, "right", new Color(0.4f, 0.3f, 0.2f, 0.9f));
             rightContainer = right;
+            rightBoardEntitiesContainer = CreateVerticalLayout("RightBoardEntities", right, 8f);
 
             locationPanels["left"] = left as RectTransform;
             locationPanels["right"] = right as RectTransform;
@@ -228,6 +239,13 @@ namespace TiraWantToCross.UI
             bottomLayoutGroup.childForceExpandHeight = false;
             bottomLayoutGroup.childForceExpandWidth = true;
 
+            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 52f);
+            selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
+            var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
+            var iconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
+            iconPanelLayoutElement.preferredHeight = 140f;
+            iconPanelLayoutElement.minHeight = 120f;
+            selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 12f, true);
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             var routeRowLayout = routeRowTransform.gameObject.AddComponent<LayoutElement>();
             routeRowLayout.preferredHeight = 122f;
@@ -246,6 +264,8 @@ namespace TiraWantToCross.UI
             restartButton = CreateButton("Restart", actionRowTransform, "Restart", () => onRestart?.Invoke(), 90, 34);
             nextStageButton = CreateButton("NextStage", actionRowTransform, "NextStage", () => onNextStage?.Invoke(), 90, 32);
             stageListButton = CreateButton("StageSelect", actionRowTransform, "ステージ一覧へ", () => onOpenStageSelect?.Invoke(), 90, 30);
+            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 28, TextAnchor.MiddleCenter, 56f);
+            objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
 
             var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 180f, 140f);
             var resultLayout = resultPanel.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -264,25 +284,22 @@ namespace TiraWantToCross.UI
             ApplyResponsiveLayout();
         }
 
-        private void RenderEntities(StageUIViewContext context)
+        private void RenderBoardEntities(StageUIViewContext context)
         {
             var entities = context.StageData.entities ?? Array.Empty<EntityData>();
             var activeIds = new HashSet<string>(entities.Select(x => x.entityId));
 
-            var staleIds = entityVisuals.Keys.Where(id => !activeIds.Contains(id)).ToList();
+            var staleIds = boardEntityVisuals.Keys.Where(id => !activeIds.Contains(id)).ToList();
             foreach (var staleId in staleIds)
             {
-                if (entityVisuals.TryGetValue(staleId, out var staleVisuals) && staleVisuals?.Button != null)
+                if (boardEntityVisuals.TryGetValue(staleId, out var staleVisuals) && staleVisuals?.Button != null)
                 {
                     GameObject.Destroy(staleVisuals.Button.gameObject);
                 }
 
-                entityVisuals.Remove(staleId);
-                entityParents.Remove(staleId);
+                boardEntityVisuals.Remove(staleId);
+                boardEntityParents.Remove(staleId);
             }
-
-            var leftSiblingIndex = 1;
-            var rightSiblingIndex = 1;
 
             foreach (var entity in entities)
             {
@@ -292,54 +309,74 @@ namespace TiraWantToCross.UI
                     continue;
                 }
 
-                var parent = location == "left" ? leftContainer : rightContainer;
-                var parentKey = location == "left" ? "left" : "right";
-                var siblingIndex = parentKey == "left" ? leftSiblingIndex++ : rightSiblingIndex++;
-                var isAtBoatLocation = location == context.GameState.BoatLocation;
+                var parent = ResolveBoardParent(location, context.GameState.BoatLocation);
+                var parentKey = parent == leftBoardEntitiesContainer ? "left" : parent == rightBoardEntitiesContainer ? "right" : "boat";
 
-                if (!entityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
+                if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => onEntitySelected?.Invoke(entityId));
-                    entityVisuals[entityId] = visuals;
-                    entityParents[entityId] = parentKey;
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, 72f, 18, false);
+                    boardEntityVisuals[entityId] = visuals;
+                    boardEntityParents[entityId] = parentKey;
                 }
-                else if (!entityParents.TryGetValue(entityId, out var currentParentKey) || currentParentKey != parentKey)
+                else if (!boardEntityParents.TryGetValue(entityId, out var currentParentKey) || currentParentKey != parentKey)
                 {
                     visuals.Button.transform.SetParent(parent, false);
-                    entityParents[entityId] = parentKey;
+                    boardEntityParents[entityId] = parentKey;
                 }
 
-                visuals.Button.transform.SetSiblingIndex(siblingIndex);
-                TryApplyPortraitSprite(entity, visuals, isAtBoatLocation ? CharacterSpriteUsage.Icon : CharacterSpriteUsage.Board);
-                visuals.Label.text = isAtBoatLocation ? entityId : $"{entityId}（反対岸）";
-                visuals.Button.interactable = isAtBoatLocation;
-                if (context.SelectedEntities.Contains(entityId))
-                {
-                    visuals.Button.image.color = new Color(0.9f, 0.82f, 0.3f, 1f);
-                    visuals.PortraitImage.color = visuals.HasPortraitSprite
-                        ? Color.white
-                        : new Color(0.98f, 0.95f, 0.6f, 1f);
-                    visuals.SelectionFrame.enabled = true;
-                    visuals.SelectionFrame.color = new Color(1f, 0.96f, 0.45f, 1f);
-                }
-                else if (!isAtBoatLocation)
-                {
-                    visuals.Button.image.color = new Color(0.45f, 0.45f, 0.5f, 0.9f);
-                    visuals.PortraitImage.color = visuals.HasPortraitSprite
-                        ? new Color(0.72f, 0.72f, 0.72f, 1f)
-                        : new Color(0.64f, 0.64f, 0.64f, 1f);
-                    visuals.SelectionFrame.enabled = false;
-                }
-                else
-                {
-                    visuals.Button.image.color = new Color(0.88f, 0.88f, 0.94f, 1f);
-                    visuals.PortraitImage.color = visuals.HasPortraitSprite
-                        ? Color.white
-                        : new Color(0.7f, 0.85f, 0.95f, 1f);
-                    visuals.SelectionFrame.enabled = false;
-                }
+                TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
+                visuals.Label.text = entityId;
+                visuals.Button.image.color = location == context.GameState.BoatLocation ? new Color(0.88f, 0.92f, 1f, 1f) : Color.white;
+                visuals.SelectionFrame.enabled = false;
             }
             UpdateLocationVisualTheme(context.GameState.BoatLocation);
+        }
+
+        private void RenderSelectionIcons(StageUIViewContext context)
+        {
+            var entities = context.StageData.entities ?? Array.Empty<EntityData>();
+            var candidates = entities.Where(x => context.GameState.EntityLocations.TryGetValue(x.entityId, out var location) && location == context.GameState.BoatLocation).ToList();
+            var activeIds = new HashSet<string>(candidates.Select(x => x.entityId));
+            var staleIds = selectionIconVisuals.Keys.Where(id => !activeIds.Contains(id)).ToList();
+            foreach (var staleId in staleIds)
+            {
+                if (selectionIconVisuals.TryGetValue(staleId, out var staleVisuals) && staleVisuals?.Button != null)
+                {
+                    GameObject.Destroy(staleVisuals.Button.gameObject);
+                }
+                selectionIconVisuals.Remove(staleId);
+            }
+
+            var capacity = Mathf.Max(1, context.GameState.BoatCapacity);
+            selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
+            var canSelectMore = context.SelectedEntities.Count < capacity;
+
+            foreach (var entity in candidates)
+            {
+                if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
+                {
+                    var capturedId = entity.entityId;
+                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 120f, 20, true);
+                    selectionIconVisuals[entity.entityId] = visuals;
+                }
+
+                TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Icon);
+                visuals.Label.text = entity.entityId;
+                var isSelected = context.SelectedEntities.Contains(entity.entityId);
+                visuals.SelectionFrame.enabled = isSelected;
+                visuals.SelectionFrame.color = new Color(0.3f, 0.8f, 0.32f, 1f);
+                visuals.Button.interactable = isSelected || canSelectMore;
+                visuals.Button.image.color = isSelected ? new Color(0.82f, 0.97f, 0.84f, 1f) : new Color(1f, 1f, 1f, 1f);
+            }
+        }
+
+        private Transform ResolveBoardParent(string entityLocation, string boatLocation)
+        {
+            if (entityLocation == boatLocation)
+            {
+                return boatBoardEntitiesContainer;
+            }
+            return entityLocation == "right" ? rightBoardEntitiesContainer : leftBoardEntitiesContainer;
         }
 
         private void RenderRoutes(StageUIViewContext context)
@@ -947,19 +984,24 @@ namespace TiraWantToCross.UI
         }
 
 
-        private static EntityVisualRefs CreateEntityVisual(string entityId, Transform parent, Action onClick)
+        private static EntityVisualRefs CreateEntityVisual(string entityId, Transform parent, Action onClick, float preferredHeight, int labelFontSize, bool circularStyle)
         {
-            var button = CreateButton(entityId, parent, string.Empty, onClick, 90f, 20);
+            var button = CreateButton(entityId, parent, string.Empty, onClick, preferredHeight, labelFontSize);
             var text = button.GetComponentInChildren<Text>();
             text.alignment = TextAnchor.LowerCenter;
+            text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            if (circularStyle)
+            {
+                button.image.color = new Color(1f, 1f, 1f, 1f);
+            }
 
             var portrait = CreateRect("Portrait", button.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
             portrait.transform.SetSiblingIndex(0);
             var portraitLayout = portrait.gameObject.AddComponent<LayoutElement>();
-            portraitLayout.preferredHeight = 50f;
-            portraitLayout.minHeight = 40f;
+            portraitLayout.preferredHeight = circularStyle ? preferredHeight - 42f : 50f;
+            portraitLayout.minHeight = circularStyle ? 64f : 40f;
 
-            var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, 50f);
+            var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, portraitLayout.preferredHeight);
             portraitText.color = new Color(0.15f, 0.2f, 0.25f, 0.9f);
 
             var frame = CreateRect("SelectionFrame", button.transform, new Color(1f, 0.95f, 0.45f, 0.95f));
