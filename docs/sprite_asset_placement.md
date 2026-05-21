@@ -30,6 +30,12 @@ Unityの`Resources.Load`で画像を読み込むため、Sprite素材は以下�
 
 
 ## 読み込み優先順位
+### `tira_` で始まる `entityId` の特例
+- 盤面表示（board用途）では `Assets/Resources/Sprites/Characters/tira_board.png` を優先
+- 下部アイコン表示（icon用途）では `Assets/Resources/Sprites/Characters/tira_icon.png` を優先
+- 上記が見つからない場合のみ通常の `spriteId` / `entityId` 解決へフォールバック
+
+### 通常キャラクター
 1. `spriteId` が設定されている場合: `Assets/Resources/Sprites/Characters/{spriteId}.png`
 2. `spriteId` が未設定・空文字の場合: `Assets/Resources/Sprites/Characters/{entityId}.png`
 3. どちらの画像も見つからない場合: 仮色表示 + `IMG` プレースホルダーにフォールバック
