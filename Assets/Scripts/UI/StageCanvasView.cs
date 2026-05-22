@@ -351,7 +351,8 @@ namespace TiraWantToCross.UI
                 {
                     var nextPosition = ResolveLocationNodePosition(i, locations.Length);
                     var existingNode = locationNodeRoots[location.locationId];
-                    if (existingNode.anchoredPosition != nextPosition)
+                    var delta = existingNode.anchoredPosition - nextPosition;
+                    if (delta.sqrMagnitude > 0.01f)
                     {
                         existingNode.anchoredPosition = nextPosition;
                         shouldRebuildRoutes = true;
