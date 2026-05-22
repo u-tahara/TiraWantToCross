@@ -1,6 +1,6 @@
 {
   "stageId": "stage_004",
-  "title": "4匹を運ぼう",
+  "title": "みんなでお引っ越し",
   "optimalMoves": 5,
   "boat": {
     "capacity": 2,
@@ -60,5 +60,10 @@
       "conditionType": "all_entities_at_location",
       "targetLocationId": "right"
     }
-  ]
+  ],
+  "uiText": {
+    "objective": "4匹全員を右岸へ運ぼう",
+    "tip": "チラをうまく戻して、みんなを運ぼう",
+    "stageSelectDescription": "操船役のチラを使って4匹を運ぶ応用ステージ"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "stageId": "stage_001",
-  "title": "2匹を右岸へ",
+  "title": "はじめての川渡り",
   "optimalMoves": 1,
   "boat": {
     "capacity": 2,
@@ -46,5 +46,10 @@
       "conditionType": "all_entities_at_location",
       "targetLocationId": "right"
     }
-  ]
+  ],
+  "uiText": {
+    "objective": "チラとインコを右岸へ運ぼう",
+    "tip": "2匹まで一緒にボートに乗れるよ",
+    "stageSelectDescription": "2匹でボート移動の基本を学ぶステージ"
+  }
 }

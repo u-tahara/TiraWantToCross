@@ -252,12 +252,24 @@ namespace TiraWantToCross.Prototype
         private void TogglePassengerSelection(string entityId)
         {
             if (selectedEntities.Contains(entityId)) { selectedEntities.Remove(entityId); return; }
-            if (gameState != null && selectedEntities.Count >= gameState.BoatCapacity) { lastMessage = $"これ以上乗せられません。（定員: {gameState.BoatCapacity}）"; return; }
+            if (gameState != null && selectedEntities.Count >= gameState.BoatCapacity) { lastMessage = $"このボートは{gameState.BoatCapacity}匹までだよ"; return; }
             selectedEntities.Add(entityId);
         }
 
         private void ExecuteMove(string routeId)
         {
+            if (selectedEntities.Count == 0)
+            {
+                lastMessage = "ボートに乗せる動物を選んでね";
+                return;
+            }
+
+            if (IsOperatorSelectionRequired() && !HasOperatorInSelection())
+            {
+                lastMessage = $"{BuildOperatorNamesText()}が乗っていないとボートを動かせないよ";
+                return;
+            }
+
             var result = gameState.TryMove(routeId, selectedEntities);
             if (!result.Succeeded) { lastMessage = $"Move失敗: {result.Message}"; Debug.LogWarning($"[PrototypeUI] {lastMessage}"); return; }
 
@@ -273,6 +285,53 @@ namespace TiraWantToCross.Prototype
         }
 
         private void ClearSelection() { selectedEntities.Clear(); lastMessage = "選択解除しました。"; }
+
+
+        private bool IsOperatorSelectionRequired()
+        {
+            return (stageData?.entities ?? Array.Empty<EntityData>()).Any(x => x.canOperateBoat);
+        }
+
+        private bool HasOperatorInSelection()
+        {
+            if (stageData?.entities == null)
+            {
+                return false;
+            }
+
+            foreach (var entityId in selectedEntities)
+            {
+                var entity = stageData.entities.FirstOrDefault(x => x.entityId == entityId);
+                if (entity != null && entity.canOperateBoat)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string BuildOperatorNamesText()
+        {
+            var operatorNames = (stageData?.entities ?? Array.Empty<EntityData>())
+                .Where(x => x.canOperateBoat)
+                .Select(ResolveEntityDisplayName)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToArray();
+
+            return operatorNames.Length == 0 ? "操船できる動物" : string.Join("・", operatorNames);
+        }
+
+        private static string ResolveEntityDisplayName(EntityData entity)
+        {
+            if (!string.IsNullOrWhiteSpace(entity?.displayName))
+            {
+                return entity.displayName;
+            }
+
+            return entity?.entityId ?? string.Empty;
+        }
 
         private List<RouteData> ResolveAvailableRoutes()
         {

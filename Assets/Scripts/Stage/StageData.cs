@@ -14,8 +14,17 @@ namespace TiraWantToCross.Stage
         public LocationData[] locations;
         public RouteData[] routes;
         public EntityData[] entities;
+        public StageUiTextData uiText;
         public ClearConditionData[] clearConditions;
         public FailConditionData[] failConditions;
+    }
+
+    [Serializable]
+    public class StageUiTextData
+    {
+        public string objective;
+        public string tip;
+        public string stageSelectDescription;
     }
 
     [Serializable]

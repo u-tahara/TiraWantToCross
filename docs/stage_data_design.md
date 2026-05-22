@@ -30,6 +30,11 @@
       "spriteId": "chinchilla_default"
     }
   ],
+  "uiText": {
+    "objective": "チラとインコを右岸へ運ぼう",
+    "tip": "2匹まで一緒にボートに乗れるよ",
+    "stageSelectDescription": "2匹でボート移動の基本を学ぶステージ"
+  },
   "clearConditions": [
     {
       "conditionType": "all_entities_at_location",
@@ -70,11 +75,17 @@
   - `conditionType` (string): 条件種別。最小実装では `entity_alone_with` を予約。
   - `locationId` (string): 判定対象ロケーションID。
   - `entityIds` (array): 同居判定対象のentityIdリスト。
+- `uiText` (object, optional): ステージ固有の表示文。
+  - `objective` (string): ゲーム画面の目的文。
+  - `tip` (string): ゲーム画面の補足文。
+  - `stageSelectDescription` (string): ステージ一覧用説明文。
+  - 未設定時はUI側で汎用文にフォールバックする。
 
 ## 4. 仕様意図
 - `locations` / `routes` によって2地点固定から脱却し、複数地点・複数ルートステージを定義可能にする。
 - `startLocation` を各要素に持たせることで、柔軟な初期配置を実現する。
 - `clearConditions` / `failConditions` を配列化して、将来の複数ルール共存に対応する。
+- ステージ固有の案内文（目的・補足・一覧説明）は `uiText` に集約し、未選択・操船不可・定員到達など共通ルール由来メッセージはC#側の共通処理で扱う。
 
 ## 5. バリデーション方針（実装時）
 - `boat.startLocation` が `locations` に存在すること。
