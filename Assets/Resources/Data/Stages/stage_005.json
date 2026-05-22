@@ -37,14 +37,14 @@
       "displayName": "イヌ",
       "spriteId": "dog",
       "startLocation": "left",
-      "canOperateBoat": false
+      "canOperateBoat": true
     },
     {
       "entityId": "monkey_1",
       "displayName": "サル",
       "spriteId": "monkey",
       "startLocation": "left",
-      "canOperateBoat": false
+      "canOperateBoat": true
     }
   ],
   "failConditions": [
