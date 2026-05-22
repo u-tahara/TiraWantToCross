@@ -363,8 +363,13 @@ namespace TiraWantToCross.UI
                 var isSelected = context.SelectedEntities.Contains(entity.entityId);
                 visuals.SelectionFrame.enabled = isSelected;
                 visuals.SelectionFrame.color = new Color(0.3f, 0.8f, 0.32f, 1f);
-                visuals.Button.interactable = isSelected || canSelectMore;
-                visuals.Button.image.color = isSelected ? new Color(0.82f, 0.97f, 0.84f, 1f) : new Color(1f, 1f, 1f, 1f);
+                var canInteract = isSelected || canSelectMore;
+                visuals.Button.interactable = true;
+                visuals.Button.image.color = isSelected
+                    ? new Color(0.82f, 0.97f, 0.84f, 1f)
+                    : canInteract
+                        ? new Color(1f, 1f, 1f, 1f)
+                        : new Color(0.92f, 0.92f, 0.92f, 1f);
             }
         }
 
@@ -447,6 +452,7 @@ namespace TiraWantToCross.UI
             visuals.PortraitImage.sprite = sprite;
             visuals.PortraitImage.type = Image.Type.Simple;
             visuals.PortraitImage.preserveAspect = true;
+            visuals.PortraitImage.color = Color.white;
             if (visuals.PortraitPlaceholderText != null)
             {
                 visuals.PortraitPlaceholderText.enabled = false;
@@ -544,6 +550,7 @@ namespace TiraWantToCross.UI
             visuals.PortraitImage.sprite = null;
             visuals.PortraitImage.type = Image.Type.Simple;
             visuals.PortraitImage.preserveAspect = true;
+            visuals.PortraitImage.color = new Color(0.7f, 0.85f, 0.95f, 1f);
             if (visuals.PortraitPlaceholderText != null)
             {
                 visuals.PortraitPlaceholderText.enabled = true;
