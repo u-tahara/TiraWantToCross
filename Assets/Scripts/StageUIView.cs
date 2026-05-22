@@ -100,7 +100,8 @@ namespace TiraWantToCross.Prototype
                 foreach (var entity in entitiesAtLocation)
                 {
                     var isSelected = context.SelectedEntities.Contains(entity.entityId);
-                    var label = isSelected ? $"[SELECTED] {entity.entityId}" : entity.entityId;
+                    var displayName = string.IsNullOrWhiteSpace(entity.displayName) ? entity.entityId : entity.displayName;
+                    var label = isSelected ? $"[SELECTED] {displayName}" : displayName;
                     var canSelectMore = context.SelectedEntities.Count < context.GameState.BoatCapacity;
                     var shouldDisable = !isSelected && !canSelectMore;
                     GUI.enabled = !shouldDisable;

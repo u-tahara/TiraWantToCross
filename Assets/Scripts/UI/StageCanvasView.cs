@@ -154,6 +154,7 @@ namespace TiraWantToCross.UI
             movesText.text = $"moves: {context.GameState.MoveCount} / optimal: {context.StageData.optimalMoves}";
             resultText.text = BuildResultText(context.GameState);
             messageText.text = context.LastMessage;
+            objectiveText.text = BuildObjectiveText(context.StageData);
             boatLocationText.text = $"ボート位置: {context.GameState.BoatLocation}";
 
             RenderBoardEntities(context);
@@ -322,7 +323,7 @@ namespace TiraWantToCross.UI
                 }
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
-                visuals.Label.text = entityId;
+                visuals.Label.text = ResolveEntityDisplayName(entity);
                 visuals.Button.image.color = location == context.GameState.BoatLocation ? new Color(0.88f, 0.92f, 1f, 1f) : Color.white;
                 visuals.SelectionFrame.enabled = false;
             }
@@ -358,7 +359,7 @@ namespace TiraWantToCross.UI
                 }
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Icon);
-                visuals.Label.text = entity.entityId;
+                visuals.Label.text = ResolveEntityDisplayName(entity);
                 var isSelected = context.SelectedEntities.Contains(entity.entityId);
                 visuals.SelectionFrame.enabled = isSelected;
                 visuals.SelectionFrame.color = new Color(0.3f, 0.8f, 0.32f, 1f);
@@ -815,7 +816,7 @@ namespace TiraWantToCross.UI
             }
             var index = FindStageIndex(context.StageIds, stageId);
             var unlocked = index >= 0 && index <= context.HighestUnlockedStageIndex;
-            stageDetailText.text = $"ステージ{index + 1}\n{stageData.title}\n{ResolveStageDescription(stageId)}\nクリア条件: 全員を右岸へ運ぶ";
+            stageDetailText.text = $"ステージ{index + 1}\n{stageData.title}\n{ResolveStageDescription(stageData)}\nクリア条件: 全員を右岸へ運ぶ";
             stageDetailMetaText.text = $"最短手数: {stageData.optimalMoves}手\n評価: {(IsStageCleared(stageId, stageData) ? "CLEAR" : "未クリア")}";
             stageStartButton.interactable = unlocked;
         }
@@ -838,16 +839,41 @@ namespace TiraWantToCross.UI
             return -1;
         }
 
-        private static string ResolveStageDescription(string stageId)
+        private static string ResolveStageDescription(StageData stageData)
         {
-            return stageId switch
+            if (!string.IsNullOrWhiteSpace(stageData?.uiText?.stageSelectDescription))
             {
-                "stage_001" => "2匹を最短手数で運ぼう",
-                "stage_002" => "3匹を上手に運ぼう",
-                "stage_003" => "漕げるチラだけで運ぼう",
-                "stage_004" => "4匹を最短手数で運ぼう",
-                _ => "最短手数を目指して川を渡ろう"
-            };
+                return stageData.uiText.stageSelectDescription;
+            }
+
+            return "このステージをクリアしよう";
+        }
+
+        private static string BuildObjectiveText(StageData stageData)
+        {
+            var objective = stageData?.uiText?.objective;
+            if (string.IsNullOrWhiteSpace(objective))
+            {
+                objective = "全員を目的地へ運ぼう";
+            }
+
+            var tip = stageData?.uiText?.tip;
+            if (string.IsNullOrWhiteSpace(tip))
+            {
+                tip = "条件を守って最短手数を目指そう";
+            }
+
+            return $"{objective}\n{tip}";
+        }
+
+        private static string ResolveEntityDisplayName(EntityData entity)
+        {
+            if (!string.IsNullOrWhiteSpace(entity?.displayName))
+            {
+                return entity.displayName;
+            }
+
+            return entity?.entityId ?? string.Empty;
         }
 
         private static bool IsStageCleared(string stageId, StageData stageData)

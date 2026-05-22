@@ -1,6 +1,6 @@
 {
   "stageId": "stage_002",
-  "title": "3匹を右岸へ",
+  "title": "3匹でわたろう",
   "optimalMoves": 3,
   "boat": {
     "capacity": 2,
@@ -53,5 +53,10 @@
       "conditionType": "all_entities_at_location",
       "targetLocationId": "right"
     }
-  ]
+  ],
+  "uiText": {
+    "objective": "チラ・インコ・ネコを右岸へ運ぼう",
+    "tip": "全員を運ぶには、だれかが戻る必要があるよ",
+    "stageSelectDescription": "3匹を運びながら、戻る操作を覚えるステージ"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "stageId": "stage_003",
-  "title": "操船できるのは1匹だけ",
+  "title": "ボートをこげるチラ",
   "optimalMoves": 3,
   "boat": {
     "capacity": 2,
@@ -53,5 +53,10 @@
       "conditionType": "all_entities_at_location",
       "targetLocationId": "right"
     }
-  ]
+  ],
+  "uiText": {
+    "objective": "チラ・インコ・ネコを右岸へ運ぼう",
+    "tip": "このステージでは、チラだけがボートをこげるよ",
+    "stageSelectDescription": "操船できる動物が必要なことを学ぶステージ"
+  }
 }
