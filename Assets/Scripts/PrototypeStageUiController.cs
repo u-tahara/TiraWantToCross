@@ -264,7 +264,7 @@ namespace TiraWantToCross.Prototype
                 return;
             }
 
-            if (!HasOperatorInSelection())
+            if (IsOperatorSelectionRequired() && !HasOperatorInSelection())
             {
                 lastMessage = $"{BuildOperatorNamesText()}が乗っていないとボートを動かせないよ";
                 return;
@@ -285,6 +285,12 @@ namespace TiraWantToCross.Prototype
         }
 
         private void ClearSelection() { selectedEntities.Clear(); lastMessage = "選択解除しました。"; }
+
+
+        private bool IsOperatorSelectionRequired()
+        {
+            return (stageData?.entities ?? Array.Empty<EntityData>()).Any(x => x.canOperateBoat);
+        }
 
         private bool HasOperatorInSelection()
         {
