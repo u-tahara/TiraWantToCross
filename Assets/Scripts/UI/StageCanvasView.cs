@@ -41,6 +41,7 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, RectTransform> locationEntityGrids = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, Text> locationCountTexts = new Dictionary<string, Text>();
         private readonly List<RectTransform> routeLineVisuals = new List<RectTransform>();
+        private string routeTopologyCacheKey = string.Empty;
 
         private RectTransform boardPanel;
         private RectTransform locationNodesRoot;
@@ -317,7 +318,7 @@ namespace TiraWantToCross.UI
                 visuals.Button.image.color = Color.white;
                 visuals.SelectionFrame.enabled = false;
             }
-            foreach (var location in context.StageData.locations)
+            foreach (var location in context.StageData.locations ?? Array.Empty<LocationData>())
             {
                 var count = entities.Count(e => context.GameState.EntityLocations.TryGetValue(e.entityId, out var loc) && loc == location.locationId);
                 if (locationCountTexts.TryGetValue(location.locationId, out var countText))
@@ -331,6 +332,7 @@ namespace TiraWantToCross.UI
         private void BuildLocationNodes(StageUIViewContext context)
         {
             var locations = context.StageData.locations ?? Array.Empty<LocationData>();
+            var shouldRebuildRoutes = false;
             var activeIds = new HashSet<string>(locations.Select(x => x.locationId));
             foreach (var staleId in locationNodeRoots.Keys.Where(x => !activeIds.Contains(x)).ToList())
             {
@@ -339,6 +341,7 @@ namespace TiraWantToCross.UI
                 locationEntityGrids.Remove(staleId);
                 locationCountTexts.Remove(staleId);
                 locationThemes.Remove(staleId);
+                shouldRebuildRoutes = true;
             }
 
             for (var i = 0; i < locations.Length; i++)
@@ -346,7 +349,13 @@ namespace TiraWantToCross.UI
                 var location = locations[i];
                 if (locationNodeRoots.ContainsKey(location.locationId))
                 {
-                    locationNodeRoots[location.locationId].anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
+                    var nextPosition = ResolveLocationNodePosition(i, locations.Length);
+                    var existingNode = locationNodeRoots[location.locationId];
+                    if (existingNode.anchoredPosition != nextPosition)
+                    {
+                        existingNode.anchoredPosition = nextPosition;
+                        shouldRebuildRoutes = true;
+                    }
                     continue;
                 }
 
@@ -394,6 +403,12 @@ namespace TiraWantToCross.UI
                     BaseColor = new Color(0.78f, 0.92f, 0.62f, 1f)
                 };
                 locationNodeRoots[location.locationId] = node;
+                shouldRebuildRoutes = true;
+            }
+
+            if (shouldRebuildRoutes)
+            {
+                routeTopologyCacheKey = string.Empty;
             }
 
             RenderRouteLines(context);
@@ -410,12 +425,23 @@ namespace TiraWantToCross.UI
 
         private void RenderRouteLines(StageUIViewContext context)
         {
+            var routes = context.StageData.routes ?? Array.Empty<RouteData>();
+            var routeKeyParts = routes
+                .Select(route => $"{route.routeId}:{route.from}->{route.to}")
+                .OrderBy(x => x)
+                .ToList();
+            var nextCacheKey = string.Join("|", routeKeyParts);
+            if (nextCacheKey == routeTopologyCacheKey)
+            {
+                return;
+            }
+
             foreach (var line in routeLineVisuals)
             {
                 GameObject.Destroy(line.gameObject);
             }
             routeLineVisuals.Clear();
-            foreach (var route in context.StageData.routes ?? Array.Empty<RouteData>())
+            foreach (var route in routes)
             {
                 if (!locationNodeRoots.TryGetValue(route.from, out var fromNode) || !locationNodeRoots.TryGetValue(route.to, out var toNode))
                 {
@@ -432,6 +458,7 @@ namespace TiraWantToCross.UI
                 line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg);
                 routeLineVisuals.Add(line);
             }
+            routeTopologyCacheKey = nextCacheKey;
         }
 
         private void RenderSelectionIcons(StageUIViewContext context)
