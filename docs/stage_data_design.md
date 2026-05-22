@@ -72,9 +72,10 @@
   - `conditionType` (string): 条件種別。現時点は `all_entities_at_location` のみ対応。
   - `targetLocationId` (string): 全員到達先ロケーションID。
 - `failConditions` (array): 条件違反ルール（将来拡張）。
-  - `conditionType` (string): 条件種別。最小実装では `entity_alone_with` を予約。
+  - `conditionType` (string): 条件種別。`entity_alone_with` / `entities_together_without_guardian` に対応。
   - `locationId` (string): 判定対象ロケーションID。
   - `entityIds` (array): 同居判定対象のentityIdリスト。
+  - `guardianEntityIds` (array): 見守り役（保護役）entityIdリスト。`entities_together_without_guardian` で使用。
 - `uiText` (object, optional): ステージ固有の表示文。
   - `objective` (string): ゲーム画面の目的文。
   - `tip` (string): ゲーム画面の補足文。
@@ -86,6 +87,15 @@
 - `startLocation` を各要素に持たせることで、柔軟な初期配置を実現する。
 - `clearConditions` / `failConditions` を配列化して、将来の複数ルール共存に対応する。
 - ステージ固有の案内文（目的・補足・一覧説明）は `uiText` に集約し、未選択・操船不可・定員到達など共通ルール由来メッセージはC#側の共通処理で扱う。
+
+## 4.1 failConditions の条件種別
+- `entity_alone_with`
+  - `locationId` にいる `entityIds` が同居したら失敗。
+- `entities_together_without_guardian`
+  - `entityIds` の全員が同じ地点にいる、かつその地点に `guardianEntityIds` が誰もいない場合に失敗。
+  - `locationId` 未指定時は全地点を判定対象にする。
+  - `locationId` 指定時は指定地点のみを判定対象にする。
+  - 用途例: 相性NG、見張り役・保護者役が必要な組み合わせ（例: イヌとサルがチラなしで同じ地点にいると失敗）。
 
 ## 5. バリデーション方針（実装時）
 - `boat.startLocation` が `locations` に存在すること。
