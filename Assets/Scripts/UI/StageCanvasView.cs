@@ -349,8 +349,9 @@ namespace TiraWantToCross.UI
             selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
             var canSelectMore = context.SelectedEntities.Count < capacity;
 
-            foreach (var entity in candidates)
+            for (var index = 0; index < candidates.Count; index++)
             {
+                var entity = candidates[index];
                 if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
                 {
                     var capturedId = entity.entityId;
@@ -370,6 +371,7 @@ namespace TiraWantToCross.UI
                     : canInteract
                         ? new Color(1f, 1f, 1f, 1f)
                         : new Color(0.92f, 0.92f, 0.92f, 1f);
+                visuals.Button.transform.SetSiblingIndex(index);
             }
         }
 
