@@ -200,7 +200,7 @@ namespace TiraWantToCross.GameLogic
                         var hasGuardian = condition.guardianEntityIds.Any(entitiesAtLocation.Contains);
                         if (!hasGuardian)
                         {
-                            LastFailMessage = "イヌとサルだけを同じ岸に残してしまったよ";
+                            LastFailMessage = "見守り役がいない危険な組み合わせが同じ場所にあります。";
                             return true;
                         }
                     }
