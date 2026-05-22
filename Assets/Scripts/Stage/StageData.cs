@@ -74,5 +74,6 @@ namespace TiraWantToCross.Stage
         public string conditionType;
         public string locationId;
         public string[] entityIds;
+        public string[] guardianEntityIds;
     }
 }

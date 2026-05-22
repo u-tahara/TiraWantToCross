@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TiraWantToCross.Stage;
+using UnityEngine;
 
 namespace TiraWantToCross.GameLogic
 {
@@ -16,6 +17,7 @@ namespace TiraWantToCross.GameLogic
         public int MoveCount { get; private set; }
         public bool IsFailed { get; private set; }
         public bool IsCleared { get; private set; }
+        public string LastFailMessage { get; private set; }
         public int BoatCapacity { get; }
 
         public RiverCrossingGameState(StageData stageData)
@@ -26,6 +28,7 @@ namespace TiraWantToCross.GameLogic
             MoveCount = 0;
             IsFailed = false;
             IsCleared = false;
+            LastFailMessage = string.Empty;
 
             entityMaster = (stageData.entities ?? Array.Empty<EntityData>()).ToDictionary(x => x.entityId, x => x);
             routes = new List<RouteData>(stageData.routes ?? Array.Empty<RouteData>());
@@ -149,6 +152,8 @@ namespace TiraWantToCross.GameLogic
 
         private bool EvaluateFailConditions()
         {
+            LastFailMessage = string.Empty;
+
             foreach (var condition in StageData.failConditions ?? Array.Empty<FailConditionData>())
             {
                 if (condition.conditionType == "entity_alone_with" && condition.entityIds != null && !string.IsNullOrEmpty(condition.locationId))
@@ -156,7 +161,48 @@ namespace TiraWantToCross.GameLogic
                     var targetsAtLocation = EntityLocations.Where(x => x.Value == condition.locationId).Select(x => x.Key).ToHashSet();
                     if (condition.entityIds.All(targetsAtLocation.Contains))
                     {
+                        LastFailMessage = "条件違反の組み合わせになりました。";
                         return true;
+                    }
+                }
+
+                if (condition.conditionType == "entities_together_without_guardian")
+                {
+                    if (condition.entityIds == null || condition.entityIds.Length == 0)
+                    {
+                        Debug.LogWarning("[RiverCrossingGameState] entities_together_without_guardian の entityIds が未設定です。判定をスキップします。");
+                        continue;
+                    }
+
+                    if (condition.guardianEntityIds == null || condition.guardianEntityIds.Length == 0)
+                    {
+                        Debug.LogWarning("[RiverCrossingGameState] entities_together_without_guardian の guardianEntityIds が未設定です。判定をスキップします。");
+                        continue;
+                    }
+
+                    var targetLocations = string.IsNullOrEmpty(condition.locationId)
+                        ? EntityLocations.Values.Distinct()
+                        : new[] { condition.locationId };
+
+                    foreach (var locationId in targetLocations)
+                    {
+                        var entitiesAtLocation = EntityLocations
+                            .Where(x => x.Value == locationId)
+                            .Select(x => x.Key)
+                            .ToHashSet();
+
+                        var allTargetsTogether = condition.entityIds.All(entitiesAtLocation.Contains);
+                        if (!allTargetsTogether)
+                        {
+                            continue;
+                        }
+
+                        var hasGuardian = condition.guardianEntityIds.Any(entitiesAtLocation.Contains);
+                        if (!hasGuardian)
+                        {
+                            LastFailMessage = "見守り役がいない危険な組み合わせが同じ場所にあります。";
+                            return true;
+                        }
                     }
                 }
             }

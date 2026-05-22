@@ -274,6 +274,12 @@ namespace TiraWantToCross.Prototype
             if (!result.Succeeded) { lastMessage = $"Move失敗: {result.Message}"; Debug.LogWarning($"[PrototypeUI] {lastMessage}"); return; }
 
             selectedEntities.Clear();
+            if (gameState.IsFailed && !string.IsNullOrWhiteSpace(gameState.LastFailMessage))
+            {
+                lastMessage = gameState.LastFailMessage;
+                Debug.LogWarning($"[PrototypeUI] {lastMessage}");
+                return;
+            }
             if (CanGoToNextStage()) UnlockNextStageIfNeeded();
             if (CanGoToNextStage() && !string.IsNullOrEmpty(activeStageId))
             {
