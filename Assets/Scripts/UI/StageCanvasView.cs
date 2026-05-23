@@ -105,6 +105,7 @@ namespace TiraWantToCross.UI
         private enum PopupResultState
         {
             Playing,
+            OperationError,
             ClearOptimal,
             ClearNotOptimal,
             Failed,
@@ -932,6 +933,11 @@ namespace TiraWantToCross.UI
 
             if (!context.GameState.IsCleared)
             {
+                if (IsOperationErrorMessage(context.LastMessage))
+                {
+                    return PopupResultState.OperationError;
+                }
+
                 return PopupResultState.Playing;
             }
 
@@ -976,6 +982,11 @@ namespace TiraWantToCross.UI
                     popupMessageText.text = "最短手数でクリアしました！";
                     ConfigurePopupButton(popupPrimaryButton, "次のステージへ", () => onNextStage?.Invoke());
                     break;
+                case PopupResultState.OperationError:
+                    popupTitleText.text = "操作エラー";
+                    popupMessageText.text = context.LastMessage;
+                    ConfigurePopupButton(popupPrimaryButton, "OK", () => { });
+                    break;
                 case PopupResultState.ClearNotOptimal:
                     popupTitleText.text = "手数オーバー";
                     popupMessageText.text = "最短手数ではありません。もう一度挑戦しましょう。";
@@ -1014,6 +1025,25 @@ namespace TiraWantToCross.UI
                 statusMessageLayoutElement.minHeight = 0f;
                 statusMessageLayoutElement.flexibleHeight = 0f;
             }
+        }
+
+        private static bool IsOperationErrorMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            if (message.StartsWith("Move成功:", StringComparison.Ordinal) ||
+                message.StartsWith("初期化完了:", StringComparison.Ordinal) ||
+                message.StartsWith("選択中:", StringComparison.Ordinal) ||
+                message == "ステージ一覧を表示しています。" ||
+                message == "選択解除しました。")
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static void ConfigurePopupButton(Button button, string label, Action onClick)
