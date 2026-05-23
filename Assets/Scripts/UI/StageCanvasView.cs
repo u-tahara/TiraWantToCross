@@ -95,6 +95,7 @@ namespace TiraWantToCross.UI
         private Action<string> onSelectStage;
         private Action onResetProgress;
         private Action onStartSelectedStage;
+        private Action onDismissOperationError;
         private Text stageSelectClearCountText;
         private Image stageSelectProgressFill;
         private Text stageDetailText;
@@ -127,7 +128,8 @@ namespace TiraWantToCross.UI
             Action onOpenStageSelect,
             Action<string> onSelectStage,
             Action onStartSelectedStage,
-            Action onResetProgress)
+            Action onResetProgress,
+            Action onDismissOperationError)
         {
             this.onEntitySelected = onEntitySelected;
             this.onMove = onMove;
@@ -138,6 +140,7 @@ namespace TiraWantToCross.UI
             this.onSelectStage = onSelectStage;
             this.onStartSelectedStage = onStartSelectedStage;
             this.onResetProgress = onResetProgress;
+            this.onDismissOperationError = onDismissOperationError;
 
             BuildRoot(parent);
         }
@@ -985,7 +988,7 @@ namespace TiraWantToCross.UI
                 case PopupResultState.OperationError:
                     popupTitleText.text = "操作エラー";
                     popupMessageText.text = context.LastMessage;
-                    ConfigurePopupButton(popupPrimaryButton, "OK", () => { });
+                    ConfigurePopupButton(popupPrimaryButton, "OK", () => onDismissOperationError?.Invoke());
                     break;
                 case PopupResultState.ClearNotOptimal:
                     popupTitleText.text = "手数オーバー";
