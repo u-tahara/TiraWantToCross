@@ -458,8 +458,8 @@ namespace TiraWantToCross.UI
                     var gridComp = grid.GetComponent<GridLayoutGroup>();
                     if (gridComp != null)
                     {
-                        changed |= ApplyVector2(ref gridComp.cellSize, new Vector2(74f * nodeScale, 54f * nodeScale));
-                        changed |= ApplyVector2(ref gridComp.spacing, new Vector2(6f * nodeScale, 6f * nodeScale));
+                        changed |= ApplyGridCellSize(gridComp, new Vector2(74f * nodeScale, 54f * nodeScale));
+                        changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
                     }
                 }
             }
@@ -521,14 +521,27 @@ namespace TiraWantToCross.UI
             return true;
         }
 
-        private static bool ApplyVector2(ref Vector2 current, Vector2 next)
+        private static bool ApplyGridCellSize(GridLayoutGroup gridComp, Vector2 next)
         {
+            var current = gridComp.cellSize;
             if ((current - next).sqrMagnitude <= 0.01f)
             {
                 return false;
             }
 
-            current = next;
+            gridComp.cellSize = next;
+            return true;
+        }
+
+        private static bool ApplyGridSpacing(GridLayoutGroup gridComp, Vector2 next)
+        {
+            var current = gridComp.spacing;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            gridComp.spacing = next;
             return true;
         }
 
