@@ -193,11 +193,11 @@ namespace TiraWantToCross.UI
             stageNameText = CreateText("StageName", top, "", 42, TextAnchor.MiddleCenter, 88);
             movesText = CreateText("Moves", top, "", 36, TextAnchor.MiddleCenter, 66);
 
-            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
+            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 380f, 1f);
             boardPanel = CreateRect("BoardPanel", mid, new Color(0.66f, 0.89f, 0.98f, 1f));
             var boardLayout = boardPanel.gameObject.AddComponent<LayoutElement>();
             boardLayout.flexibleHeight = 1f;
-            boardLayout.minHeight = 560f;
+            boardLayout.minHeight = 380f;
             ApplyFullStretch(boardPanel, 8f, 8f, 8f, 8f);
             locationNodesRoot = new GameObject("LocationNodesRoot", typeof(RectTransform)).GetComponent<RectTransform>();
             locationNodesRoot.SetParent(boardPanel, false);
@@ -215,7 +215,7 @@ namespace TiraWantToCross.UI
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
             boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 420f, 360f);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 460f, 420f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
             bottomLayoutGroup.spacing = 12f;
             bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
@@ -252,7 +252,7 @@ namespace TiraWantToCross.UI
             objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 28, TextAnchor.MiddleCenter, 56f);
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
 
-            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 180f, 140f);
+            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 120f, 96f);
             var resultLayout = resultPanel.gameObject.AddComponent<VerticalLayoutGroup>();
             resultLayout.spacing = 6f;
             resultLayout.padding = new RectOffset(16, 16, 12, 12);
@@ -368,8 +368,8 @@ namespace TiraWantToCross.UI
 
                 var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0.78f, 0.92f, 0.62f, 1f));
                 node.sizeDelta = new Vector2(220f, 240f);
-                node.anchorMin = new Vector2(0f, 0f);
-                node.anchorMax = new Vector2(0f, 0f);
+                node.anchorMin = new Vector2(0.5f, 0.5f);
+                node.anchorMax = new Vector2(0.5f, 0.5f);
                 node.pivot = new Vector2(0.5f, 0.5f);
                 node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
 
@@ -379,22 +379,24 @@ namespace TiraWantToCross.UI
                 locationCountTexts[location.locationId] = countLabel;
 
                 var animalPanel = CreateRect("AnimalPanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                animalPanel.sizeDelta = new Vector2(180f, 140f);
+                animalPanel.sizeDelta = new Vector2(184f, 144f);
                 animalPanel.anchorMin = new Vector2(0.5f, 0.5f);
                 animalPanel.anchorMax = new Vector2(0.5f, 0.5f);
                 animalPanel.pivot = new Vector2(0.5f, 0.5f);
                 animalPanel.anchoredPosition = new Vector2(0f, 14f);
-                var grid = CreateHorizontalLayout("Entities", animalPanel, 8f, true);
-                var gridLayout = grid.GetComponent<HorizontalLayoutGroup>();
-                gridLayout.childControlWidth = false;
-                gridLayout.childForceExpandWidth = false;
-                gridLayout.padding = new RectOffset(10, 10, 10, 10);
+
+                var grid = CreateRect("Entities", animalPanel, new Color(0f, 0f, 0f, 0f));
+                grid.anchorMin = new Vector2(0f, 0f);
+                grid.anchorMax = new Vector2(1f, 1f);
+                grid.pivot = new Vector2(0.5f, 0.5f);
+                grid.offsetMin = new Vector2(8f, 8f);
+                grid.offsetMax = new Vector2(-8f, -8f);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(74f, 56f);
-                gridComp.spacing = new Vector2(8f, 8f);
+                gridComp.cellSize = new Vector2(74f, 54f);
+                gridComp.spacing = new Vector2(6f, 6f);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
-                GameObject.Destroy(gridLayout);
+                gridComp.childAlignment = TextAnchor.UpperCenter;
                 locationEntityGrids[location.locationId] = grid;
 
                 var name = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
@@ -448,6 +450,7 @@ namespace TiraWantToCross.UI
                 GameObject.Destroy(line.gameObject);
             }
             routeLineVisuals.Clear();
+            routeLinesRoot.SetAsFirstSibling();
             foreach (var route in routes)
             {
                 if (!locationNodeRoots.TryGetValue(route.from, out var fromNode) || !locationNodeRoots.TryGetValue(route.to, out var toNode))
@@ -458,8 +461,8 @@ namespace TiraWantToCross.UI
                 var diff = toNode.anchoredPosition - fromNode.anchoredPosition;
                 var len = Mathf.Max(24f, diff.magnitude - 220f);
                 line.sizeDelta = new Vector2(len, 8f);
-                line.anchorMin = new Vector2(0f, 0f);
-                line.anchorMax = new Vector2(0f, 0f);
+                line.anchorMin = new Vector2(0.5f, 0.5f);
+                line.anchorMax = new Vector2(0.5f, 0.5f);
                 line.pivot = new Vector2(0.5f, 0.5f);
                 line.anchoredPosition = (fromNode.anchoredPosition + toNode.anchoredPosition) * 0.5f;
                 line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg);
@@ -563,10 +566,10 @@ namespace TiraWantToCross.UI
             if (locationNodeRoots.TryGetValue(boatLocation, out var node))
             {
                 var markerRect = boatImage.GetComponent<RectTransform>();
-                markerRect.anchorMin = new Vector2(0f, 0f);
-                markerRect.anchorMax = new Vector2(0f, 0f);
+                markerRect.anchorMin = new Vector2(0.5f, 0.5f);
+                markerRect.anchorMax = new Vector2(0.5f, 0.5f);
                 markerRect.pivot = new Vector2(0.5f, 0.5f);
-                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -110f);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f);
             }
         }
 
