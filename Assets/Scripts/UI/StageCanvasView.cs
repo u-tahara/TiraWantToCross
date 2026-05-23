@@ -46,6 +46,9 @@ namespace TiraWantToCross.UI
         private string routeTopologyCacheKey = string.Empty;
 
         private RectTransform boardPanel;
+        private RectTransform playableBoardArea;
+        private RectTransform headerOverlay;
+        private RectTransform bottomOverlay;
         private RectTransform locationNodesRoot;
         private RectTransform routeLinesRoot;
         private RectTransform boatMarkerRoot;
@@ -57,12 +60,7 @@ namespace TiraWantToCross.UI
         private Image boatImage;
         private Text boatLabelText;
         private Sprite boatSprite;
-        private HorizontalLayoutGroup midLayoutGroup;
-        private VerticalLayoutGroup mainLayoutGroup;
         private VerticalLayoutGroup bottomLayoutGroup;
-        private LayoutElement topPanelLayoutElement;
-        private LayoutElement middlePanelLayoutElement;
-        private LayoutElement bottomPanelLayoutElement;
         private LayoutElement objectiveLayoutElement;
         private LayoutElement statusMessageLayoutElement;
         private LayoutElement selectionCountLayoutElement;
@@ -185,64 +183,70 @@ namespace TiraWantToCross.UI
             var root = CreateRect("CanvasRoot", parent, new Color(0f, 0f, 0f, 0f));
             ApplyFullStretch(root);
 
-            var main = CreateVerticalLayout("Main", root, 18f);
-            ApplyFullStretch(main, 24f, 24f, 24f, 24f);
-            mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
-
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 100f, 100f, 0f);
-            topPanelLayoutElement = top.GetComponent<LayoutElement>();
-            var topLayout = top.gameObject.AddComponent<VerticalLayoutGroup>();
-            topLayout.spacing = 8f;
-            topLayout.padding = new RectOffset(16, 16, 16, 16);
-            topLayout.childControlHeight = true;
-            topLayout.childControlWidth = true;
-            topLayout.childForceExpandHeight = false;
-            topLayout.childForceExpandWidth = true;
-            topLayout.childAlignment = TextAnchor.UpperCenter;
-            stageNameText = CreateText("StageName", top, "", 36, TextAnchor.MiddleLeft, 100);
-            movesText = CreateText("Moves", top, "", 32, TextAnchor.MiddleLeft, 56);
-            var headerActions = CreateHorizontalLayout("HeaderActions", top, 12f, false);
-            var headerActionsLayout = headerActions.gameObject.AddComponent<LayoutElement>();
-            headerActionsLayout.preferredHeight = 64f;
-            headerActionsLayout.minHeight = 56f;
-            restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 72f, 28);
-            stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 72f, 28);
-
-            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 180f, 1f);
-            middlePanelLayoutElement = mid.GetComponent<LayoutElement>();
-            boardPanel = CreateRect("BoardPanel", mid, new Color(0.66f, 0.89f, 0.98f, 1f));
-            var boardLayout = boardPanel.gameObject.AddComponent<LayoutElement>();
-            boardLayout.flexibleHeight = 0f;
-            boardLayout.minHeight = 0f;
-            boardLayout.preferredHeight = 0f;
+            boardPanel = CreateRect("BoardLayer", root, new Color(0.66f, 0.89f, 0.98f, 1f));
             ApplyFullStretch(boardPanel, 0f, 0f, 0f, 0f);
-            locationNodesRoot = new GameObject("LocationNodesRoot", typeof(RectTransform)).GetComponent<RectTransform>();
-            locationNodesRoot.SetParent(boardPanel, false);
-            ApplyFullStretch(locationNodesRoot, 20f, 20f, 20f, 120f);
-            routeLinesRoot = new GameObject("RouteLinesRoot", typeof(RectTransform)).GetComponent<RectTransform>();
-            routeLinesRoot.SetParent(boardPanel, false);
-            ApplyFullStretch(routeLinesRoot, 20f, 20f, 20f, 120f);
+
+            playableBoardArea = CreateRect("PlayableBoardArea", boardPanel, new Color(0f, 0f, 0f, 0f));
+            playableBoardArea.anchorMin = new Vector2(0f, 0f);
+            playableBoardArea.anchorMax = new Vector2(1f, 1f);
+            playableBoardArea.pivot = new Vector2(0.5f, 0.5f);
+            playableBoardArea.offsetMin = new Vector2(24f, 300f);
+            playableBoardArea.offsetMax = new Vector2(-24f, -108f);
+
+            routeLinesRoot = new GameObject("RouteLines", typeof(RectTransform)).GetComponent<RectTransform>();
+            routeLinesRoot.SetParent(playableBoardArea, false);
+            ApplyFullStretch(routeLinesRoot, 0f, 0f, 0f, 0f);
+
+            locationNodesRoot = new GameObject("LocationNodes", typeof(RectTransform)).GetComponent<RectTransform>();
+            locationNodesRoot.SetParent(playableBoardArea, false);
+            ApplyFullStretch(locationNodesRoot, 0f, 0f, 0f, 0f);
+
             boatMarkerRoot = new GameObject("BoatMarker", typeof(RectTransform)).GetComponent<RectTransform>();
-            boatMarkerRoot.SetParent(boardPanel, false);
-            ApplyFullStretch(boatMarkerRoot, 20f, 20f, 20f, 20f);
+            boatMarkerRoot.SetParent(playableBoardArea, false);
+            ApplyFullStretch(boatMarkerRoot, 0f, 0f, 0f, 0f);
             boatImage = CreateRect("BoatImage", boatMarkerRoot, new Color(0.75f, 0.55f, 0.2f, 1f)).GetComponent<Image>();
             var boatRect = boatImage.GetComponent<RectTransform>();
             boatRect.sizeDelta = new Vector2(150f, 90f);
             boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "BOAT", 24, TextAnchor.MiddleCenter, 80f);
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
-            boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
+            boatLocationText = CreateText("BoatLocation", playableBoardArea, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 300f, 300f, 0f);
-            bottomPanelLayoutElement = bottom.GetComponent<LayoutElement>();
+            headerOverlay = CreateRect("HeaderOverlay", root, new Color(0.15f, 0.2f, 0.25f, 0.82f));
+            var header = headerOverlay;
+            header.anchorMin = new Vector2(0f, 1f);
+            header.anchorMax = new Vector2(1f, 1f);
+            header.pivot = new Vector2(0.5f, 1f);
+            header.offsetMin = new Vector2(0f, -108f);
+            header.offsetMax = new Vector2(0f, 0f);
+            var topLayout = header.gameObject.AddComponent<VerticalLayoutGroup>();
+            topLayout.spacing = 6f;
+            topLayout.padding = new RectOffset(16, 16, 10, 10);
+            topLayout.childControlHeight = true;
+            topLayout.childControlWidth = true;
+            topLayout.childForceExpandHeight = false;
+            topLayout.childForceExpandWidth = true;
+            stageNameText = CreateText("StageName", header, "", 34, TextAnchor.MiddleLeft, 56);
+            movesText = CreateText("Moves", header, "", 30, TextAnchor.MiddleLeft, 36);
+            var headerActions = CreateHorizontalLayout("HeaderActions", header, 10f, false);
+            restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 44f, 24);
+            stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 44f, 24);
+
+            bottomOverlay = CreateRect("BottomOverlay", root, new Color(0.2f, 0.15f, 0.2f, 0.85f));
+            var bottom = bottomOverlay;
+            bottom.anchorMin = new Vector2(0f, 0f);
+            bottom.anchorMax = new Vector2(1f, 0f);
+            bottom.pivot = new Vector2(0.5f, 0f);
+            bottom.offsetMin = new Vector2(0f, 0f);
+            bottom.offsetMax = new Vector2(0f, 300f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
-            bottomLayoutGroup.spacing = 12f;
+            bottomLayoutGroup.spacing = 10f;
             bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
             bottomLayoutGroup.childControlHeight = true;
             bottomLayoutGroup.childControlWidth = true;
             bottomLayoutGroup.childForceExpandHeight = false;
             bottomLayoutGroup.childForceExpandWidth = true;
 
-            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 70f);
+            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 64f);
             objectiveLayoutElement = objectiveText.GetComponent<LayoutElement>();
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
             statusMessageText = CreateText("StatusMessage", bottom, string.Empty, 24, TextAnchor.MiddleLeft, 0f);
@@ -251,7 +255,7 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 40f);
+            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 38f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
@@ -265,7 +269,7 @@ namespace TiraWantToCross.UI
             routeRowLayoutElement.minHeight = 72f;
             for (var i = 0; i < 2; i++)
             {
-                var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 98, 36);
+                var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 90f, 34);
                 routeButtons.Add(routeButton);
             }
 
@@ -562,8 +566,9 @@ namespace TiraWantToCross.UI
                 return 1f;
             }
 
-            var availableHeight = Mathf.Max(1f, boardPanel.rect.height - 140f);
-            var availableWidth = Mathf.Max(1f, boardPanel.rect.width - 80f);
+            var area = playableBoardArea != null ? playableBoardArea : boardPanel;
+            var availableHeight = Mathf.Max(1f, area.rect.height - 24f);
+            var availableWidth = Mathf.Max(1f, area.rect.width - 24f);
             var baseHeight = count <= 3 ? 320f : 500f;
             var baseWidth = count == 2 ? 620f : count == 3 ? 760f : 540f;
             var scaleByHeight = availableHeight / baseHeight;
@@ -1481,38 +1486,6 @@ namespace TiraWantToCross.UI
             var aspect = logicalHeight > 0 ? (float)logicalWidth / logicalHeight : 1f;
             var compact = logicalWidth < 1100f || aspect < 0.58f;
 
-            if (mainLayoutGroup != null)
-            {
-                mainLayoutGroup.spacing = compact ? 8f : 12f;
-                mainLayoutGroup.padding = compact ? new RectOffset(8, 8, 8, 8) : new RectOffset(16, 16, 16, 16);
-                mainLayoutGroup.childControlHeight = true;
-                mainLayoutGroup.childForceExpandHeight = false;
-                mainLayoutGroup.childControlWidth = true;
-                mainLayoutGroup.childForceExpandWidth = true;
-            }
-
-            if (topPanelLayoutElement != null)
-            {
-                var topPanelRequiredHeight = 80f + 44f + 56f + (8f * 2f) + 16f + 16f;
-                topPanelLayoutElement.preferredHeight = topPanelRequiredHeight;
-                topPanelLayoutElement.minHeight = topPanelRequiredHeight;
-                topPanelLayoutElement.flexibleHeight = 0f;
-            }
-
-            if (middlePanelLayoutElement != null)
-            {
-                middlePanelLayoutElement.preferredHeight = 0f;
-                middlePanelLayoutElement.minHeight = compact ? 180f : 200f;
-                middlePanelLayoutElement.flexibleHeight = 1f;
-            }
-
-            if (bottomPanelLayoutElement != null)
-            {
-                bottomPanelLayoutElement.preferredHeight = compact ? 300f : 320f;
-                bottomPanelLayoutElement.minHeight = compact ? 286f : 300f;
-                bottomPanelLayoutElement.flexibleHeight = 0f;
-            }
-
             if (objectiveLayoutElement != null)
             {
                 objectiveLayoutElement.preferredHeight = compact ? 50f : 56f;
@@ -1537,10 +1510,25 @@ namespace TiraWantToCross.UI
                 routeRowLayoutElement.minHeight = compact ? 68f : 76f;
             }
 
-            if (midLayoutGroup != null)
+            var headerHeight = compact ? 96f : 108f;
+            var bottomHeight = compact ? 280f : 300f;
+
+            if (playableBoardArea != null)
             {
-                midLayoutGroup.spacing = compact ? 6f : 12f;
-                midLayoutGroup.padding = compact ? new RectOffset(4, 4, 4, 4) : new RectOffset(8, 8, 8, 8);
+                playableBoardArea.offsetMin = new Vector2(24f, bottomHeight);
+                playableBoardArea.offsetMax = new Vector2(-24f, -headerHeight);
+            }
+
+            if (headerOverlay != null)
+            {
+                headerOverlay.offsetMin = new Vector2(0f, -headerHeight);
+                headerOverlay.offsetMax = new Vector2(0f, 0f);
+            }
+
+            if (bottomOverlay != null)
+            {
+                bottomOverlay.offsetMin = new Vector2(0f, 0f);
+                bottomOverlay.offsetMax = new Vector2(0f, bottomHeight);
             }
 
             if (bottomLayoutGroup != null)
