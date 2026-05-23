@@ -189,7 +189,7 @@ namespace TiraWantToCross.UI
             ApplyFullStretch(main, 24f, 24f, 24f, 24f);
             mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 120f, 100f);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 0f, 88f, 1f);
             topPanelLayoutElement = top.GetComponent<LayoutElement>();
             var topLayout = top.gameObject.AddComponent<VerticalLayoutGroup>();
             topLayout.spacing = 8f;
@@ -203,7 +203,8 @@ namespace TiraWantToCross.UI
             movesText = CreateText("Moves", top, "", 32, TextAnchor.MiddleLeft, 56);
             var headerActions = CreateHorizontalLayout("HeaderActions", top, 12f, false);
             var headerActionsLayout = headerActions.gameObject.AddComponent<LayoutElement>();
-            headerActionsLayout.preferredHeight = 74f;
+            headerActionsLayout.preferredHeight = 64f;
+            headerActionsLayout.minHeight = 56f;
             restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 72f, 28);
             stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 72f, 28);
 
@@ -231,7 +232,7 @@ namespace TiraWantToCross.UI
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
             boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 280f, 240f);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 0f, 320f, 4f);
             bottomPanelLayoutElement = bottom.GetComponent<LayoutElement>();
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
             bottomLayoutGroup.spacing = 12f;
@@ -241,7 +242,7 @@ namespace TiraWantToCross.UI
             bottomLayoutGroup.childForceExpandHeight = false;
             bottomLayoutGroup.childForceExpandWidth = true;
 
-            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 52f);
+            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 70f);
             objectiveLayoutElement = objectiveText.GetComponent<LayoutElement>();
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
             statusMessageText = CreateText("StatusMessage", bottom, string.Empty, 24, TextAnchor.MiddleLeft, 0f);
@@ -250,18 +251,18 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 34f);
+            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 40f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 122f;
-            selectionIconPanelLayoutElement.minHeight = 110f;
+            selectionIconPanelLayoutElement.preferredHeight = 148f;
+            selectionIconPanelLayoutElement.minHeight = 132f;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             routeRowLayoutElement = routeRowTransform.gameObject.AddComponent<LayoutElement>();
-            routeRowLayoutElement.preferredHeight = 72f;
-            routeRowLayoutElement.minHeight = 64f;
+            routeRowLayoutElement.preferredHeight = 88f;
+            routeRowLayoutElement.minHeight = 80f;
             for (var i = 0; i < 2; i++)
             {
                 var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 98, 36);
@@ -503,7 +504,7 @@ namespace TiraWantToCross.UI
                 if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
                 {
                     var capturedId = entity.entityId;
-                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 146f, 22, true);
+                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 112f, 20, true);
                     selectionIconVisuals[entity.entityId] = visuals;
                 }
 
@@ -1352,49 +1353,47 @@ namespace TiraWantToCross.UI
 
             if (topPanelLayoutElement != null)
             {
-                // Header children minimum total: StageName(80) + Moves(~44.8) + vertical padding(32) + spacing(16) ≒ 172.8
-                // Keep panel heights above that threshold to avoid persistent compression/overflow.
-                topPanelLayoutElement.preferredHeight = compact ? 176f : 188f;
-                topPanelLayoutElement.minHeight = compact ? 176f : 176f;
-                topPanelLayoutElement.flexibleHeight = 0f;
+                topPanelLayoutElement.preferredHeight = 0f;
+                topPanelLayoutElement.minHeight = compact ? 232f : 240f;
+                topPanelLayoutElement.flexibleHeight = 1f;
             }
 
             if (middlePanelLayoutElement != null)
             {
                 middlePanelLayoutElement.preferredHeight = 0f;
-                middlePanelLayoutElement.minHeight = compact ? 0f : 160f;
-                middlePanelLayoutElement.flexibleHeight = 1f;
+                middlePanelLayoutElement.minHeight = compact ? 220f : 260f;
+                middlePanelLayoutElement.flexibleHeight = compact ? 5f : 5.5f;
             }
 
             if (bottomPanelLayoutElement != null)
             {
-                bottomPanelLayoutElement.preferredHeight = compact ? 240f : 280f;
-                bottomPanelLayoutElement.minHeight = compact ? 240f : 260f;
-                bottomPanelLayoutElement.flexibleHeight = 0f;
+                bottomPanelLayoutElement.preferredHeight = 0f;
+                bottomPanelLayoutElement.minHeight = compact ? 320f : 360f;
+                bottomPanelLayoutElement.flexibleHeight = compact ? 4f : 3.5f;
             }
 
             if (objectiveLayoutElement != null)
             {
-                objectiveLayoutElement.preferredHeight = compact ? 48f : 52f;
-                objectiveLayoutElement.minHeight = compact ? 42f : 46f;
+                objectiveLayoutElement.preferredHeight = compact ? 64f : 72f;
+                objectiveLayoutElement.minHeight = compact ? 60f : 64f;
             }
 
             if (selectionCountLayoutElement != null)
             {
-                selectionCountLayoutElement.preferredHeight = compact ? 30f : 34f;
-                selectionCountLayoutElement.minHeight = compact ? 28f : 30f;
+                selectionCountLayoutElement.preferredHeight = compact ? 36f : 40f;
+                selectionCountLayoutElement.minHeight = compact ? 34f : 36f;
             }
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 110f : 122f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 102f : 110f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 136f : 152f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 130f : 140f;
             }
 
             if (routeRowLayoutElement != null)
             {
-                routeRowLayoutElement.preferredHeight = compact ? 64f : 72f;
-                routeRowLayoutElement.minHeight = compact ? 60f : 64f;
+                routeRowLayoutElement.preferredHeight = compact ? 84f : 92f;
+                routeRowLayoutElement.minHeight = compact ? 80f : 84f;
             }
 
             if (midLayoutGroup != null)
