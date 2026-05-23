@@ -189,7 +189,7 @@ namespace TiraWantToCross.UI
             ApplyFullStretch(main, 24f, 24f, 24f, 24f);
             mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 0f, 88f, 1f);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 100f, 100f, 0f);
             topPanelLayoutElement = top.GetComponent<LayoutElement>();
             var topLayout = top.gameObject.AddComponent<VerticalLayoutGroup>();
             topLayout.spacing = 8f;
@@ -208,7 +208,7 @@ namespace TiraWantToCross.UI
             restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 72f, 28);
             stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 72f, 28);
 
-            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 160f, 1f);
+            var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 180f, 1f);
             middlePanelLayoutElement = mid.GetComponent<LayoutElement>();
             boardPanel = CreateRect("BoardPanel", mid, new Color(0.66f, 0.89f, 0.98f, 1f));
             var boardLayout = boardPanel.gameObject.AddComponent<LayoutElement>();
@@ -232,7 +232,7 @@ namespace TiraWantToCross.UI
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
             boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 0f, 320f, 4f);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 300f, 300f, 0f);
             bottomPanelLayoutElement = bottom.GetComponent<LayoutElement>();
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
             bottomLayoutGroup.spacing = 12f;
@@ -256,13 +256,13 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 148f;
-            selectionIconPanelLayoutElement.minHeight = 132f;
+            selectionIconPanelLayoutElement.preferredHeight = 124f;
+            selectionIconPanelLayoutElement.minHeight = 116f;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             routeRowLayoutElement = routeRowTransform.gameObject.AddComponent<LayoutElement>();
-            routeRowLayoutElement.preferredHeight = 88f;
-            routeRowLayoutElement.minHeight = 80f;
+            routeRowLayoutElement.preferredHeight = 78f;
+            routeRowLayoutElement.minHeight = 72f;
             for (var i = 0; i < 2; i++)
             {
                 var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 98, 36);
@@ -355,6 +355,7 @@ namespace TiraWantToCross.UI
             for (var i = 0; i < locations.Length; i++)
             {
                 var location = locations[i];
+                var nodeScale = ResolveBoardNodeScale(locations.Length);
                 if (locationNodeRoots.ContainsKey(location.locationId))
                 {
                     var nextPosition = ResolveLocationNodePosition(i, locations.Length);
@@ -371,37 +372,38 @@ namespace TiraWantToCross.UI
                     {
                         existingTheme.LabelText.text = latestName;
                     }
+                    shouldRebuildRoutes |= ApplyLocationNodeScale(existingNode, nodeScale);
                     continue;
                 }
 
                 var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0.78f, 0.92f, 0.62f, 1f));
-                node.sizeDelta = new Vector2(220f, 240f);
+                node.sizeDelta = new Vector2(220f * nodeScale, 240f * nodeScale);
                 node.anchorMin = new Vector2(0.5f, 0.5f);
                 node.anchorMax = new Vector2(0.5f, 0.5f);
                 node.pivot = new Vector2(0.5f, 0.5f);
                 node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
 
                 var countLabel = CreateText("Count", node, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
-                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 96f);
+                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 96f * nodeScale);
                 countLabel.color = new Color(0.28f, 0.2f, 0.1f, 1f);
                 locationCountTexts[location.locationId] = countLabel;
 
                 var animalPanel = CreateRect("AnimalPanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                animalPanel.sizeDelta = new Vector2(184f, 144f);
+                animalPanel.sizeDelta = new Vector2(184f * nodeScale, 144f * nodeScale);
                 animalPanel.anchorMin = new Vector2(0.5f, 0.5f);
                 animalPanel.anchorMax = new Vector2(0.5f, 0.5f);
                 animalPanel.pivot = new Vector2(0.5f, 0.5f);
-                animalPanel.anchoredPosition = new Vector2(0f, 14f);
+                animalPanel.anchoredPosition = new Vector2(0f, 14f * nodeScale);
 
                 var grid = CreateRect("Entities", animalPanel, new Color(0f, 0f, 0f, 0f));
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(8f, 8f);
-                grid.offsetMax = new Vector2(-8f, -8f);
+                grid.offsetMin = new Vector2(8f * nodeScale, 8f * nodeScale);
+                grid.offsetMax = new Vector2(-8f * nodeScale, -8f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(74f, 54f);
-                gridComp.spacing = new Vector2(6f, 6f);
+                gridComp.cellSize = new Vector2(74f * nodeScale, 54f * nodeScale);
+                gridComp.spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
                 gridComp.childAlignment = TextAnchor.UpperCenter;
@@ -409,7 +411,7 @@ namespace TiraWantToCross.UI
 
                 var name = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
                 var nameLabel = CreateText("Name", node, name, 26, TextAnchor.MiddleCenter, 38f);
-                nameLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -96f);
+                nameLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -96f * nodeScale);
                 nameLabel.color = new Color(0.24f, 0.16f, 0.08f, 1f);
 
                 locationThemes[location.locationId] = new LocationVisualTheme
@@ -431,13 +433,142 @@ namespace TiraWantToCross.UI
             RenderRouteLines(context);
         }
 
-        private static Vector2 ResolveLocationNodePosition(int index, int count)
+        private static bool ApplyLocationNodeScale(RectTransform node, float nodeScale)
         {
-            if (count == 2) return new[] { new Vector2(-220f, 10f), new Vector2(220f, 10f) }[index];
-            if (count == 3) return new[] { new Vector2(-260f, 10f), new Vector2(0f, 10f), new Vector2(260f, 10f) }[index];
+            var changed = false;
+            changed |= ApplySizeDelta(node, new Vector2(220f * nodeScale, 240f * nodeScale));
+
+            var countLabelRect = node.Find("Count") as RectTransform;
+            if (countLabelRect != null)
+            {
+                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 96f * nodeScale));
+            }
+
+            var animalPanel = node.Find("AnimalPanel") as RectTransform;
+            if (animalPanel != null)
+            {
+                changed |= ApplySizeDelta(animalPanel, new Vector2(184f * nodeScale, 144f * nodeScale));
+                changed |= ApplyAnchoredPosition(animalPanel, new Vector2(0f, 14f * nodeScale));
+
+                var grid = animalPanel.Find("Entities") as RectTransform;
+                if (grid != null)
+                {
+                    changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 8f * nodeScale));
+                    changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -8f * nodeScale));
+                    var gridComp = grid.GetComponent<GridLayoutGroup>();
+                    if (gridComp != null)
+                    {
+                        changed |= ApplyGridCellSize(gridComp, new Vector2(74f * nodeScale, 54f * nodeScale));
+                        changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
+                    }
+                }
+            }
+
+            var nameLabelRect = node.Find("Name") as RectTransform;
+            if (nameLabelRect != null)
+            {
+                changed |= ApplyAnchoredPosition(nameLabelRect, new Vector2(0f, -96f * nodeScale));
+            }
+
+            return changed;
+        }
+
+        private static bool ApplySizeDelta(RectTransform rect, Vector2 next)
+        {
+            var current = rect.sizeDelta;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.sizeDelta = next;
+            return true;
+        }
+
+        private static bool ApplyAnchoredPosition(RectTransform rect, Vector2 next)
+        {
+            var current = rect.anchoredPosition;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.anchoredPosition = next;
+            return true;
+        }
+
+        private static bool ApplyOffsetMin(RectTransform rect, Vector2 next)
+        {
+            var current = rect.offsetMin;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.offsetMin = next;
+            return true;
+        }
+
+        private static bool ApplyOffsetMax(RectTransform rect, Vector2 next)
+        {
+            var current = rect.offsetMax;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.offsetMax = next;
+            return true;
+        }
+
+        private static bool ApplyGridCellSize(GridLayoutGroup gridComp, Vector2 next)
+        {
+            var current = gridComp.cellSize;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            gridComp.cellSize = next;
+            return true;
+        }
+
+        private static bool ApplyGridSpacing(GridLayoutGroup gridComp, Vector2 next)
+        {
+            var current = gridComp.spacing;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            gridComp.spacing = next;
+            return true;
+        }
+
+        private Vector2 ResolveLocationNodePosition(int index, int count)
+        {
+            var nodeScale = ResolveBoardNodeScale(count);
+            if (count == 2) return new[] { new Vector2(-220f * nodeScale, 10f * nodeScale), new Vector2(220f * nodeScale, 10f * nodeScale) }[index];
+            if (count == 3) return new[] { new Vector2(-260f * nodeScale, 10f * nodeScale), new Vector2(0f, 10f * nodeScale), new Vector2(260f * nodeScale, 10f * nodeScale) }[index];
             var col = index % 2;
             var row = index / 2;
-            return new Vector2(col == 0 ? -180f : 180f, 80f - row * 180f);
+            return new Vector2((col == 0 ? -180f : 180f) * nodeScale, (80f - row * 180f) * nodeScale);
+        }
+
+        private float ResolveBoardNodeScale(int count)
+        {
+            if (boardPanel == null)
+            {
+                return 1f;
+            }
+
+            var availableHeight = Mathf.Max(1f, boardPanel.rect.height - 140f);
+            var availableWidth = Mathf.Max(1f, boardPanel.rect.width - 80f);
+            var baseHeight = count <= 3 ? 320f : 500f;
+            var baseWidth = count == 2 ? 620f : count == 3 ? 760f : 540f;
+            var scaleByHeight = availableHeight / baseHeight;
+            var scaleByWidth = availableWidth / baseWidth;
+            return Mathf.Min(Mathf.Max(Mathf.Min(scaleByHeight, scaleByWidth), 0.01f), 1f);
         }
 
         private void RenderRouteLines(StageUIViewContext context)
@@ -447,7 +578,11 @@ namespace TiraWantToCross.UI
                 .Select(route => $"{route.routeId}:{route.from}->{route.to}")
                 .OrderBy(x => x)
                 .ToList();
-            var nextCacheKey = string.Join("|", routeKeyParts);
+            var nodePositionKeyParts = locationNodeRoots
+                .OrderBy(pair => pair.Key)
+                .Select(pair => $"{pair.Key}:{pair.Value.anchoredPosition.x:F1},{pair.Value.anchoredPosition.y:F1}")
+                .ToList();
+            var nextCacheKey = string.Join("|", routeKeyParts) + "#" + string.Join("|", nodePositionKeyParts);
             if (nextCacheKey == routeTopologyCacheKey)
             {
                 return;
@@ -467,8 +602,11 @@ namespace TiraWantToCross.UI
                 }
                 var line = CreateRect($"{route.routeId}_Line", routeLinesRoot, new Color(0.95f, 0.94f, 0.82f, 0.9f));
                 var diff = toNode.anchoredPosition - fromNode.anchoredPosition;
-                var len = Mathf.Max(24f, diff.magnitude - 220f);
-                line.sizeDelta = new Vector2(len, 8f);
+                var fromRadius = fromNode.rect.width * 0.5f;
+                var toRadius = toNode.rect.width * 0.5f;
+                var len = Mathf.Max(24f, diff.magnitude - (fromRadius + toRadius));
+                var thickness = Mathf.Max(5f, 8f * ResolveBoardNodeScale(locationNodeRoots.Count));
+                line.sizeDelta = new Vector2(len, thickness);
                 line.anchorMin = new Vector2(0.5f, 0.5f);
                 line.anchorMax = new Vector2(0.5f, 0.5f);
                 line.pivot = new Vector2(0.5f, 0.5f);
@@ -594,7 +732,9 @@ namespace TiraWantToCross.UI
                 markerRect.anchorMin = new Vector2(0.5f, 0.5f);
                 markerRect.anchorMax = new Vector2(0.5f, 0.5f);
                 markerRect.pivot = new Vector2(0.5f, 0.5f);
-                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f);
+                var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
+                var nodeScale = ResolveBoardNodeScale(locationCount);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f * nodeScale);
             }
         }
 
@@ -1353,47 +1493,48 @@ namespace TiraWantToCross.UI
 
             if (topPanelLayoutElement != null)
             {
-                topPanelLayoutElement.preferredHeight = 0f;
-                topPanelLayoutElement.minHeight = compact ? 232f : 240f;
-                topPanelLayoutElement.flexibleHeight = 1f;
+                var topPanelRequiredHeight = 80f + 44f + 56f + (8f * 2f) + 16f + 16f;
+                topPanelLayoutElement.preferredHeight = topPanelRequiredHeight;
+                topPanelLayoutElement.minHeight = topPanelRequiredHeight;
+                topPanelLayoutElement.flexibleHeight = 0f;
             }
 
             if (middlePanelLayoutElement != null)
             {
                 middlePanelLayoutElement.preferredHeight = 0f;
-                middlePanelLayoutElement.minHeight = compact ? 220f : 260f;
-                middlePanelLayoutElement.flexibleHeight = compact ? 5f : 5.5f;
+                middlePanelLayoutElement.minHeight = compact ? 180f : 200f;
+                middlePanelLayoutElement.flexibleHeight = 1f;
             }
 
             if (bottomPanelLayoutElement != null)
             {
-                bottomPanelLayoutElement.preferredHeight = 0f;
-                bottomPanelLayoutElement.minHeight = compact ? 320f : 360f;
-                bottomPanelLayoutElement.flexibleHeight = compact ? 4f : 3.5f;
+                bottomPanelLayoutElement.preferredHeight = compact ? 300f : 320f;
+                bottomPanelLayoutElement.minHeight = compact ? 286f : 300f;
+                bottomPanelLayoutElement.flexibleHeight = 0f;
             }
 
             if (objectiveLayoutElement != null)
             {
-                objectiveLayoutElement.preferredHeight = compact ? 64f : 72f;
-                objectiveLayoutElement.minHeight = compact ? 60f : 64f;
+                objectiveLayoutElement.preferredHeight = compact ? 50f : 56f;
+                objectiveLayoutElement.minHeight = compact ? 48f : 52f;
             }
 
             if (selectionCountLayoutElement != null)
             {
-                selectionCountLayoutElement.preferredHeight = compact ? 36f : 40f;
-                selectionCountLayoutElement.minHeight = compact ? 34f : 36f;
+                selectionCountLayoutElement.preferredHeight = compact ? 30f : 34f;
+                selectionCountLayoutElement.minHeight = compact ? 28f : 30f;
             }
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 136f : 152f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 130f : 140f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 116f : 126f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 112f : 120f;
             }
 
             if (routeRowLayoutElement != null)
             {
-                routeRowLayoutElement.preferredHeight = compact ? 84f : 92f;
-                routeRowLayoutElement.minHeight = compact ? 80f : 84f;
+                routeRowLayoutElement.preferredHeight = compact ? 72f : 82f;
+                routeRowLayoutElement.minHeight = compact ? 68f : 76f;
             }
 
             if (midLayoutGroup != null)
@@ -1404,8 +1545,8 @@ namespace TiraWantToCross.UI
 
             if (bottomLayoutGroup != null)
             {
-                bottomLayoutGroup.spacing = compact ? 8f : 12f;
-                bottomLayoutGroup.padding = compact ? new RectOffset(8, 8, 8, 8) : new RectOffset(12, 12, 12, 12);
+                bottomLayoutGroup.spacing = compact ? 6f : 8f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(8, 8, 8, 8) : new RectOffset(10, 10, 10, 10);
             }
 
             foreach (var panel in locationPanels.Values)
