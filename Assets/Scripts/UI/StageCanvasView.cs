@@ -1354,7 +1354,7 @@ namespace TiraWantToCross.UI
             if (topPanelLayoutElement != null)
             {
                 topPanelLayoutElement.preferredHeight = 0f;
-                topPanelLayoutElement.minHeight = compact ? 80f : 96f;
+                topPanelLayoutElement.minHeight = compact ? 232f : 240f;
                 topPanelLayoutElement.flexibleHeight = 1f;
             }
 
