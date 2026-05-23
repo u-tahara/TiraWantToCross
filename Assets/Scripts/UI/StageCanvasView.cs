@@ -355,6 +355,7 @@ namespace TiraWantToCross.UI
             for (var i = 0; i < locations.Length; i++)
             {
                 var location = locations[i];
+                var nodeScale = ResolveBoardNodeScale(locations.Length);
                 if (locationNodeRoots.ContainsKey(location.locationId))
                 {
                     var nextPosition = ResolveLocationNodePosition(i, locations.Length);
@@ -371,11 +372,11 @@ namespace TiraWantToCross.UI
                     {
                         existingTheme.LabelText.text = latestName;
                     }
+                    shouldRebuildRoutes |= ApplyLocationNodeScale(existingNode, nodeScale);
                     continue;
                 }
 
                 var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0.78f, 0.92f, 0.62f, 1f));
-                var nodeScale = ResolveBoardNodeScale(locations.Length);
                 node.sizeDelta = new Vector2(220f * nodeScale, 240f * nodeScale);
                 node.anchorMin = new Vector2(0.5f, 0.5f);
                 node.anchorMax = new Vector2(0.5f, 0.5f);
@@ -430,6 +431,77 @@ namespace TiraWantToCross.UI
             }
 
             RenderRouteLines(context);
+        }
+
+        private static bool ApplyLocationNodeScale(RectTransform node, float nodeScale)
+        {
+            var changed = false;
+            changed |= ApplySizeDelta(node, new Vector2(220f * nodeScale, 240f * nodeScale));
+
+            var countLabelRect = node.Find("Count") as RectTransform;
+            if (countLabelRect != null)
+            {
+                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 96f * nodeScale));
+            }
+
+            var animalPanel = node.Find("AnimalPanel") as RectTransform;
+            if (animalPanel != null)
+            {
+                changed |= ApplySizeDelta(animalPanel, new Vector2(184f * nodeScale, 144f * nodeScale));
+                changed |= ApplyAnchoredPosition(animalPanel, new Vector2(0f, 14f * nodeScale));
+
+                var grid = animalPanel.Find("Entities") as RectTransform;
+                if (grid != null)
+                {
+                    changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 8f * nodeScale));
+                    changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -8f * nodeScale));
+                    var gridComp = grid.GetComponent<GridLayoutGroup>();
+                    if (gridComp != null)
+                    {
+                        changed |= ApplyVector2(ref gridComp.cellSize, new Vector2(74f * nodeScale, 54f * nodeScale));
+                        changed |= ApplyVector2(ref gridComp.spacing, new Vector2(6f * nodeScale, 6f * nodeScale));
+                    }
+                }
+            }
+
+            var nameLabelRect = node.Find("Name") as RectTransform;
+            if (nameLabelRect != null)
+            {
+                changed |= ApplyAnchoredPosition(nameLabelRect, new Vector2(0f, -96f * nodeScale));
+            }
+
+            return changed;
+        }
+
+        private static bool ApplySizeDelta(RectTransform rect, Vector2 next)
+        {
+            return ApplyVector2(ref rect.sizeDelta, next);
+        }
+
+        private static bool ApplyAnchoredPosition(RectTransform rect, Vector2 next)
+        {
+            return ApplyVector2(ref rect.anchoredPosition, next);
+        }
+
+        private static bool ApplyOffsetMin(RectTransform rect, Vector2 next)
+        {
+            return ApplyVector2(ref rect.offsetMin, next);
+        }
+
+        private static bool ApplyOffsetMax(RectTransform rect, Vector2 next)
+        {
+            return ApplyVector2(ref rect.offsetMax, next);
+        }
+
+        private static bool ApplyVector2(ref Vector2 current, Vector2 next)
+        {
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            current = next;
+            return true;
         }
 
         private Vector2 ResolveLocationNodePosition(int index, int count)
