@@ -475,22 +475,50 @@ namespace TiraWantToCross.UI
 
         private static bool ApplySizeDelta(RectTransform rect, Vector2 next)
         {
-            return ApplyVector2(ref rect.sizeDelta, next);
+            var current = rect.sizeDelta;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.sizeDelta = next;
+            return true;
         }
 
         private static bool ApplyAnchoredPosition(RectTransform rect, Vector2 next)
         {
-            return ApplyVector2(ref rect.anchoredPosition, next);
+            var current = rect.anchoredPosition;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.anchoredPosition = next;
+            return true;
         }
 
         private static bool ApplyOffsetMin(RectTransform rect, Vector2 next)
         {
-            return ApplyVector2(ref rect.offsetMin, next);
+            var current = rect.offsetMin;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.offsetMin = next;
+            return true;
         }
 
         private static bool ApplyOffsetMax(RectTransform rect, Vector2 next)
         {
-            return ApplyVector2(ref rect.offsetMax, next);
+            var current = rect.offsetMax;
+            if ((current - next).sqrMagnitude <= 0.01f)
+            {
+                return false;
+            }
+
+            rect.offsetMax = next;
+            return true;
         }
 
         private static bool ApplyVector2(ref Vector2 current, Vector2 next)
