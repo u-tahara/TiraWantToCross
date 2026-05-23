@@ -47,6 +47,8 @@ namespace TiraWantToCross.UI
 
         private RectTransform boardPanel;
         private RectTransform playableBoardArea;
+        private RectTransform headerOverlay;
+        private RectTransform bottomOverlay;
         private RectTransform locationNodesRoot;
         private RectTransform routeLinesRoot;
         private RectTransform boatMarkerRoot;
@@ -209,7 +211,8 @@ namespace TiraWantToCross.UI
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
             boatLocationText = CreateText("BoatLocation", playableBoardArea, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var header = CreateRect("HeaderOverlay", root, new Color(0.15f, 0.2f, 0.25f, 0.82f));
+            headerOverlay = CreateRect("HeaderOverlay", root, new Color(0.15f, 0.2f, 0.25f, 0.82f));
+            var header = headerOverlay;
             header.anchorMin = new Vector2(0f, 1f);
             header.anchorMax = new Vector2(1f, 1f);
             header.pivot = new Vector2(0.5f, 1f);
@@ -228,7 +231,8 @@ namespace TiraWantToCross.UI
             restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 44f, 24);
             stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 44f, 24);
 
-            var bottom = CreateRect("BottomOverlay", root, new Color(0.2f, 0.15f, 0.2f, 0.85f));
+            bottomOverlay = CreateRect("BottomOverlay", root, new Color(0.2f, 0.15f, 0.2f, 0.85f));
+            var bottom = bottomOverlay;
             bottom.anchorMin = new Vector2(0f, 0f);
             bottom.anchorMax = new Vector2(1f, 0f);
             bottom.pivot = new Vector2(0.5f, 0f);
@@ -1506,12 +1510,25 @@ namespace TiraWantToCross.UI
                 routeRowLayoutElement.minHeight = compact ? 68f : 76f;
             }
 
+            var headerHeight = compact ? 96f : 108f;
+            var bottomHeight = compact ? 280f : 300f;
+
             if (playableBoardArea != null)
             {
-                var headerHeight = compact ? 96f : 108f;
-                var bottomHeight = compact ? 280f : 300f;
                 playableBoardArea.offsetMin = new Vector2(24f, bottomHeight);
                 playableBoardArea.offsetMax = new Vector2(-24f, -headerHeight);
+            }
+
+            if (headerOverlay != null)
+            {
+                headerOverlay.offsetMin = new Vector2(0f, -headerHeight);
+                headerOverlay.offsetMax = new Vector2(0f, 0f);
+            }
+
+            if (bottomOverlay != null)
+            {
+                bottomOverlay.offsetMin = new Vector2(0f, 0f);
+                bottomOverlay.offsetMax = new Vector2(0f, bottomHeight);
             }
 
             if (bottomLayoutGroup != null)
