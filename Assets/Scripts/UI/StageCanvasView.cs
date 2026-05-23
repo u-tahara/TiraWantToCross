@@ -1352,8 +1352,10 @@ namespace TiraWantToCross.UI
 
             if (topPanelLayoutElement != null)
             {
-                topPanelLayoutElement.preferredHeight = compact ? 100f : 120f;
-                topPanelLayoutElement.minHeight = compact ? 100f : 110f;
+                // Header children minimum total: StageName(80) + Moves(~44.8) + vertical padding(32) + spacing(16) ≒ 172.8
+                // Keep panel heights above that threshold to avoid persistent compression/overflow.
+                topPanelLayoutElement.preferredHeight = compact ? 176f : 188f;
+                topPanelLayoutElement.minHeight = compact ? 176f : 176f;
                 topPanelLayoutElement.flexibleHeight = 0f;
             }
 
