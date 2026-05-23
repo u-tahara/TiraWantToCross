@@ -147,6 +147,7 @@ namespace TiraWantToCross.UI
                 stageNameText.text = "ステージ未読込";
                 movesText.text = string.Empty;
                 objectiveText.text = string.Empty;
+                RenderStatusMessage(context, PopupResultState.Playing);
                 return;
             }
 
