@@ -62,6 +62,7 @@ namespace TiraWantToCross.UI
         private RectTransform routeRowTransform;
         private Text selectionCountText;
         private Text objectiveText;
+        private Text statusMessageText;
 
         private Button restartButton;
         private Button nextStageButton;
@@ -161,6 +162,7 @@ namespace TiraWantToCross.UI
             RenderRoutes(context);
 
             var popupState = ResolvePopupState(context);
+            RenderStatusMessage(context, popupState);
             RenderPopup(context, popupState);
 
             nextStageButton.gameObject.SetActive(false);
@@ -226,6 +228,9 @@ namespace TiraWantToCross.UI
 
             objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 84f);
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
+            statusMessageText = CreateText("StatusMessage", bottom, string.Empty, 24, TextAnchor.MiddleLeft, 48f);
+            statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
+            statusMessageText.gameObject.SetActive(false);
             selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 52f);
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
@@ -803,6 +808,22 @@ namespace TiraWantToCross.UI
                     popupMessageText.text = "ここまでのステージをすべてクリアしました！";
                     ConfigurePopupButton(popupPrimaryButton, "ステージ一覧へ", () => onOpenStageSelect?.Invoke());
                     break;
+            }
+        }
+
+
+        private void RenderStatusMessage(StageUIViewContext context, PopupResultState popupState)
+        {
+            if (statusMessageText == null)
+            {
+                return;
+            }
+
+            var canShowMessage = popupState == PopupResultState.Playing && !string.IsNullOrWhiteSpace(context.LastMessage);
+            statusMessageText.gameObject.SetActive(canShowMessage);
+            if (canShowMessage)
+            {
+                statusMessageText.text = context.LastMessage;
             }
         }
 
