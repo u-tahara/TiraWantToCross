@@ -15,9 +15,11 @@ namespace TiraWantToCross.UI
         {
             public Button Button;
             public Image PortraitImage;
+            public Image ButtonBackground;
             public Image SelectionFrame;
             public Text Label;
             public Text PortraitPlaceholderText;
+            public Text CheckmarkText;
             public bool HasPortraitSprite;
         }
 
@@ -236,9 +238,9 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             var iconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            iconPanelLayoutElement.preferredHeight = 140f;
-            iconPanelLayoutElement.minHeight = 120f;
-            selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 12f, true);
+            iconPanelLayoutElement.preferredHeight = 186f;
+            iconPanelLayoutElement.minHeight = 168f;
+            selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             var routeRowLayout = routeRowTransform.gameObject.AddComponent<LayoutElement>();
             routeRowLayout.preferredHeight = 122f;
@@ -484,7 +486,7 @@ namespace TiraWantToCross.UI
                 if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
                 {
                     var capturedId = entity.entityId;
-                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 120f, 20, true);
+                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 146f, 22, true);
                     selectionIconVisuals[entity.entityId] = visuals;
                 }
 
@@ -492,14 +494,31 @@ namespace TiraWantToCross.UI
                 visuals.Label.text = ResolveEntityDisplayName(entity);
                 var isSelected = context.SelectedEntities.Contains(entity.entityId);
                 visuals.SelectionFrame.enabled = isSelected;
-                visuals.SelectionFrame.color = new Color(0.3f, 0.8f, 0.32f, 1f);
+                visuals.SelectionFrame.color = new Color(0.2f, 0.8f, 0.3f, 1f);
                 var canInteract = isSelected || canSelectMore;
                 visuals.Button.interactable = true;
-                visuals.Button.image.color = isSelected
-                    ? new Color(0.82f, 0.97f, 0.84f, 1f)
+
+                if (visuals.ButtonBackground != null)
+                {
+                    visuals.ButtonBackground.color = isSelected
+                        ? new Color(0.86f, 0.98f, 0.88f, 1f)
+                        : canInteract
+                            ? new Color(1f, 1f, 1f, 1f)
+                            : new Color(0.93f, 0.93f, 0.93f, 1f);
+                }
+
+                if (visuals.CheckmarkText != null)
+                {
+                    visuals.CheckmarkText.enabled = isSelected;
+                    visuals.CheckmarkText.text = "✓";
+                }
+
+                visuals.Label.color = isSelected
+                    ? new Color(0.12f, 0.45f, 0.16f, 1f)
                     : canInteract
-                        ? new Color(1f, 1f, 1f, 1f)
-                        : new Color(0.92f, 0.92f, 0.92f, 1f);
+                        ? new Color(0.2f, 0.2f, 0.2f, 1f)
+                        : new Color(0.42f, 0.42f, 0.42f, 1f);
+
                 visuals.Button.transform.SetSiblingIndex(index);
             }
         }
@@ -1211,33 +1230,78 @@ namespace TiraWantToCross.UI
             var text = button.GetComponentInChildren<Text>();
             text.alignment = TextAnchor.LowerCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
-            if (circularStyle)
-            {
-                button.image.color = new Color(1f, 1f, 1f, 1f);
-            }
 
-            var portrait = CreateRect("Portrait", button.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
-            portrait.transform.SetSiblingIndex(0);
-            var portraitLayout = portrait.gameObject.AddComponent<LayoutElement>();
-            portraitLayout.preferredHeight = circularStyle ? preferredHeight - 42f : 50f;
-            portraitLayout.minHeight = circularStyle ? 64f : 40f;
+            var buttonLayout = button.gameObject.AddComponent<VerticalLayoutGroup>();
+            buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 6, 6) : new RectOffset(4, 4, 4, 4);
+            buttonLayout.spacing = circularStyle ? 4f : 2f;
+            buttonLayout.childAlignment = TextAnchor.UpperCenter;
+            buttonLayout.childControlWidth = true;
+            buttonLayout.childControlHeight = false;
+            buttonLayout.childForceExpandWidth = true;
+            buttonLayout.childForceExpandHeight = false;
 
-            var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, portraitLayout.preferredHeight);
+            var buttonImage = button.image;
+            buttonImage.color = Color.clear;
+            button.transition = Selectable.Transition.ColorTint;
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.95f, 0.99f, 1f, 1f);
+            colors.pressedColor = new Color(0.9f, 0.95f, 1f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = Color.white;
+            button.colors = colors;
+
+            var shell = CreateRect("Shell", button.transform, new Color(1f, 1f, 1f, 1f));
+            shell.transform.SetSiblingIndex(0);
+            var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
+            shellLayout.preferredHeight = circularStyle ? preferredHeight - 44f : preferredHeight - 24f;
+            shellLayout.preferredWidth = shellLayout.preferredHeight;
+            shellLayout.minHeight = circularStyle ? 108f : 64f;
+            shellLayout.minWidth = shellLayout.minHeight;
+            var shellImage = shell.GetComponent<Image>();
+
+            var portrait = CreateRect("Portrait", shell.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
+            ApplyFullStretch(portrait, 16f, 16f, 16f, 16f);
+
+            var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, shellLayout.preferredHeight - 32f);
             portraitText.color = new Color(0.15f, 0.2f, 0.25f, 0.9f);
 
-            var frame = CreateRect("SelectionFrame", button.transform, new Color(1f, 0.95f, 0.45f, 0.95f));
+            var frame = CreateRect("SelectionFrame", shell.transform, new Color(0.2f, 0.8f, 0.3f, 1f));
+            ApplyFullStretch(frame, -4f, -4f, -4f, -4f);
             frame.transform.SetAsLastSibling();
             var frameImage = frame.GetComponent<Image>();
             frameImage.raycastTarget = false;
             frameImage.enabled = false;
 
+            var checkmark = CreateText("Checkmark", shell.transform, "✓", 34, TextAnchor.MiddleCenter, 38f);
+            var checkmarkRect = checkmark.GetComponent<RectTransform>();
+            checkmarkRect.anchorMin = new Vector2(1f, 0f);
+            checkmarkRect.anchorMax = new Vector2(1f, 0f);
+            checkmarkRect.pivot = new Vector2(1f, 0f);
+            checkmarkRect.anchoredPosition = new Vector2(-6f, 2f);
+            checkmarkRect.sizeDelta = new Vector2(38f, 38f);
+            checkmark.color = new Color(0.16f, 0.68f, 0.24f, 1f);
+            checkmark.raycastTarget = false;
+            checkmark.enabled = false;
+
+            if (circularStyle)
+            {
+                text.fontSize = Mathf.Max(labelFontSize, 22);
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 14;
+                text.resizeTextMaxSize = 22;
+                shellImage.type = Image.Type.Simple;
+            }
+
             return new EntityVisualRefs
             {
                 Button = button,
                 PortraitImage = portrait.GetComponent<Image>(),
+                ButtonBackground = shellImage,
                 SelectionFrame = frameImage,
                 Label = text,
-                PortraitPlaceholderText = portraitText
+                PortraitPlaceholderText = portraitText,
+                CheckmarkText = checkmark
             };
         }
 
