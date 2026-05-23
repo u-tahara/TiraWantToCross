@@ -568,7 +568,7 @@ namespace TiraWantToCross.UI
             var baseWidth = count == 2 ? 620f : count == 3 ? 760f : 540f;
             var scaleByHeight = availableHeight / baseHeight;
             var scaleByWidth = availableWidth / baseWidth;
-            return Mathf.Clamp(Mathf.Min(scaleByHeight, scaleByWidth), 0.72f, 1f);
+            return Mathf.Min(Mathf.Max(Mathf.Min(scaleByHeight, scaleByWidth), 0.01f), 1f);
         }
 
         private void RenderRouteLines(StageUIViewContext context)
