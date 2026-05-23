@@ -732,7 +732,9 @@ namespace TiraWantToCross.UI
                 markerRect.anchorMin = new Vector2(0.5f, 0.5f);
                 markerRect.anchorMax = new Vector2(0.5f, 0.5f);
                 markerRect.pivot = new Vector2(0.5f, 0.5f);
-                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f);
+                var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
+                var nodeScale = ResolveBoardNodeScale(locationCount);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f * nodeScale);
             }
         }
 
