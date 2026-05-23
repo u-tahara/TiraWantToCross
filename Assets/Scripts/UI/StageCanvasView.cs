@@ -465,7 +465,11 @@ namespace TiraWantToCross.UI
                 .Select(route => $"{route.routeId}:{route.from}->{route.to}")
                 .OrderBy(x => x)
                 .ToList();
-            var nextCacheKey = string.Join("|", routeKeyParts);
+            var nodePositionKeyParts = locationNodeRoots
+                .OrderBy(pair => pair.Key)
+                .Select(pair => $"{pair.Key}:{pair.Value.anchoredPosition.x:F1},{pair.Value.anchoredPosition.y:F1}")
+                .ToList();
+            var nextCacheKey = string.Join("|", routeKeyParts) + "#" + string.Join("|", nodePositionKeyParts);
             if (nextCacheKey == routeTopologyCacheKey)
             {
                 return;
@@ -485,8 +489,11 @@ namespace TiraWantToCross.UI
                 }
                 var line = CreateRect($"{route.routeId}_Line", routeLinesRoot, new Color(0.95f, 0.94f, 0.82f, 0.9f));
                 var diff = toNode.anchoredPosition - fromNode.anchoredPosition;
-                var len = Mathf.Max(24f, diff.magnitude - 220f);
-                line.sizeDelta = new Vector2(len, 8f);
+                var fromRadius = fromNode.rect.width * 0.5f;
+                var toRadius = toNode.rect.width * 0.5f;
+                var len = Mathf.Max(24f, diff.magnitude - (fromRadius + toRadius));
+                var thickness = Mathf.Max(5f, 8f * ResolveBoardNodeScale(locationNodeRoots.Count));
+                line.sizeDelta = new Vector2(len, thickness);
                 line.anchorMin = new Vector2(0.5f, 0.5f);
                 line.anchorMax = new Vector2(0.5f, 0.5f);
                 line.pivot = new Vector2(0.5f, 0.5f);
@@ -1371,8 +1378,9 @@ namespace TiraWantToCross.UI
 
             if (topPanelLayoutElement != null)
             {
-                topPanelLayoutElement.preferredHeight = compact ? 100f : 112f;
-                topPanelLayoutElement.minHeight = compact ? 92f : 100f;
+                var topPanelRequiredHeight = 80f + 44f + 56f + (8f * 2f) + 16f + 16f;
+                topPanelLayoutElement.preferredHeight = topPanelRequiredHeight;
+                topPanelLayoutElement.minHeight = topPanelRequiredHeight;
                 topPanelLayoutElement.flexibleHeight = 0f;
             }
 
