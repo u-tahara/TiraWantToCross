@@ -494,7 +494,7 @@ namespace TiraWantToCross.UI
                 visuals.Label.text = ResolveEntityDisplayName(entity);
                 var isSelected = context.SelectedEntities.Contains(entity.entityId);
                 visuals.SelectionFrame.enabled = isSelected;
-                visuals.SelectionFrame.color = new Color(0.2f, 0.8f, 0.3f, 1f);
+                visuals.SelectionFrame.color = Color.clear;
                 var canInteract = isSelected || canSelectMore;
                 visuals.Button.interactable = true;
 
@@ -1266,11 +1266,16 @@ namespace TiraWantToCross.UI
             var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, shellLayout.preferredHeight - 32f);
             portraitText.color = new Color(0.15f, 0.2f, 0.25f, 0.9f);
 
-            var frame = CreateRect("SelectionFrame", shell.transform, new Color(0.2f, 0.8f, 0.3f, 1f));
+            var frame = CreateRect("SelectionFrame", shell.transform, Color.clear);
             ApplyFullStretch(frame, -4f, -4f, -4f, -4f);
             frame.transform.SetAsLastSibling();
             var frameImage = frame.GetComponent<Image>();
             frameImage.raycastTarget = false;
+            frameImage.color = Color.clear;
+            var frameOutline = frame.gameObject.AddComponent<Outline>();
+            frameOutline.effectColor = new Color(0.2f, 0.8f, 0.3f, 1f);
+            frameOutline.effectDistance = new Vector2(3f, 3f);
+            frameOutline.useGraphicAlpha = false;
             frameImage.enabled = false;
 
             var checkmark = CreateText("Checkmark", shell.transform, "✓", 34, TextAnchor.MiddleCenter, 38f);
