@@ -49,11 +49,8 @@ namespace TiraWantToCross.UI
         private RectTransform boatMarkerRoot;
         private Transform selectionIconsContainer;
 
-        private Text stageTitleText;
         private Text stageNameText;
         private Text movesText;
-        private Text resultText;
-        private Text messageText;
         private Text boatLocationText;
         private Image boatImage;
         private Text boatLabelText;
@@ -63,7 +60,6 @@ namespace TiraWantToCross.UI
         private VerticalLayoutGroup bottomLayoutGroup;
 
         private RectTransform routeRowTransform;
-        private RectTransform actionRowTransform;
         private Text selectionCountText;
         private Text objectiveText;
 
@@ -148,17 +144,17 @@ namespace TiraWantToCross.UI
             if (context.GameState == null || context.StageData == null)
             {
                 stageNameText.text = "ステージ未読込";
-                messageText.text = context.LastMessage;
+                movesText.text = string.Empty;
+                objectiveText.text = string.Empty;
                 return;
             }
 
-            stageNameText.text = $"{context.StageData.stageId} - {context.StageData.title}";
-            stageTitleText.text = "Tira Want To Cross";
-            movesText.text = $"moves: {context.GameState.MoveCount} / optimal: {context.StageData.optimalMoves}";
-            resultText.text = BuildResultText(context.GameState);
-            messageText.text = context.LastMessage;
+            var stageNumber = ResolveStageIndex(context.StageIds, context.StageData.stageId) + 1;
+            var stageLabel = stageNumber > 0 ? $"ステージ {stageNumber}" : context.StageData.stageId;
+            stageNameText.text = $"{stageLabel}\n{context.StageData.title}";
+            movesText.text = $"手数 {context.GameState.MoveCount} / 最短 {context.StageData.optimalMoves}";
             objectiveText.text = BuildObjectiveText(context.StageData);
-            boatLocationText.text = $"ボート位置: {context.GameState.BoatLocation}";
+            boatLocationText.text = string.Empty;
 
             RenderBoardEntities(context);
             RenderSelectionIcons(context);
@@ -180,7 +176,7 @@ namespace TiraWantToCross.UI
             ApplyFullStretch(main, 24f, 24f, 24f, 24f);
             mainLayoutGroup = main.GetComponent<VerticalLayoutGroup>();
 
-            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 260f, 220f);
+            var top = CreatePanel("TopPanel", main, new Color(0.15f, 0.2f, 0.25f, 0.8f), 220f, 180f);
             var topLayout = top.gameObject.AddComponent<VerticalLayoutGroup>();
             topLayout.spacing = 8f;
             topLayout.padding = new RectOffset(16, 16, 16, 16);
@@ -189,9 +185,13 @@ namespace TiraWantToCross.UI
             topLayout.childForceExpandHeight = false;
             topLayout.childForceExpandWidth = true;
             topLayout.childAlignment = TextAnchor.UpperCenter;
-            stageTitleText = CreateText("Title", top, "", 46, TextAnchor.MiddleCenter, 70);
-            stageNameText = CreateText("StageName", top, "", 42, TextAnchor.MiddleCenter, 88);
-            movesText = CreateText("Moves", top, "", 36, TextAnchor.MiddleCenter, 66);
+            stageNameText = CreateText("StageName", top, "", 36, TextAnchor.MiddleLeft, 100);
+            movesText = CreateText("Moves", top, "", 32, TextAnchor.MiddleLeft, 56);
+            var headerActions = CreateHorizontalLayout("HeaderActions", top, 12f, false);
+            var headerActionsLayout = headerActions.gameObject.AddComponent<LayoutElement>();
+            headerActionsLayout.preferredHeight = 74f;
+            restartButton = CreateButton("Restart", headerActions, "やり直す", () => onRestart?.Invoke(), 72f, 28);
+            stageListButton = CreateButton("StageSelect", headerActions, "ステージ一覧", () => onOpenStageSelect?.Invoke(), 72f, 28);
 
             var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 380f, 1f);
             boardPanel = CreateRect("BoardPanel", mid, new Color(0.66f, 0.89f, 0.98f, 1f));
@@ -215,7 +215,7 @@ namespace TiraWantToCross.UI
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
             boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
 
-            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 460f, 420f);
+            var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 400f, 340f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
             bottomLayoutGroup.spacing = 12f;
             bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
@@ -224,6 +224,8 @@ namespace TiraWantToCross.UI
             bottomLayoutGroup.childForceExpandHeight = false;
             bottomLayoutGroup.childForceExpandWidth = true;
 
+            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 84f);
+            objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
             selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 52f);
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
@@ -241,28 +243,8 @@ namespace TiraWantToCross.UI
                 routeButtons.Add(routeButton);
             }
 
-            actionRowTransform = CreateHorizontalLayout("ActionRow", bottom, 12f, false);
-            var actionRowLayout = actionRowTransform.gameObject.AddComponent<LayoutElement>();
-            actionRowLayout.preferredHeight = 112f;
-            actionRowLayout.minHeight = 92f;
-            CreateButton("ClearSelection", actionRowTransform, "選択解除", () => onClearSelection?.Invoke(), 90, 32);
-            restartButton = CreateButton("Restart", actionRowTransform, "Restart", () => onRestart?.Invoke(), 90, 34);
-            nextStageButton = CreateButton("NextStage", actionRowTransform, "NextStage", () => onNextStage?.Invoke(), 90, 32);
-            stageListButton = CreateButton("StageSelect", actionRowTransform, "ステージ一覧へ", () => onOpenStageSelect?.Invoke(), 90, 30);
-            objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 28, TextAnchor.MiddleCenter, 56f);
-            objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
-
-            var resultPanel = CreatePanel("ResultPanel", main, new Color(0.1f, 0.3f, 0.2f, 0.7f), 120f, 96f);
-            var resultLayout = resultPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            resultLayout.spacing = 6f;
-            resultLayout.padding = new RectOffset(16, 16, 12, 12);
-            resultLayout.childControlHeight = true;
-            resultLayout.childControlWidth = true;
-            resultLayout.childForceExpandHeight = false;
-            resultLayout.childForceExpandWidth = true;
-            resultLayout.childAlignment = TextAnchor.UpperCenter;
-            resultText = CreateText("Result", resultPanel, "", 38, TextAnchor.MiddleCenter, 74);
-            messageText = CreateText("Message", resultPanel, "", 30, TextAnchor.MiddleCenter, 64);
+            nextStageButton = CreateButton("NextStage", bottom, "次のステージ", () => onNextStage?.Invoke(), 1f, 1);
+            nextStageButton.gameObject.SetActive(false);
 
             BuildPopupOverlay(root);
             BuildStageSelect(root);
@@ -991,6 +973,25 @@ namespace TiraWantToCross.UI
             return -1;
         }
 
+
+        private static int ResolveStageIndex(IReadOnlyList<string> stageIds, string stageId)
+        {
+            if (stageIds == null || string.IsNullOrWhiteSpace(stageId))
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < stageIds.Count; i++)
+            {
+                if (stageIds[i] == stageId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
         private static string ResolveStageDescription(StageData stageData)
         {
             if (!string.IsNullOrWhiteSpace(stageData?.uiText?.stageSelectDescription))
@@ -1256,12 +1257,10 @@ namespace TiraWantToCross.UI
                 le.flexibleWidth = 1f;
             }
 
-            ScaleText(stageTitleText, compact ? 38 : 48);
-            ScaleText(stageNameText, compact ? 42 : 52);
-            ScaleText(movesText, compact ? 32 : 40);
-            ScaleText(resultText, compact ? 34 : 40);
-            ScaleText(messageText, compact ? 26 : 32);
-            ScaleText(boatLocationText, compact ? 26 : 32);
+            ScaleText(stageNameText, compact ? 32 : 36);
+            ScaleText(movesText, compact ? 28 : 32);
+            ScaleText(objectiveText, compact ? 22 : 26);
+            ScaleText(selectionCountText, compact ? 26 : 30);
         }
 
         private void ScaleText(Text text, int fontSize)
