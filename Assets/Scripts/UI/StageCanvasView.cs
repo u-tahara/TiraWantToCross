@@ -274,8 +274,6 @@ namespace TiraWantToCross.UI
 
             BuildPopupOverlay(root);
             BuildStageSelect(root);
-            header.SetAsLastSibling();
-            bottom.SetAsLastSibling();
             ApplyResponsiveLayout();
         }
 
