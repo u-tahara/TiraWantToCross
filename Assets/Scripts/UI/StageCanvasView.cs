@@ -37,13 +37,16 @@ namespace TiraWantToCross.UI
         private readonly List<Button> routeButtons = new List<Button>();
         private readonly Dictionary<string, Sprite> boardSpriteCache = new Dictionary<string, Sprite>();
         private readonly Dictionary<string, Sprite> iconSpriteCache = new Dictionary<string, Sprite>();
+        private readonly Dictionary<string, RectTransform> locationNodeRoots = new Dictionary<string, RectTransform>();
+        private readonly Dictionary<string, RectTransform> locationEntityGrids = new Dictionary<string, RectTransform>();
+        private readonly Dictionary<string, Text> locationCountTexts = new Dictionary<string, Text>();
+        private readonly List<RectTransform> routeLineVisuals = new List<RectTransform>();
+        private string routeTopologyCacheKey = string.Empty;
 
-        private Transform leftContainer;
-        private Transform rightContainer;
-        private Transform boatContainer;
-        private Transform leftBoardEntitiesContainer;
-        private Transform rightBoardEntitiesContainer;
-        private Transform boatBoardEntitiesContainer;
+        private RectTransform boardPanel;
+        private RectTransform locationNodesRoot;
+        private RectTransform routeLinesRoot;
+        private RectTransform boatMarkerRoot;
         private Transform selectionIconsContainer;
 
         private Text stageTitleText;
@@ -191,42 +194,26 @@ namespace TiraWantToCross.UI
             movesText = CreateText("Moves", top, "", 36, TextAnchor.MiddleCenter, 66);
 
             var mid = CreatePanel("MiddlePanel", main, new Color(0.15f, 0.15f, 0.2f, 0.7f), 0f, 560f, 1f);
-            var midLayout = CreateHorizontalLayout("MidLayout", mid, 12f, true);
-            midLayoutGroup = midLayout.GetComponent<HorizontalLayoutGroup>();
-
-            var left = CreateLocationArea("左岸", midLayout, "left", new Color(0.3f, 0.38f, 0.26f, 0.9f));
-            leftContainer = left;
-            leftBoardEntitiesContainer = CreateVerticalLayout("LeftBoardEntities", left, 8f);
-            var river = CreateLocationArea("川", midLayout, "river", new Color(0.2f, 0.35f, 0.55f, 0.9f));
-            boatContainer = CreateRect("BoatContainer", river, new Color(0.6f, 0.5f, 0.2f, 0.9f));
-            var boatLayout = boatContainer.gameObject.AddComponent<VerticalLayoutGroup>();
-            boatLayout.childControlHeight = true;
-            boatLayout.childControlWidth = true;
-            boatLayout.childForceExpandHeight = false;
-            boatLayout.childForceExpandWidth = true;
-            boatLayout.childAlignment = TextAnchor.UpperCenter;
-            boatLayout.spacing = 8f;
-            boatLayout.padding = new RectOffset(12, 12, 12, 12);
-            var boatAreaLayout = boatContainer.gameObject.AddComponent<LayoutElement>();
-            boatAreaLayout.minHeight = 240f;
-            boatAreaLayout.flexibleHeight = 1f;
-            boatImage = CreateRect("BoatImage", boatContainer, new Color(0.75f, 0.55f, 0.2f, 1f)).GetComponent<Image>();
-            var boatImageLayout = boatImage.gameObject.AddComponent<LayoutElement>();
-            boatImageLayout.preferredHeight = 150f;
-            boatImageLayout.minHeight = 100f;
-            boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "Boat << LEFT", 28, TextAnchor.MiddleCenter, 150f);
-            boatLabelText.color = new Color(0.15f, 0.1f, 0.08f, 1f);
-            boatBoardEntitiesContainer = CreateHorizontalLayout("BoatBoardEntities", boatContainer, 8f);
-            boatLocationText = CreateText("BoatLocation", boatContainer, "", 32, TextAnchor.MiddleCenter, 50);
+            boardPanel = CreateRect("BoardPanel", mid, new Color(0.66f, 0.89f, 0.98f, 1f));
+            var boardLayout = boardPanel.gameObject.AddComponent<LayoutElement>();
+            boardLayout.flexibleHeight = 1f;
+            boardLayout.minHeight = 560f;
+            ApplyFullStretch(boardPanel, 8f, 8f, 8f, 8f);
+            locationNodesRoot = new GameObject("LocationNodesRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            locationNodesRoot.SetParent(boardPanel, false);
+            ApplyFullStretch(locationNodesRoot, 20f, 20f, 20f, 120f);
+            routeLinesRoot = new GameObject("RouteLinesRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            routeLinesRoot.SetParent(boardPanel, false);
+            ApplyFullStretch(routeLinesRoot, 20f, 20f, 20f, 120f);
+            boatMarkerRoot = new GameObject("BoatMarker", typeof(RectTransform)).GetComponent<RectTransform>();
+            boatMarkerRoot.SetParent(boardPanel, false);
+            ApplyFullStretch(boatMarkerRoot, 20f, 20f, 20f, 20f);
+            boatImage = CreateRect("BoatImage", boatMarkerRoot, new Color(0.75f, 0.55f, 0.2f, 1f)).GetComponent<Image>();
+            var boatRect = boatImage.GetComponent<RectTransform>();
+            boatRect.sizeDelta = new Vector2(150f, 90f);
+            boatLabelText = CreateText("BoatVisualLabel", boatImage.transform, "BOAT", 24, TextAnchor.MiddleCenter, 80f);
             boatSprite = Resources.Load<Sprite>("Sprites/Boat/boat");
-
-            var right = CreateLocationArea("右岸", midLayout, "right", new Color(0.4f, 0.3f, 0.2f, 0.9f));
-            rightContainer = right;
-            rightBoardEntitiesContainer = CreateVerticalLayout("RightBoardEntities", right, 8f);
-
-            locationPanels["left"] = left as RectTransform;
-            locationPanels["right"] = right as RectTransform;
-            locationPanels["river"] = river as RectTransform;
+            boatLocationText = CreateText("BoatLocation", boardPanel, "", 28, TextAnchor.LowerCenter, 44f);
 
             var bottom = CreatePanel("BottomPanel", main, new Color(0.2f, 0.15f, 0.2f, 0.8f), 420f, 360f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -284,6 +271,7 @@ namespace TiraWantToCross.UI
 
         private void RenderBoardEntities(StageUIViewContext context)
         {
+            BuildLocationNodes(context);
             var entities = context.StageData.entities ?? Array.Empty<EntityData>();
             var activeIds = new HashSet<string>(entities.Select(x => x.entityId));
 
@@ -307,12 +295,15 @@ namespace TiraWantToCross.UI
                     continue;
                 }
 
-                var parent = ResolveBoardParent(location);
-                var parentKey = parent == leftBoardEntitiesContainer ? "left" : parent == rightBoardEntitiesContainer ? "right" : "boat";
+                if (!locationEntityGrids.TryGetValue(location, out var parent))
+                {
+                    continue;
+                }
+                var parentKey = location;
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => { }, 72f, 18, false);
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, 58f, 16, false);
                     boardEntityVisuals[entityId] = visuals;
                     boardEntityParents[entityId] = parentKey;
                 }
@@ -324,10 +315,157 @@ namespace TiraWantToCross.UI
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
                 visuals.Label.text = ResolveEntityDisplayName(entity);
-                visuals.Button.image.color = location == context.GameState.BoatLocation ? new Color(0.88f, 0.92f, 1f, 1f) : Color.white;
+                visuals.Button.image.color = Color.white;
                 visuals.SelectionFrame.enabled = false;
             }
+            foreach (var location in context.StageData.locations ?? Array.Empty<LocationData>())
+            {
+                var count = entities.Count(e => context.GameState.EntityLocations.TryGetValue(e.entityId, out var loc) && loc == location.locationId);
+                if (locationCountTexts.TryGetValue(location.locationId, out var countText))
+                {
+                    countText.text = $"{count}ひき";
+                }
+            }
             UpdateLocationVisualTheme(context.GameState.BoatLocation);
+        }
+
+        private void BuildLocationNodes(StageUIViewContext context)
+        {
+            var locations = context.StageData.locations ?? Array.Empty<LocationData>();
+            var shouldRebuildRoutes = false;
+            var activeIds = new HashSet<string>(locations.Select(x => x.locationId));
+            foreach (var staleId in locationNodeRoots.Keys.Where(x => !activeIds.Contains(x)).ToList())
+            {
+                GameObject.Destroy(locationNodeRoots[staleId].gameObject);
+                locationNodeRoots.Remove(staleId);
+                locationEntityGrids.Remove(staleId);
+                locationCountTexts.Remove(staleId);
+                locationThemes.Remove(staleId);
+                shouldRebuildRoutes = true;
+            }
+
+            for (var i = 0; i < locations.Length; i++)
+            {
+                var location = locations[i];
+                if (locationNodeRoots.ContainsKey(location.locationId))
+                {
+                    var nextPosition = ResolveLocationNodePosition(i, locations.Length);
+                    var existingNode = locationNodeRoots[location.locationId];
+                    var delta = existingNode.anchoredPosition - nextPosition;
+                    if (delta.sqrMagnitude > 0.01f)
+                    {
+                        existingNode.anchoredPosition = nextPosition;
+                        shouldRebuildRoutes = true;
+                    }
+
+                    var latestName = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
+                    if (locationThemes.TryGetValue(location.locationId, out var existingTheme) && existingTheme.LabelText != null && existingTheme.LabelText.text != latestName)
+                    {
+                        existingTheme.LabelText.text = latestName;
+                    }
+                    continue;
+                }
+
+                var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0.78f, 0.92f, 0.62f, 1f));
+                node.sizeDelta = new Vector2(220f, 240f);
+                node.anchorMin = new Vector2(0f, 0f);
+                node.anchorMax = new Vector2(0f, 0f);
+                node.pivot = new Vector2(0.5f, 0.5f);
+                node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
+
+                var countLabel = CreateText("Count", node, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
+                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 96f);
+                countLabel.color = new Color(0.28f, 0.2f, 0.1f, 1f);
+                locationCountTexts[location.locationId] = countLabel;
+
+                var animalPanel = CreateRect("AnimalPanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
+                animalPanel.sizeDelta = new Vector2(180f, 140f);
+                animalPanel.anchorMin = new Vector2(0.5f, 0.5f);
+                animalPanel.anchorMax = new Vector2(0.5f, 0.5f);
+                animalPanel.pivot = new Vector2(0.5f, 0.5f);
+                animalPanel.anchoredPosition = new Vector2(0f, 14f);
+                var grid = CreateHorizontalLayout("Entities", animalPanel, 8f, true);
+                var gridLayout = grid.GetComponent<HorizontalLayoutGroup>();
+                gridLayout.childControlWidth = false;
+                gridLayout.childForceExpandWidth = false;
+                gridLayout.padding = new RectOffset(10, 10, 10, 10);
+                var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
+                gridComp.cellSize = new Vector2(74f, 56f);
+                gridComp.spacing = new Vector2(8f, 8f);
+                gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                gridComp.constraintCount = 2;
+                GameObject.Destroy(gridLayout);
+                locationEntityGrids[location.locationId] = grid;
+
+                var name = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
+                var nameLabel = CreateText("Name", node, name, 26, TextAnchor.MiddleCenter, 38f);
+                nameLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -96f);
+                nameLabel.color = new Color(0.24f, 0.16f, 0.08f, 1f);
+
+                locationThemes[location.locationId] = new LocationVisualTheme
+                {
+                    LocationId = location.locationId,
+                    BackgroundImage = node.GetComponent<Image>(),
+                    LabelText = nameLabel,
+                    BaseColor = new Color(0.78f, 0.92f, 0.62f, 1f)
+                };
+                locationNodeRoots[location.locationId] = node;
+                shouldRebuildRoutes = true;
+            }
+
+            if (shouldRebuildRoutes)
+            {
+                routeTopologyCacheKey = string.Empty;
+            }
+
+            RenderRouteLines(context);
+        }
+
+        private static Vector2 ResolveLocationNodePosition(int index, int count)
+        {
+            if (count == 2) return new[] { new Vector2(-220f, 10f), new Vector2(220f, 10f) }[index];
+            if (count == 3) return new[] { new Vector2(-260f, 10f), new Vector2(0f, 10f), new Vector2(260f, 10f) }[index];
+            var col = index % 2;
+            var row = index / 2;
+            return new Vector2(col == 0 ? -180f : 180f, 80f - row * 180f);
+        }
+
+        private void RenderRouteLines(StageUIViewContext context)
+        {
+            var routes = context.StageData.routes ?? Array.Empty<RouteData>();
+            var routeKeyParts = routes
+                .Select(route => $"{route.routeId}:{route.from}->{route.to}")
+                .OrderBy(x => x)
+                .ToList();
+            var nextCacheKey = string.Join("|", routeKeyParts);
+            if (nextCacheKey == routeTopologyCacheKey)
+            {
+                return;
+            }
+
+            foreach (var line in routeLineVisuals)
+            {
+                GameObject.Destroy(line.gameObject);
+            }
+            routeLineVisuals.Clear();
+            foreach (var route in routes)
+            {
+                if (!locationNodeRoots.TryGetValue(route.from, out var fromNode) || !locationNodeRoots.TryGetValue(route.to, out var toNode))
+                {
+                    continue;
+                }
+                var line = CreateRect($"{route.routeId}_Line", routeLinesRoot, new Color(0.95f, 0.94f, 0.82f, 0.9f));
+                var diff = toNode.anchoredPosition - fromNode.anchoredPosition;
+                var len = Mathf.Max(24f, diff.magnitude - 220f);
+                line.sizeDelta = new Vector2(len, 8f);
+                line.anchorMin = new Vector2(0f, 0f);
+                line.anchorMax = new Vector2(0f, 0f);
+                line.pivot = new Vector2(0.5f, 0.5f);
+                line.anchoredPosition = (fromNode.anchoredPosition + toNode.anchoredPosition) * 0.5f;
+                line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg);
+                routeLineVisuals.Add(line);
+            }
+            routeTopologyCacheKey = nextCacheKey;
         }
 
         private void RenderSelectionIcons(StageUIViewContext context)
@@ -375,11 +513,6 @@ namespace TiraWantToCross.UI
             }
         }
 
-        private Transform ResolveBoardParent(string entityLocation)
-        {
-            return entityLocation == "right" ? rightBoardEntitiesContainer : leftBoardEntitiesContainer;
-        }
-
         private void RenderRoutes(StageUIViewContext context)
         {
             for (var i = 0; i < routeButtons.Count; i++)
@@ -399,11 +532,11 @@ namespace TiraWantToCross.UI
                 routeButtons[i].interactable = CanMoveSelectedEntities(context);
             }
 
-            UpdateBoatVisual(context.GameState.BoatLocation);
+            UpdateBoatVisual(context.GameState.BoatLocation, context);
         }
 
 
-        private void UpdateBoatVisual(string boatLocation)
+        private void UpdateBoatVisual(string boatLocation, StageUIViewContext context)
         {
             if (boatImage != null)
             {
@@ -417,16 +550,23 @@ namespace TiraWantToCross.UI
                 else
                 {
                     boatImage.sprite = null;
-                    boatImage.color = boatLocation == "left"
-                        ? new Color(0.75f, 0.55f, 0.2f, 1f)
-                        : new Color(0.55f, 0.75f, 0.25f, 1f);
+                    boatImage.color = new Color(0.75f, 0.55f, 0.2f, 1f);
                 }
             }
 
             if (boatLabelText != null)
             {
                 boatLabelText.enabled = boatSprite == null;
-                boatLabelText.text = boatLocation == "left" ? "Boat << LEFT" : "Boat RIGHT >>";
+                boatLabelText.text = "BOAT";
+            }
+
+            if (locationNodeRoots.TryGetValue(boatLocation, out var node))
+            {
+                var markerRect = boatImage.GetComponent<RectTransform>();
+                markerRect.anchorMin = new Vector2(0f, 0f);
+                markerRect.anchorMax = new Vector2(0f, 0f);
+                markerRect.pivot = new Vector2(0.5f, 0.5f);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -110f);
             }
         }
 
