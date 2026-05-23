@@ -357,6 +357,12 @@ namespace TiraWantToCross.UI
                         existingNode.anchoredPosition = nextPosition;
                         shouldRebuildRoutes = true;
                     }
+
+                    var latestName = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
+                    if (locationThemes.TryGetValue(location.locationId, out var existingTheme) && existingTheme.LabelText != null && existingTheme.LabelText.text != latestName)
+                    {
+                        existingTheme.LabelText.text = latestName;
+                    }
                     continue;
                 }
 
