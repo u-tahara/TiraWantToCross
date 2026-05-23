@@ -251,6 +251,8 @@ namespace TiraWantToCross.UI
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
             statusMessageText = CreateText("StatusMessage", bottom, string.Empty, 24, TextAnchor.MiddleLeft, 0f);
             statusMessageLayoutElement = statusMessageText.GetComponent<LayoutElement>();
+            statusMessageLayoutElement.ignoreLayout = true;
+            statusMessageLayoutElement.preferredHeight = 0f;
             statusMessageLayoutElement.minHeight = 0f;
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
@@ -1002,17 +1004,15 @@ namespace TiraWantToCross.UI
                 return;
             }
 
-            var canShowMessage = popupState == PopupResultState.Playing && !string.IsNullOrWhiteSpace(context.LastMessage);
-            statusMessageText.gameObject.SetActive(canShowMessage);
+            // BottomPanel の縦レイアウトを固定するため、ステータスメッセージは常に非表示にする。
+            statusMessageText.gameObject.SetActive(false);
+            statusMessageText.text = string.Empty;
             if (statusMessageLayoutElement != null)
             {
-                statusMessageLayoutElement.preferredHeight = canShowMessage ? 48f : 0f;
-                statusMessageLayoutElement.minHeight = canShowMessage ? 36f : 0f;
-            }
-
-            if (canShowMessage)
-            {
-                statusMessageText.text = context.LastMessage;
+                statusMessageLayoutElement.ignoreLayout = true;
+                statusMessageLayoutElement.preferredHeight = 0f;
+                statusMessageLayoutElement.minHeight = 0f;
+                statusMessageLayoutElement.flexibleHeight = 0f;
             }
         }
 
