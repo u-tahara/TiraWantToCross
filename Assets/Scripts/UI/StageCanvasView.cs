@@ -42,7 +42,6 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, Sprite> iconSpriteCache = new Dictionary<string, Sprite>();
         private readonly Dictionary<string, RectTransform> locationNodeRoots = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, RectTransform> locationEntityGrids = new Dictionary<string, RectTransform>();
-        private readonly Dictionary<string, Text> locationCountTexts = new Dictionary<string, Text>();
         private readonly List<RectTransform> routeLineVisuals = new List<RectTransform>();
         private static Sprite circularBorderSprite;
         private static Sprite circularMaskSprite;
@@ -215,8 +214,8 @@ namespace TiraWantToCross.UI
             playableBoardArea.anchorMin = new Vector2(0f, 0f);
             playableBoardArea.anchorMax = new Vector2(1f, 1f);
             playableBoardArea.pivot = new Vector2(0.5f, 0.5f);
-            playableBoardArea.offsetMin = new Vector2(24f, 390f);
-            playableBoardArea.offsetMax = new Vector2(-24f, -140f);
+            playableBoardArea.offsetMin = new Vector2(24f, 374f);
+            playableBoardArea.offsetMax = new Vector2(-24f, -156f);
 
             routeLinesRoot = new GameObject("RouteLines", typeof(RectTransform)).GetComponent<RectTransform>();
             routeLinesRoot.SetParent(playableBoardArea, false);
@@ -428,7 +427,7 @@ namespace TiraWantToCross.UI
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => { }, 58f, 16, false);
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, 88f, 16, false);
                     boardEntityVisuals[entityId] = visuals;
                     boardEntityParents[entityId] = parentKey;
                 }
@@ -444,14 +443,6 @@ namespace TiraWantToCross.UI
                 visuals.Button.image.color = Color.white;
                 visuals.CircleBorderImage.enabled = false;
             }
-            foreach (var location in context.StageData.locations ?? Array.Empty<LocationData>())
-            {
-                var count = entities.Count(e => context.GameState.EntityLocations.TryGetValue(e.entityId, out var loc) && loc == location.locationId);
-                if (locationCountTexts.TryGetValue(location.locationId, out var countText))
-                {
-                    countText.text = $"{count}ひき";
-                }
-            }
             UpdateLocationVisualTheme(context.GameState.BoatLocation);
         }
 
@@ -465,7 +456,6 @@ namespace TiraWantToCross.UI
                 GameObject.Destroy(locationNodeRoots[staleId].gameObject);
                 locationNodeRoots.Remove(staleId);
                 locationEntityGrids.Remove(staleId);
-                locationCountTexts.Remove(staleId);
                 locationThemes.Remove(staleId);
                 shouldRebuildRoutes = true;
             }
@@ -504,11 +494,11 @@ namespace TiraWantToCross.UI
                 islandBase.anchoredPosition = new Vector2(0f, -68f * nodeScale);
 
                 var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubblePanel.sizeDelta = new Vector2(216f * nodeScale, 184f * nodeScale);
+                bubblePanel.sizeDelta = new Vector2(216f * nodeScale, 188f * nodeScale);
                 bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
                 bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
                 bubblePanel.pivot = new Vector2(0.5f, 0.5f);
-                bubblePanel.anchoredPosition = new Vector2(0f, 60f * nodeScale);
+                bubblePanel.anchoredPosition = new Vector2(0f, 66f * nodeScale);
 
                 var bubbleTail = CreateRect("BubbleTail", bubblePanel, new Color(0.99f, 0.96f, 0.9f, 1f));
                 bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 20f * nodeScale);
@@ -517,20 +507,15 @@ namespace TiraWantToCross.UI
                 bubbleTail.pivot = new Vector2(0.5f, 1f);
                 bubbleTail.anchoredPosition = new Vector2(0f, -6f * nodeScale);
 
-                var countLabel = CreateText("Count", bubblePanel, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
-                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 66f * nodeScale);
-                countLabel.color = new Color(0.28f, 0.2f, 0.1f, 1f);
-                locationCountTexts[location.locationId] = countLabel;
-
                 var grid = CreateRect("Entities", bubblePanel, new Color(0f, 0f, 0f, 0f));
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(6f * nodeScale, 8f * nodeScale);
-                grid.offsetMax = new Vector2(-6f * nodeScale, -28f * nodeScale);
+                grid.offsetMin = new Vector2(8f * nodeScale, 12f * nodeScale);
+                grid.offsetMax = new Vector2(-8f * nodeScale, -10f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(98f * nodeScale, 72f * nodeScale);
-                gridComp.spacing = new Vector2(4f * nodeScale, 4f * nodeScale);
+                gridComp.cellSize = new Vector2(96f * nodeScale, 84f * nodeScale);
+                gridComp.spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
                 gridComp.childAlignment = TextAnchor.UpperCenter;
@@ -571,14 +556,8 @@ namespace TiraWantToCross.UI
             var bubblePanel = node.Find("AnimalBubblePanel") as RectTransform;
             if (bubblePanel != null)
             {
-                changed |= ApplySizeDelta(bubblePanel, new Vector2(216f * nodeScale, 184f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 60f * nodeScale));
-            }
-
-            var countLabelRect = node.Find("AnimalBubblePanel/Count") as RectTransform;
-            if (countLabelRect != null)
-            {
-                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 66f * nodeScale));
+                changed |= ApplySizeDelta(bubblePanel, new Vector2(216f * nodeScale, 188f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 66f * nodeScale));
             }
 
             var bubbleTail = node.Find("AnimalBubblePanel/BubbleTail") as RectTransform;
@@ -591,13 +570,13 @@ namespace TiraWantToCross.UI
             var grid = node.Find("AnimalBubblePanel/Entities") as RectTransform;
             if (grid != null)
             {
-                changed |= ApplyOffsetMin(grid, new Vector2(6f * nodeScale, 8f * nodeScale));
-                changed |= ApplyOffsetMax(grid, new Vector2(-6f * nodeScale, -28f * nodeScale));
+                changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 12f * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -10f * nodeScale));
                 var gridComp = grid.GetComponent<GridLayoutGroup>();
                 if (gridComp != null)
                 {
-                    changed |= ApplyGridCellSize(gridComp, new Vector2(98f * nodeScale, 72f * nodeScale));
-                    changed |= ApplyGridSpacing(gridComp, new Vector2(4f * nodeScale, 4f * nodeScale));
+                    changed |= ApplyGridCellSize(gridComp, new Vector2(96f * nodeScale, 84f * nodeScale));
+                    changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
                 }
             }
 
@@ -1719,7 +1698,7 @@ namespace TiraWantToCross.UI
             var shell = CreateRect("CircleRoot", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
-            var circleSize = circularStyle ? iconButtonSize - 36f : preferredHeight - 24f;
+                var circleSize = circularStyle ? iconButtonSize - 36f : preferredHeight - 4f;
             shellLayout.preferredHeight = circleSize;
             shellLayout.preferredWidth = circleSize;
             shellLayout.minHeight = circleSize;
@@ -1750,7 +1729,7 @@ namespace TiraWantToCross.UI
             }
             else
             {
-                ApplyFullStretch(portraitMask, 16f, 16f, 16f, 16f);
+                ApplyFullStretch(portraitMask, 6f, 6f, 6f, 6f);
                 ApplyFullStretch(portrait, 0f, 0f, 0f, 0f);
             }
 
@@ -1767,7 +1746,7 @@ namespace TiraWantToCross.UI
             }
             else
             {
-                ApplyFullStretch(border, -4f, -4f, -4f, -4f);
+                ApplyFullStretch(border, -2f, -2f, -2f, -2f);
             }
             border.transform.SetAsLastSibling();
             var borderImage = border.GetComponent<Image>();
@@ -1810,6 +1789,20 @@ namespace TiraWantToCross.UI
                 borderImage.sprite = GetCircularBorderSprite();
                 borderImage.type = Image.Type.Simple;
                 borderImage.color = new Color(0.86f, 0.78f, 0.62f, 1f);
+            }
+            else
+            {
+                text.text = string.Empty;
+                text.enabled = false;
+                var textLayout = text.GetComponent<LayoutElement>();
+                if (textLayout != null)
+                {
+                    textLayout.preferredHeight = 0f;
+                    textLayout.minHeight = 0f;
+                    textLayout.flexibleHeight = 0f;
+                }
+                portraitText.enabled = false;
+                borderImage.enabled = false;
             }
 
             return new EntityVisualRefs
@@ -1862,8 +1855,8 @@ namespace TiraWantToCross.UI
 
             if (playableBoardArea != null)
             {
-                playableBoardArea.offsetMin = new Vector2(24f, bottomHeight);
-                playableBoardArea.offsetMax = new Vector2(-24f, -headerHeight);
+                playableBoardArea.offsetMin = new Vector2(24f, Mathf.Max(0f, bottomHeight - 16f));
+                playableBoardArea.offsetMax = new Vector2(-24f, -(headerHeight + 16f));
             }
 
             if (headerOverlay != null)
