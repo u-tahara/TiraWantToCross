@@ -16,7 +16,7 @@ namespace TiraWantToCross.UI
             public Button Button;
             public Image PortraitImage;
             public Image ButtonBackground;
-            public Image SelectionFrame;
+            public Image CircleBorderImage;
             public Text Label;
             public Text PortraitPlaceholderText;
             public Text CheckmarkText;
@@ -43,7 +43,7 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, RectTransform> locationEntityGrids = new Dictionary<string, RectTransform>();
         private readonly Dictionary<string, Text> locationCountTexts = new Dictionary<string, Text>();
         private readonly List<RectTransform> routeLineVisuals = new List<RectTransform>();
-        private static Sprite circularUiSprite;
+        private static Sprite circularBorderSprite;
         private string routeTopologyCacheKey = string.Empty;
 
         private RectTransform boardPanel;
@@ -341,7 +341,7 @@ namespace TiraWantToCross.UI
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
                 visuals.Label.text = ResolveEntityDisplayName(entity);
                 visuals.Button.image.color = Color.white;
-                visuals.SelectionFrame.enabled = false;
+                visuals.CircleBorderImage.enabled = false;
             }
             foreach (var location in context.StageData.locations ?? Array.Empty<LocationData>())
             {
@@ -671,18 +671,22 @@ namespace TiraWantToCross.UI
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Icon);
                 visuals.Label.text = ResolveEntityDisplayName(entity);
                 var isSelected = context.SelectedEntities.Contains(entity.entityId);
-                visuals.SelectionFrame.enabled = isSelected;
-                visuals.SelectionFrame.color = Color.clear;
                 var canInteract = isSelected || canSelectMore;
                 visuals.Button.interactable = true;
 
                 if (visuals.ButtonBackground != null)
                 {
-                    visuals.ButtonBackground.color = isSelected
-                        ? new Color(0.62f, 0.86f, 0.56f, 1f)
+                    visuals.ButtonBackground.color = Color.clear;
+                }
+
+                if (visuals.CircleBorderImage != null)
+                {
+                    visuals.CircleBorderImage.enabled = true;
+                    visuals.CircleBorderImage.color = isSelected
+                        ? new Color(0.48f, 0.84f, 0.45f, 1f)
                         : canInteract
-                            ? new Color(0.94f, 0.9f, 0.8f, 1f)
-                            : new Color(0.86f, 0.86f, 0.86f, 1f);
+                            ? new Color(0.86f, 0.78f, 0.62f, 1f)
+                            : new Color(0.78f, 0.78f, 0.78f, 1f);
                 }
 
                 if (visuals.CheckmarkText != null)
@@ -741,6 +745,20 @@ namespace TiraWantToCross.UI
                 shellLayout.minHeight = circleSize;
                 shellLayout.flexibleWidth = 0f;
                 shellLayout.flexibleHeight = 0f;
+            }
+
+            if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
+            {
+                var portraitSize = circleSize - 16f;
+                portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
+                portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
+            }
+
+            if (visuals.CircleBorderImage != null && visuals.CircleBorderImage.transform is RectTransform borderRect)
+            {
+                var borderSize = circleSize + 6f;
+                borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, borderSize);
+                borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, borderSize);
             }
         }
 
@@ -1518,7 +1536,7 @@ namespace TiraWantToCross.UI
             colors.disabledColor = Color.white;
             button.colors = colors;
 
-            var shell = CreateRect("Shell", button.transform, new Color(1f, 1f, 1f, 1f));
+            var shell = CreateRect("Shell", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
             var circleSize = circularStyle ? iconButtonSize - 30f : preferredHeight - 24f;
@@ -1531,22 +1549,37 @@ namespace TiraWantToCross.UI
             var shellImage = shell.GetComponent<Image>();
 
             var portrait = CreateRect("Portrait", shell.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
-            ApplyFullStretch(portrait, circularStyle ? 14f : 16f, circularStyle ? 14f : 16f, circularStyle ? 14f : 16f, circularStyle ? 14f : 16f);
+            if (circularStyle)
+            {
+                portrait.anchorMin = new Vector2(0.5f, 0.5f);
+                portrait.anchorMax = new Vector2(0.5f, 0.5f);
+                portrait.pivot = new Vector2(0.5f, 0.5f);
+                portrait.sizeDelta = new Vector2(72f, 72f);
+            }
+            else
+            {
+                ApplyFullStretch(portrait, 16f, 16f, 16f, 16f);
+            }
 
             var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, shellLayout.preferredHeight - 32f);
             portraitText.color = new Color(0.15f, 0.2f, 0.25f, 0.9f);
 
-            var frame = CreateRect("SelectionFrame", shell.transform, Color.clear);
-            ApplyFullStretch(frame, -4f, -4f, -4f, -4f);
-            frame.transform.SetAsLastSibling();
-            var frameImage = frame.GetComponent<Image>();
-            frameImage.raycastTarget = false;
-            frameImage.color = Color.clear;
-            var frameOutline = frame.gameObject.AddComponent<Outline>();
-            frameOutline.effectColor = new Color(0.2f, 0.8f, 0.3f, 1f);
-            frameOutline.effectDistance = new Vector2(3f, 3f);
-            frameOutline.useGraphicAlpha = false;
-            frameImage.enabled = false;
+            var border = CreateRect("CircleBorderImage", shell.transform, Color.white);
+            if (circularStyle)
+            {
+                border.anchorMin = new Vector2(0.5f, 0.5f);
+                border.anchorMax = new Vector2(0.5f, 0.5f);
+                border.pivot = new Vector2(0.5f, 0.5f);
+                border.sizeDelta = new Vector2(88f, 88f);
+            }
+            else
+            {
+                ApplyFullStretch(border, -4f, -4f, -4f, -4f);
+            }
+            border.transform.SetAsLastSibling();
+            var borderImage = border.GetComponent<Image>();
+            borderImage.raycastTarget = false;
+            borderImage.enabled = circularStyle;
 
             var checkmark = CreateText("Checkmark", shell.transform, "✓", 34, TextAnchor.MiddleCenter, 38f);
             var checkmarkRect = checkmark.GetComponent<RectTransform>();
@@ -1565,16 +1598,16 @@ namespace TiraWantToCross.UI
                 text.resizeTextForBestFit = true;
                 text.resizeTextMinSize = 14;
                 text.resizeTextMaxSize = 22;
+                shellImage.sprite = null;
                 shellImage.type = Image.Type.Simple;
-                var circleSprite = GetCircularUiSprite();
-                shellImage.sprite = circleSprite;
-                shellImage.type = Image.Type.Sliced;
-                shellImage.pixelsPerUnitMultiplier = 1f;
-                portrait.GetComponent<Image>().sprite = circleSprite;
-                portrait.GetComponent<Image>().type = Image.Type.Sliced;
-                frameImage.sprite = circleSprite;
-                frameImage.type = Image.Type.Sliced;
-                frameImage.color = new Color(0.18f, 0.66f, 0.2f, 1f);
+                shellImage.color = Color.clear;
+                var portraitImage = portrait.GetComponent<Image>();
+                portraitImage.sprite = null;
+                portraitImage.type = Image.Type.Simple;
+                portraitImage.color = Color.white;
+                borderImage.sprite = GetCircularBorderSprite();
+                borderImage.type = Image.Type.Simple;
+                borderImage.color = new Color(0.86f, 0.78f, 0.62f, 1f);
             }
 
             return new EntityVisualRefs
@@ -1582,7 +1615,7 @@ namespace TiraWantToCross.UI
                 Button = button,
                 PortraitImage = portrait.GetComponent<Image>(),
                 ButtonBackground = shellImage,
-                SelectionFrame = frameImage,
+                CircleBorderImage = borderImage,
                 Label = text,
                 PortraitPlaceholderText = portraitText,
                 CheckmarkText = checkmark
@@ -1692,22 +1725,22 @@ namespace TiraWantToCross.UI
             return txt;
         }
 
-        private static Sprite GetCircularUiSprite()
+        private static Sprite GetCircularBorderSprite()
         {
-            if (circularUiSprite != null)
+            if (circularBorderSprite != null)
             {
-                return circularUiSprite;
+                return circularBorderSprite;
             }
 
             const int size = 128;
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            texture.name = "GeneratedCircularUiSprite";
+            texture.name = "GeneratedCircularBorderSprite";
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Bilinear;
 
             var center = (size - 1) * 0.5f;
-            var radius = center;
-            var edgeSoftness = 1.2f;
+            var radius = center - 2f;
+            var borderThickness = 6f;
             for (var y = 0; y < size; y++)
             {
                 for (var x = 0; x < size; x++)
@@ -1715,15 +1748,16 @@ namespace TiraWantToCross.UI
                     var dx = x - center;
                     var dy = y - center;
                     var distance = Mathf.Sqrt(dx * dx + dy * dy);
-                    var alpha = Mathf.Clamp01((radius - distance) / edgeSoftness);
+                    var edgeDistance = Mathf.Abs(distance - radius);
+                    var alpha = edgeDistance <= borderThickness * 0.5f ? 1f : 0f;
                     texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
                 }
             }
 
             texture.Apply();
-            circularUiSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f, 0u, SpriteMeshType.FullRect, new Vector4(32f, 32f, 32f, 32f));
-            circularUiSprite.name = "GeneratedCircularUiSprite";
-            return circularUiSprite;
+            circularBorderSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
+            circularBorderSprite.name = "GeneratedCircularBorderSprite";
+            return circularBorderSprite;
         }
 
         private static Button CreateButton(string name, Transform parent, string text, Action onClick, float preferredHeight = 56f, int fontSize = 22)
