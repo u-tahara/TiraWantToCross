@@ -270,6 +270,12 @@ namespace TiraWantToCross.UI
             selectionIconPanelLayoutElement.preferredHeight = 124f;
             selectionIconPanelLayoutElement.minHeight = 116f;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
+            var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
+            selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
+            selectionIconsLayout.childControlWidth = false;
+            selectionIconsLayout.childForceExpandWidth = false;
+            selectionIconsLayout.childControlHeight = false;
+            selectionIconsLayout.childForceExpandHeight = false;
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             routeRowLayoutElement = routeRowTransform.gameObject.AddComponent<LayoutElement>();
             routeRowLayoutElement.preferredHeight = 78f;
@@ -647,6 +653,9 @@ namespace TiraWantToCross.UI
             var capacity = Mathf.Max(1, context.GameState.BoatCapacity);
             selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
             var canSelectMore = context.SelectedEntities.Count < capacity;
+            var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
+            var iconButtonSize = isCompact ? 104f : 112f;
+            var circleSize = isCompact ? 74f : 82f;
 
             for (var index = 0; index < candidates.Count; index++)
             {
@@ -654,9 +663,10 @@ namespace TiraWantToCross.UI
                 if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
                 {
                     var capturedId = entity.entityId;
-                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), 118f, 20, true);
+                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), iconButtonSize, 20, true);
                     selectionIconVisuals[entity.entityId] = visuals;
                 }
+                ApplySelectionIconSizing(visuals, iconButtonSize, circleSize);
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Icon);
                 visuals.Label.text = ResolveEntityDisplayName(entity);
@@ -688,6 +698,49 @@ namespace TiraWantToCross.UI
                         : new Color(0.42f, 0.42f, 0.42f, 1f);
 
                 visuals.Button.transform.SetSiblingIndex(index);
+            }
+        }
+
+        private static void ApplySelectionIconSizing(EntityVisualRefs visuals, float iconButtonSize, float circleSize)
+        {
+            if (visuals?.Button == null)
+            {
+                return;
+            }
+
+            var buttonRect = visuals.Button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, iconButtonSize);
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, iconButtonSize);
+            }
+
+            if (visuals.Button.TryGetComponent<LayoutElement>(out var buttonLayout))
+            {
+                buttonLayout.preferredWidth = iconButtonSize;
+                buttonLayout.preferredHeight = iconButtonSize;
+                buttonLayout.minWidth = iconButtonSize;
+                buttonLayout.minHeight = iconButtonSize;
+                buttonLayout.flexibleWidth = 0f;
+                buttonLayout.flexibleHeight = 0f;
+            }
+
+            var shell = visuals.Button.transform.Find("Shell");
+            var shellRect = shell as RectTransform;
+            if (shellRect != null)
+            {
+                shellRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, circleSize);
+                shellRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, circleSize);
+            }
+
+            if (shell != null && shell.TryGetComponent<LayoutElement>(out var shellLayout))
+            {
+                shellLayout.preferredWidth = circleSize;
+                shellLayout.preferredHeight = circleSize;
+                shellLayout.minWidth = circleSize;
+                shellLayout.minHeight = circleSize;
+                shellLayout.flexibleWidth = 0f;
+                shellLayout.flexibleHeight = 0f;
             }
         }
 
@@ -1433,6 +1486,17 @@ namespace TiraWantToCross.UI
             var text = button.GetComponentInChildren<Text>();
             text.alignment = TextAnchor.LowerCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            var buttonLayoutElement = button.GetComponent<LayoutElement>();
+            var iconButtonSize = circularStyle ? Mathf.Clamp(preferredHeight, 104f, 116f) : preferredHeight;
+            if (buttonLayoutElement != null && circularStyle)
+            {
+                buttonLayoutElement.preferredWidth = iconButtonSize;
+                buttonLayoutElement.preferredHeight = iconButtonSize;
+                buttonLayoutElement.minWidth = iconButtonSize;
+                buttonLayoutElement.minHeight = iconButtonSize;
+                buttonLayoutElement.flexibleWidth = 0f;
+                buttonLayoutElement.flexibleHeight = 0f;
+            }
 
             var buttonLayout = button.gameObject.AddComponent<VerticalLayoutGroup>();
             buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 6, 6) : new RectOffset(4, 4, 4, 4);
@@ -1457,10 +1521,13 @@ namespace TiraWantToCross.UI
             var shell = CreateRect("Shell", button.transform, new Color(1f, 1f, 1f, 1f));
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
-            shellLayout.preferredHeight = circularStyle ? preferredHeight - 44f : preferredHeight - 24f;
-            shellLayout.preferredWidth = shellLayout.preferredHeight;
-            shellLayout.minHeight = circularStyle ? 108f : 64f;
-            shellLayout.minWidth = shellLayout.minHeight;
+            var circleSize = circularStyle ? iconButtonSize - 30f : preferredHeight - 24f;
+            shellLayout.preferredHeight = circleSize;
+            shellLayout.preferredWidth = circleSize;
+            shellLayout.minHeight = circleSize;
+            shellLayout.minWidth = circleSize;
+            shellLayout.flexibleWidth = 0f;
+            shellLayout.flexibleHeight = 0f;
             var shellImage = shell.GetComponent<Image>();
 
             var portrait = CreateRect("Portrait", shell.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
