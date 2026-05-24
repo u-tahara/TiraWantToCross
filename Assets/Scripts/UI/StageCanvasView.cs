@@ -427,7 +427,7 @@ namespace TiraWantToCross.UI
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => { }, 132f, 16, false);
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, 112f, 16, false);
                     boardEntityVisuals[entityId] = visuals;
                     boardEntityParents[entityId] = parentKey;
                 }
@@ -1071,6 +1071,8 @@ namespace TiraWantToCross.UI
             {
                 yield return $"Sprites/Characters/{baseId}/{baseId}_icon";
                 yield return $"Sprites/Characters/{baseId}_icon";
+                yield return $"Sprites/Characters/{baseId}/{baseId}_board";
+                yield return $"Sprites/Characters/{baseId}_board";
                 yield return $"Sprites/Characters/{baseId}/{baseId}";
                 yield return $"Sprites/Characters/{baseId}";
                 yield break;
