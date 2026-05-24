@@ -254,6 +254,11 @@ namespace TiraWantToCross.UI
             objectiveText = CreateText("Objective", bottom, "全員を最短手数で対岸へ運ぼう", 26, TextAnchor.MiddleLeft, 64f);
             objectiveLayoutElement = objectiveText.GetComponent<LayoutElement>();
             objectiveText.color = new Color(0.26f, 0.22f, 0.16f, 1f);
+            objectiveLayoutElement.ignoreLayout = true;
+            objectiveLayoutElement.preferredHeight = 0f;
+            objectiveLayoutElement.minHeight = 0f;
+            objectiveLayoutElement.flexibleHeight = 0f;
+            objectiveText.gameObject.SetActive(false);
             statusMessageText = CreateText("StatusMessage", bottom, string.Empty, 24, TextAnchor.MiddleLeft, 0f);
             statusMessageLayoutElement = statusMessageText.GetComponent<LayoutElement>();
             statusMessageLayoutElement.ignoreLayout = true;
@@ -262,13 +267,27 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            selectionCountText = CreateText("SelectionCount", bottom, "のせる動物 0/0", 30, TextAnchor.MiddleLeft, 38f);
+            var selectionCountRoot = CreateRect("SelectionCountRoot", bottom, new Color(0f, 0f, 0f, 0f));
+            var selectionCountRootLayout = selectionCountRoot.gameObject.AddComponent<LayoutElement>();
+            selectionCountRootLayout.preferredHeight = 46f;
+            selectionCountRootLayout.minHeight = 42f;
+            selectionCountRootLayout.flexibleHeight = 0f;
+            selectionCountText = CreateText("SelectionCount", selectionCountRoot, "0/0", 34, TextAnchor.MiddleCenter, 38f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 212f;
-            selectionIconPanelLayoutElement.minHeight = 196f;
+            selectionIconPanelLayoutElement.preferredHeight = 320f;
+            selectionIconPanelLayoutElement.minHeight = 300f;
+            var selectionPanelLayout = iconPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            selectionPanelLayout.spacing = 4f;
+            selectionPanelLayout.padding = new RectOffset(8, 8, 8, 10);
+            selectionPanelLayout.childAlignment = TextAnchor.UpperCenter;
+            selectionPanelLayout.childControlWidth = true;
+            selectionPanelLayout.childControlHeight = false;
+            selectionPanelLayout.childForceExpandWidth = true;
+            selectionPanelLayout.childForceExpandHeight = false;
+            selectionCountText.transform.SetParent(iconPanel, false);
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
             selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -651,11 +670,11 @@ namespace TiraWantToCross.UI
             }
 
             var capacity = Mathf.Max(1, context.GameState.BoatCapacity);
-            selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
+            selectionCountText.text = $"{context.SelectedEntities.Count}/{capacity}";
             var canSelectMore = context.SelectedEntities.Count < capacity;
             var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
-            var iconButtonSize = isCompact ? 148f : 160f;
-            var circleSize = isCompact ? 124f : 136f;
+            var iconButtonSize = isCompact ? 216f : 240f;
+            var circleSize = isCompact ? 190f : 212f;
 
             for (var index = 0; index < candidates.Count; index++)
             {
@@ -749,7 +768,7 @@ namespace TiraWantToCross.UI
 
             if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
             {
-                var portraitSize = circleSize - 20f;
+                var portraitSize = circleSize - 36f;
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
             }
@@ -1632,20 +1651,22 @@ namespace TiraWantToCross.UI
 
             if (objectiveLayoutElement != null)
             {
-                objectiveLayoutElement.preferredHeight = compact ? 50f : 56f;
-                objectiveLayoutElement.minHeight = compact ? 48f : 52f;
+                objectiveLayoutElement.ignoreLayout = true;
+                objectiveLayoutElement.preferredHeight = 0f;
+                objectiveLayoutElement.minHeight = 0f;
+                objectiveLayoutElement.flexibleHeight = 0f;
             }
 
             if (selectionCountLayoutElement != null)
             {
-                selectionCountLayoutElement.preferredHeight = compact ? 30f : 34f;
-                selectionCountLayoutElement.minHeight = compact ? 28f : 30f;
+                selectionCountLayoutElement.preferredHeight = compact ? 42f : 46f;
+                selectionCountLayoutElement.minHeight = compact ? 40f : 42f;
             }
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 192f : 214f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 180f : 202f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 286f : 328f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 264f : 308f;
             }
 
             if (routeRowLayoutElement != null)
@@ -1655,7 +1676,7 @@ namespace TiraWantToCross.UI
             }
 
             var headerHeight = compact ? 96f : 108f;
-            var bottomHeight = compact ? 390f : 410f;
+            var bottomHeight = compact ? 440f : 500f;
 
             if (playableBoardArea != null)
             {
@@ -1677,8 +1698,8 @@ namespace TiraWantToCross.UI
 
             if (bottomLayoutGroup != null)
             {
-                bottomLayoutGroup.spacing = compact ? 6f : 8f;
-                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 10, 10) : new RectOffset(12, 12, 12, 12);
+                bottomLayoutGroup.spacing = compact ? 8f : 10f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 8, 10) : new RectOffset(12, 12, 10, 12);
             }
 
             foreach (var panel in locationPanels.Values)
@@ -1696,8 +1717,7 @@ namespace TiraWantToCross.UI
 
             ScaleText(stageNameText, compact ? 32 : 36);
             ScaleText(movesText, compact ? 28 : 32);
-            ScaleText(objectiveText, compact ? 22 : 26);
-            ScaleText(selectionCountText, compact ? 26 : 30);
+            ScaleText(selectionCountText, compact ? 30 : 34);
         }
 
         private void ScaleText(Text text, int fontSize)
