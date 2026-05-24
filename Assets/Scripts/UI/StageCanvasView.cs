@@ -275,18 +275,25 @@ namespace TiraWantToCross.UI
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
             selectionIconPanelLayoutElement.preferredHeight = 296f;
             selectionIconPanelLayoutElement.minHeight = 280f;
-            var selectionPanelLayout = iconPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            selectionPanelLayout.spacing = 16f;
-            selectionPanelLayout.padding = new RectOffset(8, 8, 8, 8);
-            selectionPanelLayout.childAlignment = TextAnchor.UpperCenter;
-            selectionPanelLayout.childControlWidth = true;
-            selectionPanelLayout.childControlHeight = false;
-            selectionPanelLayout.childForceExpandWidth = true;
-            selectionPanelLayout.childForceExpandHeight = false;
             selectionCountText.transform.SetParent(iconPanel, false);
-            selectionCountText.alignment = TextAnchor.MiddleCenter;
-            selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
-            var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
+            selectionCountText.alignment = TextAnchor.UpperCenter;
+            var selectionCountRect = selectionCountText.GetComponent<RectTransform>();
+            selectionCountRect.anchorMin = new Vector2(0.5f, 1f);
+            selectionCountRect.anchorMax = new Vector2(0.5f, 1f);
+            selectionCountRect.pivot = new Vector2(0.5f, 1f);
+            selectionCountRect.anchoredPosition = new Vector2(0f, -12f);
+            selectionCountRect.sizeDelta = new Vector2(220f, 34f);
+
+            var selectionIconsRoot = CreateRect("SelectionIcons", iconPanel, Color.clear);
+            selectionIconsRoot.anchorMin = new Vector2(0f, 0f);
+            selectionIconsRoot.anchorMax = new Vector2(1f, 1f);
+            selectionIconsRoot.pivot = new Vector2(0.5f, 0.5f);
+            selectionIconsRoot.offsetMin = new Vector2(8f, 8f);
+            selectionIconsRoot.offsetMax = new Vector2(-8f, -68f);
+            selectionIconsContainer = selectionIconsRoot;
+
+            var selectionIconsLayout = selectionIconsRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            selectionIconsLayout.spacing = 16f;
             selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
             selectionIconsLayout.childControlWidth = false;
             selectionIconsLayout.childForceExpandWidth = false;
@@ -798,8 +805,8 @@ namespace TiraWantToCross.UI
 
             if (visuals.Label != null && visuals.Label.TryGetComponent<LayoutElement>(out var labelLayout))
             {
-                labelLayout.preferredHeight = 28f;
-                labelLayout.minHeight = 24f;
+                labelLayout.preferredHeight = 26f;
+                labelLayout.minHeight = 22f;
                 labelLayout.flexibleHeight = 0f;
             }
         }
@@ -1544,7 +1551,7 @@ namespace TiraWantToCross.UI
         {
             var button = CreateButton(entityId, parent, string.Empty, onClick, preferredHeight, labelFontSize);
             var text = button.GetComponentInChildren<Text>();
-            text.alignment = TextAnchor.LowerCenter;
+            text.alignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
             var buttonLayoutElement = button.GetComponent<LayoutElement>();
             var iconButtonSize = circularStyle ? Mathf.Max(preferredHeight, 148f) : preferredHeight;
@@ -1559,9 +1566,9 @@ namespace TiraWantToCross.UI
             }
 
             var buttonLayout = button.gameObject.AddComponent<VerticalLayoutGroup>();
-            buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 6, 6) : new RectOffset(4, 4, 4, 4);
-            buttonLayout.spacing = circularStyle ? 4f : 2f;
-            buttonLayout.childAlignment = TextAnchor.UpperCenter;
+            buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 4, 4) : new RectOffset(4, 4, 4, 4);
+            buttonLayout.spacing = circularStyle ? 3f : 2f;
+            buttonLayout.childAlignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
             buttonLayout.childControlWidth = true;
             buttonLayout.childControlHeight = false;
             buttonLayout.childForceExpandWidth = true;
@@ -1581,7 +1588,7 @@ namespace TiraWantToCross.UI
             var shell = CreateRect("CircleRoot", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
-            var circleSize = circularStyle ? iconButtonSize - 16f : preferredHeight - 24f;
+            var circleSize = circularStyle ? iconButtonSize - 36f : preferredHeight - 24f;
             shellLayout.preferredHeight = circleSize;
             shellLayout.preferredWidth = circleSize;
             shellLayout.minHeight = circleSize;
@@ -1654,8 +1661,8 @@ namespace TiraWantToCross.UI
                 var textLayout = text.GetComponent<LayoutElement>();
                 if (textLayout != null)
                 {
-                    textLayout.preferredHeight = 28f;
-                    textLayout.minHeight = 24f;
+                    textLayout.preferredHeight = 26f;
+                    textLayout.minHeight = 22f;
                     textLayout.flexibleHeight = 0f;
                 }
                 shellImage.sprite = null;
