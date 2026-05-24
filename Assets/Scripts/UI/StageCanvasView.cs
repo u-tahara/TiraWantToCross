@@ -669,10 +669,11 @@ namespace TiraWantToCross.UI
             var canSelectMore = context.SelectedEntities.Count < capacity;
             var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
             var iconButtonSize = isCompact ? 216f : 240f;
-            if (isCompact && selectionIconsContainer != null)
+            var selectionIconsRect = selectionIconsContainer as RectTransform;
+            if (isCompact && selectionIconsRect != null)
             {
                 var candidateCount = Mathf.Max(1, candidates.Count);
-                var availableWidth = selectionIconsContainer.rect.width;
+                var availableWidth = selectionIconsRect.rect.width;
                 var spacingWidth = Mathf.Max(0, candidateCount - 1) * 16f;
                 var fitSize = (availableWidth - spacingWidth) / candidateCount;
                 iconButtonSize = Mathf.Min(iconButtonSize, fitSize);
