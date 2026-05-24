@@ -44,6 +44,7 @@ namespace TiraWantToCross.UI
         private readonly Dictionary<string, Text> locationCountTexts = new Dictionary<string, Text>();
         private readonly List<RectTransform> routeLineVisuals = new List<RectTransform>();
         private static Sprite circularBorderSprite;
+        private static Sprite circularMaskSprite;
         private string routeTopologyCacheKey = string.Empty;
 
         private RectTransform boardPanel;
@@ -267,16 +268,16 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            selectionCountText = CreateText("SelectionCount", bottom, "0/0", 34, TextAnchor.MiddleCenter, 38f);
+            selectionCountText = CreateText("SelectionCount", bottom, "0/0", 34, TextAnchor.MiddleCenter, 30f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 320f;
-            selectionIconPanelLayoutElement.minHeight = 300f;
+            selectionIconPanelLayoutElement.preferredHeight = 296f;
+            selectionIconPanelLayoutElement.minHeight = 280f;
             var selectionPanelLayout = iconPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            selectionPanelLayout.spacing = 4f;
-            selectionPanelLayout.padding = new RectOffset(8, 8, 8, 10);
+            selectionPanelLayout.spacing = 6f;
+            selectionPanelLayout.padding = new RectOffset(8, 8, 6, 8);
             selectionPanelLayout.childAlignment = TextAnchor.UpperCenter;
             selectionPanelLayout.childControlWidth = true;
             selectionPanelLayout.childControlHeight = false;
@@ -774,9 +775,17 @@ namespace TiraWantToCross.UI
 
             if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
             {
-                var portraitSize = circleSize - 36f;
+                var portraitSize = circleSize - 30f;
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
+            }
+
+            var portraitMask = visuals.Button.transform.Find("Shell/PortraitMask") as RectTransform;
+            if (portraitMask != null)
+            {
+                var portraitMaskSize = circleSize - 28f;
+                portraitMask.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitMaskSize);
+                portraitMask.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitMaskSize);
             }
 
             if (visuals.CircleBorderImage != null && visuals.CircleBorderImage.transform is RectTransform borderRect)
@@ -1573,18 +1582,30 @@ namespace TiraWantToCross.UI
             shellLayout.flexibleHeight = 0f;
             var shellImage = shell.GetComponent<Image>();
 
-            var portrait = CreateRect("Portrait", shell.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
+            var portraitMask = CreateRect("PortraitMask", shell.transform, Color.white);
+            var portraitMaskImage = portraitMask.GetComponent<Image>();
+            var portraitMaskComp = portraitMask.gameObject.AddComponent<Mask>();
+            portraitMaskComp.showMaskGraphic = false;
+
+            var portrait = CreateRect("Portrait", portraitMask.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
             if (circularStyle)
             {
+                portraitMask.anchorMin = new Vector2(0.5f, 0.5f);
+                portraitMask.anchorMax = new Vector2(0.5f, 0.5f);
+                portraitMask.pivot = new Vector2(0.5f, 0.5f);
+                var portraitMaskSize = Mathf.Max(92f, circleSize - 28f);
+                portraitMask.sizeDelta = new Vector2(portraitMaskSize, portraitMaskSize);
+
                 portrait.anchorMin = new Vector2(0.5f, 0.5f);
                 portrait.anchorMax = new Vector2(0.5f, 0.5f);
                 portrait.pivot = new Vector2(0.5f, 0.5f);
-                var portraitSize = Mathf.Max(96f, circleSize - 20f);
+                var portraitSize = Mathf.Max(88f, portraitMaskSize - 2f);
                 portrait.sizeDelta = new Vector2(portraitSize, portraitSize);
             }
             else
             {
-                ApplyFullStretch(portrait, 16f, 16f, 16f, 16f);
+                ApplyFullStretch(portraitMask, 16f, 16f, 16f, 16f);
+                ApplyFullStretch(portrait, 0f, 0f, 0f, 0f);
             }
 
             var portraitText = CreateText("PortraitText", portrait.transform, "IMG", 18, TextAnchor.MiddleCenter, shellLayout.preferredHeight - 32f);
@@ -1624,9 +1645,18 @@ namespace TiraWantToCross.UI
                 text.resizeTextForBestFit = true;
                 text.resizeTextMinSize = 14;
                 text.resizeTextMaxSize = 22;
+                var textLayout = text.GetComponent<LayoutElement>();
+                if (textLayout != null)
+                {
+                    textLayout.preferredHeight = 26f;
+                    textLayout.minHeight = 22f;
+                }
                 shellImage.sprite = null;
                 shellImage.type = Image.Type.Simple;
                 shellImage.color = Color.clear;
+                portraitMaskImage.sprite = GetCircularMaskSprite();
+                portraitMaskImage.type = Image.Type.Simple;
+                portraitMaskImage.color = Color.white;
                 var portraitImage = portrait.GetComponent<Image>();
                 portraitImage.sprite = null;
                 portraitImage.type = Image.Type.Simple;
@@ -1665,14 +1695,14 @@ namespace TiraWantToCross.UI
 
             if (selectionCountLayoutElement != null)
             {
-                selectionCountLayoutElement.preferredHeight = compact ? 42f : 46f;
-                selectionCountLayoutElement.minHeight = compact ? 40f : 42f;
+                selectionCountLayoutElement.preferredHeight = compact ? 26f : 30f;
+                selectionCountLayoutElement.minHeight = compact ? 24f : 28f;
             }
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 286f : 328f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 264f : 308f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 270f : 292f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 252f : 274f;
             }
 
             if (routeRowLayoutElement != null)
@@ -1682,7 +1712,7 @@ namespace TiraWantToCross.UI
             }
 
             var headerHeight = compact ? 96f : 108f;
-            var bottomHeight = compact ? 440f : 500f;
+            var bottomHeight = compact ? 422f : 468f;
 
             if (playableBoardArea != null)
             {
@@ -1704,8 +1734,8 @@ namespace TiraWantToCross.UI
 
             if (bottomLayoutGroup != null)
             {
-                bottomLayoutGroup.spacing = compact ? 8f : 10f;
-                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 8, 10) : new RectOffset(12, 12, 10, 12);
+                bottomLayoutGroup.spacing = compact ? 6f : 8f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 8, 8) : new RectOffset(12, 12, 8, 10);
             }
 
             foreach (var panel in locationPanels.Values)
@@ -1785,6 +1815,39 @@ namespace TiraWantToCross.UI
             circularBorderSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
             circularBorderSprite.name = "GeneratedCircularBorderSprite";
             return circularBorderSprite;
+        }
+
+        private static Sprite GetCircularMaskSprite()
+        {
+            if (circularMaskSprite != null)
+            {
+                return circularMaskSprite;
+            }
+
+            const int size = 128;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.name = "GeneratedCircularMaskSprite";
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+
+            var center = (size - 1) * 0.5f;
+            var radius = center - 2f;
+            for (var y = 0; y < size; y++)
+            {
+                for (var x = 0; x < size; x++)
+                {
+                    var dx = x - center;
+                    var dy = y - center;
+                    var distance = Mathf.Sqrt(dx * dx + dy * dy);
+                    var alpha = distance <= radius ? 1f : 0f;
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            texture.Apply();
+            circularMaskSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f);
+            circularMaskSprite.name = "GeneratedCircularMaskSprite";
+            return circularMaskSprite;
         }
 
         private static Button CreateButton(string name, Transform parent, string text, Action onClick, float preferredHeight = 56f, int fontSize = 22)
