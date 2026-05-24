@@ -26,9 +26,10 @@ namespace TiraWantToCross.UI
         private sealed class LocationVisualTheme
         {
             public string LocationId;
-            public Image BackgroundImage;
-            public Text LabelText;
-            public Color BaseColor;
+            public Image IslandImage;
+            public Image BubbleImage;
+            public Color IslandBaseColor;
+            public Color BubbleBaseColor;
         }
 
         private readonly Dictionary<string, EntityVisualRefs> boardEntityVisuals = new Dictionary<string, EntityVisualRefs>();
@@ -483,59 +484,64 @@ namespace TiraWantToCross.UI
                         shouldRebuildRoutes = true;
                     }
 
-                    var latestName = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
-                    if (locationThemes.TryGetValue(location.locationId, out var existingTheme) && existingTheme.LabelText != null && existingTheme.LabelText.text != latestName)
-                    {
-                        existingTheme.LabelText.text = latestName;
-                    }
                     shouldRebuildRoutes |= ApplyLocationNodeScale(existingNode, nodeScale);
                     continue;
                 }
 
-                var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0.78f, 0.92f, 0.62f, 1f));
-                node.sizeDelta = new Vector2(220f * nodeScale, 240f * nodeScale);
+                var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0f, 0f, 0f, 0f));
+                node.sizeDelta = new Vector2(260f * nodeScale, 300f * nodeScale);
                 node.anchorMin = new Vector2(0.5f, 0.5f);
                 node.anchorMax = new Vector2(0.5f, 0.5f);
                 node.pivot = new Vector2(0.5f, 0.5f);
                 node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
 
-                var countLabel = CreateText("Count", node, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
-                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 96f * nodeScale);
+                var islandBase = CreateRect("IslandBase", node, new Color(0.60f, 0.82f, 0.47f, 1f));
+                islandBase.sizeDelta = new Vector2(220f * nodeScale, 112f * nodeScale);
+                islandBase.anchorMin = new Vector2(0.5f, 0.5f);
+                islandBase.anchorMax = new Vector2(0.5f, 0.5f);
+                islandBase.pivot = new Vector2(0.5f, 0.5f);
+                islandBase.anchoredPosition = new Vector2(0f, -68f * nodeScale);
+
+                var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
+                bubblePanel.sizeDelta = new Vector2(210f * nodeScale, 176f * nodeScale);
+                bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
+                bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
+                bubblePanel.pivot = new Vector2(0.5f, 0.5f);
+                bubblePanel.anchoredPosition = new Vector2(0f, 44f * nodeScale);
+
+                var bubbleTail = CreateRect("BubbleTail", bubblePanel, new Color(0.99f, 0.96f, 0.9f, 1f));
+                bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 22f * nodeScale);
+                bubbleTail.anchorMin = new Vector2(0.5f, 0f);
+                bubbleTail.anchorMax = new Vector2(0.5f, 0f);
+                bubbleTail.pivot = new Vector2(0.5f, 1f);
+                bubbleTail.anchoredPosition = new Vector2(0f, -4f * nodeScale);
+
+                var countLabel = CreateText("Count", bubblePanel, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
+                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 62f * nodeScale);
                 countLabel.color = new Color(0.28f, 0.2f, 0.1f, 1f);
                 locationCountTexts[location.locationId] = countLabel;
 
-                var animalPanel = CreateRect("AnimalPanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                animalPanel.sizeDelta = new Vector2(184f * nodeScale, 144f * nodeScale);
-                animalPanel.anchorMin = new Vector2(0.5f, 0.5f);
-                animalPanel.anchorMax = new Vector2(0.5f, 0.5f);
-                animalPanel.pivot = new Vector2(0.5f, 0.5f);
-                animalPanel.anchoredPosition = new Vector2(0f, 14f * nodeScale);
-
-                var grid = CreateRect("Entities", animalPanel, new Color(0f, 0f, 0f, 0f));
+                var grid = CreateRect("Entities", bubblePanel, new Color(0f, 0f, 0f, 0f));
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(8f * nodeScale, 8f * nodeScale);
-                grid.offsetMax = new Vector2(-8f * nodeScale, -8f * nodeScale);
+                grid.offsetMin = new Vector2(8f * nodeScale, 10f * nodeScale);
+                grid.offsetMax = new Vector2(-8f * nodeScale, -34f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(74f * nodeScale, 54f * nodeScale);
+                gridComp.cellSize = new Vector2(90f * nodeScale, 62f * nodeScale);
                 gridComp.spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
                 gridComp.childAlignment = TextAnchor.UpperCenter;
                 locationEntityGrids[location.locationId] = grid;
 
-                var name = string.IsNullOrWhiteSpace(location.displayName) ? location.locationId : location.displayName;
-                var nameLabel = CreateText("Name", node, name, 26, TextAnchor.MiddleCenter, 38f);
-                nameLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -96f * nodeScale);
-                nameLabel.color = new Color(0.24f, 0.16f, 0.08f, 1f);
-
                 locationThemes[location.locationId] = new LocationVisualTheme
                 {
                     LocationId = location.locationId,
-                    BackgroundImage = node.GetComponent<Image>(),
-                    LabelText = nameLabel,
-                    BaseColor = new Color(0.78f, 0.92f, 0.62f, 1f)
+                    IslandImage = islandBase.GetComponent<Image>(),
+                    BubbleImage = bubblePanel.GetComponent<Image>(),
+                    IslandBaseColor = new Color(0.60f, 0.82f, 0.47f, 1f),
+                    BubbleBaseColor = new Color(0.99f, 0.96f, 0.9f, 1f)
                 };
                 locationNodeRoots[location.locationId] = node;
                 shouldRebuildRoutes = true;
@@ -552,38 +558,46 @@ namespace TiraWantToCross.UI
         private static bool ApplyLocationNodeScale(RectTransform node, float nodeScale)
         {
             var changed = false;
-            changed |= ApplySizeDelta(node, new Vector2(220f * nodeScale, 240f * nodeScale));
+            changed |= ApplySizeDelta(node, new Vector2(260f * nodeScale, 300f * nodeScale));
 
-            var countLabelRect = node.Find("Count") as RectTransform;
+            var islandBase = node.Find("IslandBase") as RectTransform;
+            if (islandBase != null)
+            {
+                changed |= ApplySizeDelta(islandBase, new Vector2(220f * nodeScale, 112f * nodeScale));
+                changed |= ApplyAnchoredPosition(islandBase, new Vector2(0f, -68f * nodeScale));
+            }
+
+            var bubblePanel = node.Find("AnimalBubblePanel") as RectTransform;
+            if (bubblePanel != null)
+            {
+                changed |= ApplySizeDelta(bubblePanel, new Vector2(210f * nodeScale, 176f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 44f * nodeScale));
+            }
+
+            var countLabelRect = node.Find("AnimalBubblePanel/Count") as RectTransform;
             if (countLabelRect != null)
             {
-                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 96f * nodeScale));
+                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 62f * nodeScale));
             }
 
-            var animalPanel = node.Find("AnimalPanel") as RectTransform;
-            if (animalPanel != null)
+            var bubbleTail = node.Find("AnimalBubblePanel/BubbleTail") as RectTransform;
+            if (bubbleTail != null)
             {
-                changed |= ApplySizeDelta(animalPanel, new Vector2(184f * nodeScale, 144f * nodeScale));
-                changed |= ApplyAnchoredPosition(animalPanel, new Vector2(0f, 14f * nodeScale));
+                changed |= ApplySizeDelta(bubbleTail, new Vector2(34f * nodeScale, 22f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubbleTail, new Vector2(0f, -4f * nodeScale));
+            }
 
-                var grid = animalPanel.Find("Entities") as RectTransform;
-                if (grid != null)
+            var grid = node.Find("AnimalBubblePanel/Entities") as RectTransform;
+            if (grid != null)
+            {
+                changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 10f * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -34f * nodeScale));
+                var gridComp = grid.GetComponent<GridLayoutGroup>();
+                if (gridComp != null)
                 {
-                    changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 8f * nodeScale));
-                    changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -8f * nodeScale));
-                    var gridComp = grid.GetComponent<GridLayoutGroup>();
-                    if (gridComp != null)
-                    {
-                        changed |= ApplyGridCellSize(gridComp, new Vector2(74f * nodeScale, 54f * nodeScale));
-                        changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
-                    }
+                    changed |= ApplyGridCellSize(gridComp, new Vector2(90f * nodeScale, 62f * nodeScale));
+                    changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
                 }
-            }
-
-            var nameLabelRect = node.Find("Name") as RectTransform;
-            if (nameLabelRect != null)
-            {
-                changed |= ApplyAnchoredPosition(nameLabelRect, new Vector2(0f, -96f * nodeScale));
             }
 
             return changed;
@@ -717,19 +731,27 @@ namespace TiraWantToCross.UI
                 {
                     continue;
                 }
-                var line = CreateRect($"{route.routeId}_Line", routeLinesRoot, new Color(0.95f, 0.94f, 0.82f, 0.9f));
                 var diff = toNode.anchoredPosition - fromNode.anchoredPosition;
-                var fromRadius = fromNode.rect.width * 0.5f;
-                var toRadius = toNode.rect.width * 0.5f;
-                var len = Mathf.Max(24f, diff.magnitude - (fromRadius + toRadius));
-                var thickness = Mathf.Max(5f, 8f * ResolveBoardNodeScale(locationNodeRoots.Count));
-                line.sizeDelta = new Vector2(len, thickness);
-                line.anchorMin = new Vector2(0.5f, 0.5f);
-                line.anchorMax = new Vector2(0.5f, 0.5f);
-                line.pivot = new Vector2(0.5f, 0.5f);
-                line.anchoredPosition = (fromNode.anchoredPosition + toNode.anchoredPosition) * 0.5f;
-                line.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg);
-                routeLineVisuals.Add(line);
+                var distance = diff.magnitude;
+                if (distance <= 0.01f) continue;
+                var dir = diff / distance;
+                var fromEdge = fromNode.anchoredPosition + dir * (fromNode.rect.width * 0.28f);
+                var toEdge = toNode.anchoredPosition - dir * (toNode.rect.width * 0.28f);
+                var segment = toEdge - fromEdge;
+                var segmentLength = segment.magnitude;
+                var dotCount = Mathf.Clamp(Mathf.RoundToInt(segmentLength / 34f), 4, 18);
+                for (var dotIndex = 0; dotIndex <= dotCount; dotIndex++)
+                {
+                    var t = dotCount == 0 ? 0f : (float)dotIndex / dotCount;
+                    var pos = Vector2.Lerp(fromEdge, toEdge, t);
+                    var dot = CreateRect($"{route.routeId}_Dot_{dotIndex}", routeLinesRoot, new Color(0.95f, 0.94f, 0.82f, 0.95f));
+                    dot.sizeDelta = Vector2.one * Mathf.Max(9f, 12f * ResolveBoardNodeScale(locationNodeRoots.Count));
+                    dot.anchorMin = new Vector2(0.5f, 0.5f);
+                    dot.anchorMax = new Vector2(0.5f, 0.5f);
+                    dot.pivot = new Vector2(0.5f, 0.5f);
+                    dot.anchoredPosition = pos + new Vector2(0f, -48f * ResolveBoardNodeScale(locationNodeRoots.Count));
+                    routeLineVisuals.Add(dot);
+                }
             }
             routeTopologyCacheKey = nextCacheKey;
         }
@@ -952,7 +974,7 @@ namespace TiraWantToCross.UI
                 markerRect.pivot = new Vector2(0.5f, 0.5f);
                 var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
                 var nodeScale = ResolveBoardNodeScale(locationCount);
-                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -86f * nodeScale);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -142f * nodeScale);
             }
         }
 
@@ -1090,10 +1112,12 @@ namespace TiraWantToCross.UI
             foreach (var theme in locationThemes.Values)
             {
                 var isBoatHere = theme.LocationId == boatLocation;
-                var color = isBoatHere ? theme.BaseColor * 1.2f : theme.BaseColor;
-                color.a = theme.BaseColor.a;
-                theme.BackgroundImage.color = color;
-                theme.LabelText.color = isBoatHere ? new Color(1f, 0.96f, 0.65f, 1f) : Color.white;
+                var islandColor = isBoatHere ? theme.IslandBaseColor * 1.15f : theme.IslandBaseColor;
+                islandColor.a = theme.IslandBaseColor.a;
+                var bubbleColor = isBoatHere ? theme.BubbleBaseColor * 1.03f : theme.BubbleBaseColor;
+                bubbleColor.a = theme.BubbleBaseColor.a;
+                if (theme.IslandImage != null) theme.IslandImage.color = islandColor;
+                if (theme.BubbleImage != null) theme.BubbleImage.color = bubbleColor;
             }
         }
 
@@ -1641,13 +1665,13 @@ namespace TiraWantToCross.UI
             layout.childControlWidth = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
-            var labelText = CreateText("Label", panel, label, 34, TextAnchor.MiddleCenter, 52);
             locationThemes[key] = new LocationVisualTheme
             {
                 LocationId = key,
-                BackgroundImage = panel.GetComponent<Image>(),
-                LabelText = labelText,
-                BaseColor = baseColor
+                IslandImage = panel.GetComponent<Image>(),
+                BubbleImage = null,
+                IslandBaseColor = baseColor,
+                BubbleBaseColor = Color.white
             };
             return panel;
         }
