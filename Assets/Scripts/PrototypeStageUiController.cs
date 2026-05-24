@@ -146,7 +146,9 @@ namespace TiraWantToCross.Prototype
                 TrySelectStageFromList,
                 StartSelectedStage,
                 ResetProgress,
-                DismissOperationError);
+                DismissOperationError,
+                OpenRuleGuide,
+                OnRetireRequested);
         }
 
         private void Update()
@@ -178,6 +180,43 @@ namespace TiraWantToCross.Prototype
             selectedEntities.Clear();
             selectedRouteId = null;
             lastMessage = "ステージ一覧を表示しています。";
+        }
+
+        private void OpenRuleGuide()
+        {
+            // ルールボタンは現状ガイドUI未実装のため、操作エラーポップアップへ流れないようメッセージは更新しない。
+            lastMessage = string.Empty;
+        }
+
+        private void OnRetireRequested()
+        {
+            if (gameState == null || string.IsNullOrEmpty(activeStageId))
+            {
+                lastMessage = "プレイ中のステージがありません。";
+                return;
+            }
+
+            ShowRewardedAdForRetire(() => CompleteStageByRetire(activeStageId));
+        }
+
+        private void ShowRewardedAdForRetire(Action onRewardCompleted)
+        {
+            // TODO: 広告SDK導入後はここでリワード広告表示に差し替える
+            onRewardCompleted?.Invoke();
+        }
+
+        private void CompleteStageByRetire(string stageId)
+        {
+            if (string.IsNullOrEmpty(stageId))
+            {
+                return;
+            }
+
+            PlayerPrefs.SetInt($"{ClearedStageKeyPrefix}{stageId}", 1);
+            PlayerPrefs.Save();
+            UnlockNextStageIfNeeded();
+            OpenStageSelect();
+            lastMessage = "広告視聴完了（仮）として、このステージをクリア扱いにしました。";
         }
 
         private void TrySelectStageFromList(string stageId)
