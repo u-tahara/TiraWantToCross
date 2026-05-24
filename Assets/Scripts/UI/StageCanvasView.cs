@@ -245,8 +245,9 @@ namespace TiraWantToCross.UI
             bottom.offsetMin = new Vector2(0f, 0f);
             bottom.offsetMax = new Vector2(0f, 390f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
-            bottomLayoutGroup.spacing = 10f;
-            bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
+            bottomLayoutGroup.spacing = 8f;
+            bottomLayoutGroup.padding = new RectOffset(12, 12, 10, 8);
+            bottomLayoutGroup.childAlignment = TextAnchor.LowerCenter;
             bottomLayoutGroup.childControlHeight = true;
             bottomLayoutGroup.childControlWidth = true;
             bottomLayoutGroup.childForceExpandHeight = false;
@@ -273,8 +274,8 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 296f;
-            selectionIconPanelLayoutElement.minHeight = 280f;
+            selectionIconPanelLayoutElement.preferredHeight = 282f;
+            selectionIconPanelLayoutElement.minHeight = 266f;
             selectionCountText.transform.SetParent(iconPanel, false);
             selectionCountText.alignment = TextAnchor.UpperCenter;
             var selectionCountRect = selectionCountText.GetComponent<RectTransform>();
@@ -301,8 +302,8 @@ namespace TiraWantToCross.UI
             selectionIconsLayout.childForceExpandHeight = false;
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             routeRowLayoutElement = routeRowTransform.gameObject.AddComponent<LayoutElement>();
-            routeRowLayoutElement.preferredHeight = 78f;
-            routeRowLayoutElement.minHeight = 72f;
+            routeRowLayoutElement.preferredHeight = 76f;
+            routeRowLayoutElement.minHeight = 70f;
             for (var i = 0; i < 2; i++)
             {
                 var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 90f, 34);
@@ -697,7 +698,7 @@ namespace TiraWantToCross.UI
                 if (!selectionIconVisuals.TryGetValue(entity.entityId, out var visuals) || visuals?.Button == null)
                 {
                     var capturedId = entity.entityId;
-                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), iconButtonSize, 20, true);
+                    visuals = CreateEntityVisual(entity.entityId, selectionIconsContainer, () => onEntitySelected?.Invoke(capturedId), iconButtonSize, 24, true);
                     selectionIconVisuals[entity.entityId] = visuals;
                 }
                 ApplySelectionIconSizing(visuals, iconButtonSize, circleSize);
@@ -805,8 +806,18 @@ namespace TiraWantToCross.UI
 
             if (visuals.Label != null && visuals.Label.TryGetComponent<LayoutElement>(out var labelLayout))
             {
-                labelLayout.preferredHeight = 26f;
-                labelLayout.minHeight = 22f;
+                const float labelPreferredHeight = 32f;
+                const float baseLabelMinHeight = 28f;
+                const float minReadableLabelHeight = 14f;
+                const float buttonVerticalPaddingAndSpacing = 11f; // 上下padding(4+4) + 要素間spacing(3)
+
+                var availableLabelHeight = iconButtonSize - circleSize - buttonVerticalPaddingAndSpacing;
+                var adjustedMinHeight = Mathf.Clamp(availableLabelHeight, minReadableLabelHeight, baseLabelMinHeight);
+
+                var adjustedPreferredHeight = Mathf.Clamp(labelPreferredHeight, adjustedMinHeight, Mathf.Max(adjustedMinHeight, availableLabelHeight));
+
+                labelLayout.preferredHeight = adjustedPreferredHeight;
+                labelLayout.minHeight = adjustedMinHeight;
                 labelLayout.flexibleHeight = 0f;
             }
         }
@@ -1656,13 +1667,13 @@ namespace TiraWantToCross.UI
 
             if (circularStyle)
             {
-                text.fontSize = Mathf.Max(labelFontSize, 22);
+                text.fontSize = Mathf.Max(labelFontSize, 24);
                 text.resizeTextForBestFit = false;
                 var textLayout = text.GetComponent<LayoutElement>();
                 if (textLayout != null)
                 {
-                    textLayout.preferredHeight = 26f;
-                    textLayout.minHeight = 22f;
+                    textLayout.preferredHeight = 32f;
+                    textLayout.minHeight = 28f;
                     textLayout.flexibleHeight = 0f;
                 }
                 shellImage.sprite = null;
@@ -1716,18 +1727,18 @@ namespace TiraWantToCross.UI
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 270f : 292f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 252f : 274f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 258f : 278f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 244f : 264f;
             }
 
             if (routeRowLayoutElement != null)
             {
-                routeRowLayoutElement.preferredHeight = compact ? 76f : 84f;
-                routeRowLayoutElement.minHeight = compact ? 72f : 80f;
+                routeRowLayoutElement.preferredHeight = compact ? 72f : 80f;
+                routeRowLayoutElement.minHeight = compact ? 68f : 76f;
             }
 
             var headerHeight = compact ? 96f : 108f;
-            var bottomHeight = compact ? 422f : 468f;
+            var bottomHeight = compact ? 398f : 438f;
 
             if (playableBoardArea != null)
             {
@@ -1749,8 +1760,9 @@ namespace TiraWantToCross.UI
 
             if (bottomLayoutGroup != null)
             {
-                bottomLayoutGroup.spacing = compact ? 6f : 8f;
-                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 8, 8) : new RectOffset(12, 12, 8, 10);
+                bottomLayoutGroup.spacing = compact ? 4f : 6f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 6, 6) : new RectOffset(12, 12, 8, 6);
+                bottomLayoutGroup.childAlignment = TextAnchor.LowerCenter;
             }
 
             foreach (var panel in locationPanels.Values)
