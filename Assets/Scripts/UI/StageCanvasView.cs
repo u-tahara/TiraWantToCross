@@ -1771,9 +1771,9 @@ namespace TiraWantToCross.UI
 
             if (bottomLayoutGroup != null)
             {
-                bottomLayoutGroup.spacing = compact ? 4f : 6f;
-                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 6, 6) : new RectOffset(12, 12, 8, 6);
-                bottomLayoutGroup.childAlignment = TextAnchor.LowerCenter;
+                bottomLayoutGroup.spacing = compact ? 8f : 10f;
+                bottomLayoutGroup.padding = compact ? new RectOffset(10, 10, 10, 10) : new RectOffset(12, 12, 12, 12);
+                bottomLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
             }
 
             foreach (var panel in locationPanels.Values)
