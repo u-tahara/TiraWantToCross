@@ -439,7 +439,8 @@ namespace TiraWantToCross.UI
                 }
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
-                visuals.Label.text = ResolveEntityDisplayName(entity);
+                visuals.Label.text = string.Empty;
+                visuals.Label.enabled = false;
                 visuals.Button.image.color = Color.white;
                 visuals.CircleBorderImage.enabled = false;
             }
@@ -503,21 +504,21 @@ namespace TiraWantToCross.UI
                 islandBase.anchoredPosition = new Vector2(0f, -68f * nodeScale);
 
                 var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubblePanel.sizeDelta = new Vector2(210f * nodeScale, 176f * nodeScale);
+                bubblePanel.sizeDelta = new Vector2(216f * nodeScale, 184f * nodeScale);
                 bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
                 bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
                 bubblePanel.pivot = new Vector2(0.5f, 0.5f);
-                bubblePanel.anchoredPosition = new Vector2(0f, 44f * nodeScale);
+                bubblePanel.anchoredPosition = new Vector2(0f, 60f * nodeScale);
 
                 var bubbleTail = CreateRect("BubbleTail", bubblePanel, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 22f * nodeScale);
+                bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 20f * nodeScale);
                 bubbleTail.anchorMin = new Vector2(0.5f, 0f);
                 bubbleTail.anchorMax = new Vector2(0.5f, 0f);
                 bubbleTail.pivot = new Vector2(0.5f, 1f);
-                bubbleTail.anchoredPosition = new Vector2(0f, -4f * nodeScale);
+                bubbleTail.anchoredPosition = new Vector2(0f, -6f * nodeScale);
 
                 var countLabel = CreateText("Count", bubblePanel, "0ひき", 24, TextAnchor.MiddleCenter, 32f);
-                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 62f * nodeScale);
+                countLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 66f * nodeScale);
                 countLabel.color = new Color(0.28f, 0.2f, 0.1f, 1f);
                 locationCountTexts[location.locationId] = countLabel;
 
@@ -525,11 +526,11 @@ namespace TiraWantToCross.UI
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(8f * nodeScale, 10f * nodeScale);
-                grid.offsetMax = new Vector2(-8f * nodeScale, -34f * nodeScale);
+                grid.offsetMin = new Vector2(6f * nodeScale, 8f * nodeScale);
+                grid.offsetMax = new Vector2(-6f * nodeScale, -28f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(90f * nodeScale, 62f * nodeScale);
-                gridComp.spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
+                gridComp.cellSize = new Vector2(98f * nodeScale, 72f * nodeScale);
+                gridComp.spacing = new Vector2(4f * nodeScale, 4f * nodeScale);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
                 gridComp.childAlignment = TextAnchor.UpperCenter;
@@ -570,33 +571,33 @@ namespace TiraWantToCross.UI
             var bubblePanel = node.Find("AnimalBubblePanel") as RectTransform;
             if (bubblePanel != null)
             {
-                changed |= ApplySizeDelta(bubblePanel, new Vector2(210f * nodeScale, 176f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 44f * nodeScale));
+                changed |= ApplySizeDelta(bubblePanel, new Vector2(216f * nodeScale, 184f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 60f * nodeScale));
             }
 
             var countLabelRect = node.Find("AnimalBubblePanel/Count") as RectTransform;
             if (countLabelRect != null)
             {
-                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 62f * nodeScale));
+                changed |= ApplyAnchoredPosition(countLabelRect, new Vector2(0f, 66f * nodeScale));
             }
 
             var bubbleTail = node.Find("AnimalBubblePanel/BubbleTail") as RectTransform;
             if (bubbleTail != null)
             {
-                changed |= ApplySizeDelta(bubbleTail, new Vector2(34f * nodeScale, 22f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubbleTail, new Vector2(0f, -4f * nodeScale));
+                changed |= ApplySizeDelta(bubbleTail, new Vector2(34f * nodeScale, 20f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubbleTail, new Vector2(0f, -6f * nodeScale));
             }
 
             var grid = node.Find("AnimalBubblePanel/Entities") as RectTransform;
             if (grid != null)
             {
-                changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 10f * nodeScale));
-                changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -34f * nodeScale));
+                changed |= ApplyOffsetMin(grid, new Vector2(6f * nodeScale, 8f * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-6f * nodeScale, -28f * nodeScale));
                 var gridComp = grid.GetComponent<GridLayoutGroup>();
                 if (gridComp != null)
                 {
-                    changed |= ApplyGridCellSize(gridComp, new Vector2(90f * nodeScale, 62f * nodeScale));
-                    changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
+                    changed |= ApplyGridCellSize(gridComp, new Vector2(98f * nodeScale, 72f * nodeScale));
+                    changed |= ApplyGridSpacing(gridComp, new Vector2(4f * nodeScale, 4f * nodeScale));
                 }
             }
 
@@ -974,7 +975,7 @@ namespace TiraWantToCross.UI
                 markerRect.pivot = new Vector2(0.5f, 0.5f);
                 var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
                 var nodeScale = ResolveBoardNodeScale(locationCount);
-                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -142f * nodeScale);
+                markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -172f * nodeScale);
             }
         }
 
