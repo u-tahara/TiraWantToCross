@@ -753,6 +753,13 @@ namespace TiraWantToCross.UI
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
             }
+
+            if (visuals.CircleBorderImage != null && visuals.CircleBorderImage.transform is RectTransform borderRect)
+            {
+                var borderSize = circleSize + 6f;
+                borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, borderSize);
+                borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, borderSize);
+            }
         }
 
         private void RenderRoutes(StageUIViewContext context)
