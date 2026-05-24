@@ -427,7 +427,7 @@ namespace TiraWantToCross.UI
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => { }, 88f, 16, false);
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, 132f, 16, false);
                     boardEntityVisuals[entityId] = visuals;
                     boardEntityParents[entityId] = parentKey;
                 }
@@ -494,11 +494,11 @@ namespace TiraWantToCross.UI
                 islandBase.anchoredPosition = new Vector2(0f, -68f * nodeScale);
 
                 var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubblePanel.sizeDelta = new Vector2(216f * nodeScale, 188f * nodeScale);
+                bubblePanel.sizeDelta = new Vector2(244f * nodeScale, 208f * nodeScale);
                 bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
                 bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
                 bubblePanel.pivot = new Vector2(0.5f, 0.5f);
-                bubblePanel.anchoredPosition = new Vector2(0f, 66f * nodeScale);
+                bubblePanel.anchoredPosition = new Vector2(0f, 70f * nodeScale);
 
                 var bubbleTail = CreateRect("BubbleTail", bubblePanel, new Color(0.99f, 0.96f, 0.9f, 1f));
                 bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 20f * nodeScale);
@@ -511,14 +511,14 @@ namespace TiraWantToCross.UI
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(8f * nodeScale, 12f * nodeScale);
-                grid.offsetMax = new Vector2(-8f * nodeScale, -10f * nodeScale);
+                grid.offsetMin = new Vector2(4f * nodeScale, 8f * nodeScale);
+                grid.offsetMax = new Vector2(-4f * nodeScale, -6f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(96f * nodeScale, 84f * nodeScale);
-                gridComp.spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
+                gridComp.cellSize = new Vector2(112f * nodeScale, 96f * nodeScale);
+                gridComp.spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
                 gridComp.constraintCount = 2;
-                gridComp.childAlignment = TextAnchor.UpperCenter;
+                gridComp.childAlignment = TextAnchor.MiddleCenter;
                 locationEntityGrids[location.locationId] = grid;
 
                 locationThemes[location.locationId] = new LocationVisualTheme
@@ -556,8 +556,8 @@ namespace TiraWantToCross.UI
             var bubblePanel = node.Find("AnimalBubblePanel") as RectTransform;
             if (bubblePanel != null)
             {
-                changed |= ApplySizeDelta(bubblePanel, new Vector2(216f * nodeScale, 188f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 66f * nodeScale));
+                changed |= ApplySizeDelta(bubblePanel, new Vector2(244f * nodeScale, 208f * nodeScale));
+                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 70f * nodeScale));
             }
 
             var bubbleTail = node.Find("AnimalBubblePanel/BubbleTail") as RectTransform;
@@ -570,13 +570,13 @@ namespace TiraWantToCross.UI
             var grid = node.Find("AnimalBubblePanel/Entities") as RectTransform;
             if (grid != null)
             {
-                changed |= ApplyOffsetMin(grid, new Vector2(8f * nodeScale, 12f * nodeScale));
-                changed |= ApplyOffsetMax(grid, new Vector2(-8f * nodeScale, -10f * nodeScale));
+                changed |= ApplyOffsetMin(grid, new Vector2(4f * nodeScale, 8f * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-4f * nodeScale, -6f * nodeScale));
                 var gridComp = grid.GetComponent<GridLayoutGroup>();
                 if (gridComp != null)
                 {
-                    changed |= ApplyGridCellSize(gridComp, new Vector2(96f * nodeScale, 84f * nodeScale));
-                    changed |= ApplyGridSpacing(gridComp, new Vector2(6f * nodeScale, 6f * nodeScale));
+                    changed |= ApplyGridCellSize(gridComp, new Vector2(112f * nodeScale, 96f * nodeScale));
+                    changed |= ApplyGridSpacing(gridComp, new Vector2(8f * nodeScale, 8f * nodeScale));
                 }
             }
 
@@ -1067,10 +1067,18 @@ namespace TiraWantToCross.UI
                 yield break;
             }
 
-            var usageSuffix = usage == CharacterSpriteUsage.Board ? "board" : "icon";
-            yield return $"Sprites/Characters/{baseId}/{baseId}_{usageSuffix}";
+            if (usage == CharacterSpriteUsage.Board)
+            {
+                yield return $"Sprites/Characters/{baseId}/{baseId}_icon";
+                yield return $"Sprites/Characters/{baseId}_icon";
+                yield return $"Sprites/Characters/{baseId}/{baseId}";
+                yield return $"Sprites/Characters/{baseId}";
+                yield break;
+            }
+
+            yield return $"Sprites/Characters/{baseId}/{baseId}_icon";
             yield return $"Sprites/Characters/{baseId}/{baseId}";
-            yield return $"Sprites/Characters/{baseId}_{usageSuffix}";
+            yield return $"Sprites/Characters/{baseId}_icon";
             yield return $"Sprites/Characters/{baseId}";
         }
 
