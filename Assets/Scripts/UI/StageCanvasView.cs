@@ -245,9 +245,9 @@ namespace TiraWantToCross.UI
             bottom.offsetMin = new Vector2(0f, 0f);
             bottom.offsetMax = new Vector2(0f, 390f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
-            bottomLayoutGroup.spacing = 8f;
-            bottomLayoutGroup.padding = new RectOffset(12, 12, 10, 8);
-            bottomLayoutGroup.childAlignment = TextAnchor.LowerCenter;
+            bottomLayoutGroup.spacing = 10f;
+            bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
+            bottomLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
             bottomLayoutGroup.childControlHeight = true;
             bottomLayoutGroup.childControlWidth = true;
             bottomLayoutGroup.childForceExpandHeight = false;
@@ -274,23 +274,34 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 282f;
-            selectionIconPanelLayoutElement.minHeight = 266f;
+            selectionIconPanelLayoutElement.preferredHeight = 274f;
+            selectionIconPanelLayoutElement.minHeight = 258f;
+            var selectionPanelLayout = iconPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            selectionPanelLayout.spacing = 10f;
+            selectionPanelLayout.padding = new RectOffset(12, 12, 22, 22);
+            selectionPanelLayout.childAlignment = TextAnchor.MiddleCenter;
+            selectionPanelLayout.childControlWidth = true;
+            selectionPanelLayout.childControlHeight = false;
+            selectionPanelLayout.childForceExpandWidth = true;
+            selectionPanelLayout.childForceExpandHeight = false;
             selectionCountText.transform.SetParent(iconPanel, false);
-            selectionCountText.alignment = TextAnchor.UpperCenter;
+            selectionCountText.alignment = TextAnchor.MiddleCenter;
             var selectionCountRect = selectionCountText.GetComponent<RectTransform>();
-            selectionCountRect.anchorMin = new Vector2(0.5f, 1f);
-            selectionCountRect.anchorMax = new Vector2(0.5f, 1f);
-            selectionCountRect.pivot = new Vector2(0.5f, 1f);
-            selectionCountRect.anchoredPosition = new Vector2(0f, -12f);
+            selectionCountRect.anchorMin = new Vector2(0.5f, 0.5f);
+            selectionCountRect.anchorMax = new Vector2(0.5f, 0.5f);
+            selectionCountRect.pivot = new Vector2(0.5f, 0.5f);
+            selectionCountRect.anchoredPosition = Vector2.zero;
             selectionCountRect.sizeDelta = new Vector2(220f, 34f);
 
             var selectionIconsRoot = CreateRect("SelectionIcons", iconPanel, Color.clear);
-            selectionIconsRoot.anchorMin = new Vector2(0f, 0f);
-            selectionIconsRoot.anchorMax = new Vector2(1f, 1f);
+            selectionIconsRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            selectionIconsRoot.anchorMax = new Vector2(0.5f, 0.5f);
             selectionIconsRoot.pivot = new Vector2(0.5f, 0.5f);
-            selectionIconsRoot.offsetMin = new Vector2(8f, 8f);
-            selectionIconsRoot.offsetMax = new Vector2(-8f, -68f);
+            selectionIconsRoot.anchoredPosition = Vector2.zero;
+            selectionIconsRoot.sizeDelta = new Vector2(0f, 192f);
+            var selectionIconsLayoutElement = selectionIconsRoot.gameObject.AddComponent<LayoutElement>();
+            selectionIconsLayoutElement.preferredHeight = 192f;
+            selectionIconsLayoutElement.flexibleHeight = 1f;
             selectionIconsContainer = selectionIconsRoot;
 
             var selectionIconsLayout = selectionIconsRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -302,8 +313,8 @@ namespace TiraWantToCross.UI
             selectionIconsLayout.childForceExpandHeight = false;
             routeRowTransform = CreateHorizontalLayout("RouteRow", bottom, 12f, false);
             routeRowLayoutElement = routeRowTransform.gameObject.AddComponent<LayoutElement>();
-            routeRowLayoutElement.preferredHeight = 76f;
-            routeRowLayoutElement.minHeight = 70f;
+            routeRowLayoutElement.preferredHeight = 74f;
+            routeRowLayoutElement.minHeight = 68f;
             for (var i = 0; i < 2; i++)
             {
                 var routeButton = CreateButton($"Route{i + 1}", routeRowTransform, "Move", () => { }, 90f, 34);
