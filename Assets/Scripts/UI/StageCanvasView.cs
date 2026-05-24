@@ -267,12 +267,7 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            var selectionCountRoot = CreateRect("SelectionCountRoot", bottom, new Color(0f, 0f, 0f, 0f));
-            var selectionCountRootLayout = selectionCountRoot.gameObject.AddComponent<LayoutElement>();
-            selectionCountRootLayout.preferredHeight = 46f;
-            selectionCountRootLayout.minHeight = 42f;
-            selectionCountRootLayout.flexibleHeight = 0f;
-            selectionCountText = CreateText("SelectionCount", selectionCountRoot, "0/0", 34, TextAnchor.MiddleCenter, 38f);
+            selectionCountText = CreateText("SelectionCount", bottom, "0/0", 34, TextAnchor.MiddleCenter, 38f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
@@ -674,7 +669,17 @@ namespace TiraWantToCross.UI
             var canSelectMore = context.SelectedEntities.Count < capacity;
             var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
             var iconButtonSize = isCompact ? 216f : 240f;
-            var circleSize = isCompact ? 190f : 212f;
+            if (isCompact && selectionIconsContainer != null)
+            {
+                var candidateCount = Mathf.Max(1, candidates.Count);
+                var availableWidth = selectionIconsContainer.rect.width;
+                var spacingWidth = Mathf.Max(0, candidateCount - 1) * 16f;
+                var fitSize = (availableWidth - spacingWidth) / candidateCount;
+                iconButtonSize = Mathf.Min(iconButtonSize, fitSize);
+                iconButtonSize = Mathf.Max(140f, iconButtonSize);
+            }
+
+            var circleSize = iconButtonSize * 0.88f;
 
             for (var index = 0; index < candidates.Count; index++)
             {
