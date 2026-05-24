@@ -1832,7 +1832,7 @@ namespace TiraWantToCross.UI
                 routeRowLayoutElement.minHeight = compact ? 68f : 76f;
             }
 
-            var headerHeight = compact ? 96f : 108f;
+            var headerHeight = compact ? 132f : 140f;
             var bottomHeight = compact ? 398f : 438f;
 
             if (playableBoardArea != null)
