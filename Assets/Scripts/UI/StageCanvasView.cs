@@ -268,7 +268,7 @@ namespace TiraWantToCross.UI
             statusMessageLayoutElement.flexibleHeight = 0f;
             statusMessageText.color = new Color(0.7f, 0.15f, 0.12f, 1f);
             statusMessageText.gameObject.SetActive(false);
-            selectionCountText = CreateText("SelectionCount", bottom, "0/0", 34, TextAnchor.MiddleCenter, 30f);
+            selectionCountText = CreateText("SelectionCountText", bottom, "0/0", 34, TextAnchor.MiddleCenter, 34f);
             selectionCountLayoutElement = selectionCountText.GetComponent<LayoutElement>();
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
@@ -276,14 +276,15 @@ namespace TiraWantToCross.UI
             selectionIconPanelLayoutElement.preferredHeight = 296f;
             selectionIconPanelLayoutElement.minHeight = 280f;
             var selectionPanelLayout = iconPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            selectionPanelLayout.spacing = 6f;
-            selectionPanelLayout.padding = new RectOffset(8, 8, 6, 8);
+            selectionPanelLayout.spacing = 16f;
+            selectionPanelLayout.padding = new RectOffset(8, 8, 8, 8);
             selectionPanelLayout.childAlignment = TextAnchor.UpperCenter;
             selectionPanelLayout.childControlWidth = true;
             selectionPanelLayout.childControlHeight = false;
             selectionPanelLayout.childForceExpandWidth = true;
             selectionPanelLayout.childForceExpandHeight = false;
             selectionCountText.transform.SetParent(iconPanel, false);
+            selectionCountText.alignment = TextAnchor.MiddleCenter;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
             selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -681,7 +682,7 @@ namespace TiraWantToCross.UI
                 iconButtonSize = Mathf.Max(140f, iconButtonSize);
             }
 
-            var circleSize = iconButtonSize * 0.88f;
+            var circleSize = Mathf.Max(116f, iconButtonSize - 58f);
 
             for (var index = 0; index < candidates.Count; index++)
             {
@@ -755,7 +756,7 @@ namespace TiraWantToCross.UI
                 buttonLayout.flexibleHeight = 0f;
             }
 
-            var shell = visuals.Button.transform.Find("Shell");
+            var shell = visuals.Button.transform.Find("CircleRoot");
             var shellRect = shell as RectTransform;
             if (shellRect != null)
             {
@@ -775,15 +776,15 @@ namespace TiraWantToCross.UI
 
             if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
             {
-                var portraitSize = circleSize - 30f;
+                var portraitSize = Mathf.Max(92f, circleSize - 8f);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
             }
 
-            var portraitMask = visuals.Button.transform.Find("Shell/PortraitMask") as RectTransform;
+            var portraitMask = visuals.Button.transform.Find("CircleRoot/CircleMask") as RectTransform;
             if (portraitMask != null)
             {
-                var portraitMaskSize = circleSize - 28f;
+                var portraitMaskSize = Mathf.Max(96f, circleSize - 24f);
                 portraitMask.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitMaskSize);
                 portraitMask.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitMaskSize);
             }
@@ -793,6 +794,13 @@ namespace TiraWantToCross.UI
                 var borderSize = circleSize;
                 borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, borderSize);
                 borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, borderSize);
+            }
+
+            if (visuals.Label != null && visuals.Label.TryGetComponent<LayoutElement>(out var labelLayout))
+            {
+                labelLayout.preferredHeight = 28f;
+                labelLayout.minHeight = 24f;
+                labelLayout.flexibleHeight = 0f;
             }
         }
 
@@ -1570,7 +1578,7 @@ namespace TiraWantToCross.UI
             colors.disabledColor = Color.white;
             button.colors = colors;
 
-            var shell = CreateRect("Shell", button.transform, Color.clear);
+            var shell = CreateRect("CircleRoot", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
             var circleSize = circularStyle ? iconButtonSize - 16f : preferredHeight - 24f;
@@ -1582,24 +1590,24 @@ namespace TiraWantToCross.UI
             shellLayout.flexibleHeight = 0f;
             var shellImage = shell.GetComponent<Image>();
 
-            var portraitMask = CreateRect("PortraitMask", shell.transform, Color.white);
+            var portraitMask = CreateRect("CircleMask", shell.transform, Color.white);
             var portraitMaskImage = portraitMask.GetComponent<Image>();
             var portraitMaskComp = portraitMask.gameObject.AddComponent<Mask>();
             portraitMaskComp.showMaskGraphic = false;
 
-            var portrait = CreateRect("Portrait", portraitMask.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
+            var portrait = CreateRect("PortraitImage", portraitMask.transform, new Color(0.7f, 0.85f, 0.95f, 1f));
             if (circularStyle)
             {
                 portraitMask.anchorMin = new Vector2(0.5f, 0.5f);
                 portraitMask.anchorMax = new Vector2(0.5f, 0.5f);
                 portraitMask.pivot = new Vector2(0.5f, 0.5f);
-                var portraitMaskSize = Mathf.Max(92f, circleSize - 28f);
+                var portraitMaskSize = Mathf.Max(96f, circleSize - 24f);
                 portraitMask.sizeDelta = new Vector2(portraitMaskSize, portraitMaskSize);
 
                 portrait.anchorMin = new Vector2(0.5f, 0.5f);
                 portrait.anchorMax = new Vector2(0.5f, 0.5f);
                 portrait.pivot = new Vector2(0.5f, 0.5f);
-                var portraitSize = Mathf.Max(88f, portraitMaskSize - 2f);
+                var portraitSize = Mathf.Max(92f, portraitMaskSize - 4f);
                 portrait.sizeDelta = new Vector2(portraitSize, portraitSize);
             }
             else
@@ -1642,14 +1650,13 @@ namespace TiraWantToCross.UI
             if (circularStyle)
             {
                 text.fontSize = Mathf.Max(labelFontSize, 22);
-                text.resizeTextForBestFit = true;
-                text.resizeTextMinSize = 14;
-                text.resizeTextMaxSize = 22;
+                text.resizeTextForBestFit = false;
                 var textLayout = text.GetComponent<LayoutElement>();
                 if (textLayout != null)
                 {
-                    textLayout.preferredHeight = 26f;
-                    textLayout.minHeight = 22f;
+                    textLayout.preferredHeight = 28f;
+                    textLayout.minHeight = 24f;
+                    textLayout.flexibleHeight = 0f;
                 }
                 shellImage.sprite = null;
                 shellImage.type = Image.Type.Simple;
@@ -1661,6 +1668,7 @@ namespace TiraWantToCross.UI
                 portraitImage.sprite = null;
                 portraitImage.type = Image.Type.Simple;
                 portraitImage.color = Color.white;
+                portraitImage.preserveAspect = true;
                 borderImage.sprite = GetCircularBorderSprite();
                 borderImage.type = Image.Type.Simple;
                 borderImage.color = new Color(0.86f, 0.78f, 0.62f, 1f);
