@@ -708,6 +708,13 @@ namespace TiraWantToCross.UI
                 return;
             }
 
+            var buttonRect = visuals.Button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, iconButtonSize);
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, iconButtonSize);
+            }
+
             if (visuals.Button.TryGetComponent<LayoutElement>(out var buttonLayout))
             {
                 buttonLayout.preferredWidth = iconButtonSize;
@@ -719,6 +726,13 @@ namespace TiraWantToCross.UI
             }
 
             var shell = visuals.Button.transform.Find("Shell");
+            var shellRect = shell as RectTransform;
+            if (shellRect != null)
+            {
+                shellRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, circleSize);
+                shellRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, circleSize);
+            }
+
             if (shell != null && shell.TryGetComponent<LayoutElement>(out var shellLayout))
             {
                 shellLayout.preferredWidth = circleSize;
