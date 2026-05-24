@@ -1551,7 +1551,7 @@ namespace TiraWantToCross.UI
         {
             var button = CreateButton(entityId, parent, string.Empty, onClick, preferredHeight, labelFontSize);
             var text = button.GetComponentInChildren<Text>();
-            text.alignment = TextAnchor.UpperCenter;
+            text.alignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
             var buttonLayoutElement = button.GetComponent<LayoutElement>();
             var iconButtonSize = circularStyle ? Mathf.Max(preferredHeight, 148f) : preferredHeight;
