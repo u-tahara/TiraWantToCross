@@ -184,15 +184,8 @@ namespace TiraWantToCross.Prototype
 
         private void OpenRuleGuide()
         {
-            if (stageData == null)
-            {
-                lastMessage = "このステージのルールを確認できます。";
-                return;
-            }
-
-            lastMessage = string.IsNullOrWhiteSpace(stageData.tip)
-                ? "このステージのルールを確認できます。"
-                : $"ルール: {stageData.tip}";
+            // ルールボタンは現状ガイドUI未実装のため、操作エラーポップアップへ流れないようメッセージは更新しない。
+            lastMessage = string.Empty;
         }
 
         private void OnRetireRequested()
