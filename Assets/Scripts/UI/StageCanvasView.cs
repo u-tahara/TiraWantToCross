@@ -806,8 +806,16 @@ namespace TiraWantToCross.UI
 
             if (visuals.Label != null && visuals.Label.TryGetComponent<LayoutElement>(out var labelLayout))
             {
-                labelLayout.preferredHeight = 32f;
-                labelLayout.minHeight = 28f;
+                const float labelPreferredHeight = 32f;
+                const float baseLabelMinHeight = 28f;
+                const float minReadableLabelHeight = 14f;
+                const float buttonVerticalPaddingAndSpacing = 11f; // 上下padding(4+4) + 要素間spacing(3)
+
+                var availableLabelHeight = iconButtonSize - circleSize - buttonVerticalPaddingAndSpacing;
+                var adjustedMinHeight = Mathf.Clamp(availableLabelHeight, minReadableLabelHeight, baseLabelMinHeight);
+
+                labelLayout.preferredHeight = labelPreferredHeight;
+                labelLayout.minHeight = adjustedMinHeight;
                 labelLayout.flexibleHeight = 0f;
             }
         }
