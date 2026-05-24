@@ -527,7 +527,7 @@ namespace TiraWantToCross.UI
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
                 grid.offsetMin = new Vector2(6f * nodeScale, 8f * nodeScale);
-                grid.offsetMax = new Vector2(-6f * nodeScale, -40f * nodeScale);
+                grid.offsetMax = new Vector2(-6f * nodeScale, -28f * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
                 gridComp.cellSize = new Vector2(98f * nodeScale, 72f * nodeScale);
                 gridComp.spacing = new Vector2(4f * nodeScale, 4f * nodeScale);
@@ -592,7 +592,7 @@ namespace TiraWantToCross.UI
             if (grid != null)
             {
                 changed |= ApplyOffsetMin(grid, new Vector2(6f * nodeScale, 8f * nodeScale));
-                changed |= ApplyOffsetMax(grid, new Vector2(-6f * nodeScale, -40f * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-6f * nodeScale, -28f * nodeScale));
                 var gridComp = grid.GetComponent<GridLayoutGroup>();
                 if (gridComp != null)
                 {
