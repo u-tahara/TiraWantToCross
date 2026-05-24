@@ -195,7 +195,7 @@ namespace TiraWantToCross.UI
             playableBoardArea.anchorMin = new Vector2(0f, 0f);
             playableBoardArea.anchorMax = new Vector2(1f, 1f);
             playableBoardArea.pivot = new Vector2(0.5f, 0.5f);
-            playableBoardArea.offsetMin = new Vector2(24f, 350f);
+            playableBoardArea.offsetMin = new Vector2(24f, 390f);
             playableBoardArea.offsetMax = new Vector2(-24f, -108f);
 
             routeLinesRoot = new GameObject("RouteLines", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -242,7 +242,7 @@ namespace TiraWantToCross.UI
             bottom.anchorMax = new Vector2(1f, 0f);
             bottom.pivot = new Vector2(0.5f, 0f);
             bottom.offsetMin = new Vector2(0f, 0f);
-            bottom.offsetMax = new Vector2(0f, 350f);
+            bottom.offsetMax = new Vector2(0f, 390f);
             bottomLayoutGroup = bottom.gameObject.AddComponent<VerticalLayoutGroup>();
             bottomLayoutGroup.spacing = 10f;
             bottomLayoutGroup.padding = new RectOffset(12, 12, 12, 12);
@@ -267,8 +267,8 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 152f;
-            selectionIconPanelLayoutElement.minHeight = 144f;
+            selectionIconPanelLayoutElement.preferredHeight = 212f;
+            selectionIconPanelLayoutElement.minHeight = 196f;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
             selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -654,8 +654,8 @@ namespace TiraWantToCross.UI
             selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
             var canSelectMore = context.SelectedEntities.Count < capacity;
             var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
-            var iconButtonSize = isCompact ? 120f : 128f;
-            var circleSize = isCompact ? 104f : 112f;
+            var iconButtonSize = isCompact ? 148f : 160f;
+            var circleSize = isCompact ? 124f : 136f;
 
             for (var index = 0; index < candidates.Count; index++)
             {
@@ -1505,7 +1505,7 @@ namespace TiraWantToCross.UI
             text.alignment = TextAnchor.LowerCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
             var buttonLayoutElement = button.GetComponent<LayoutElement>();
-            var iconButtonSize = circularStyle ? Mathf.Clamp(preferredHeight, 120f, 128f) : preferredHeight;
+            var iconButtonSize = circularStyle ? Mathf.Max(preferredHeight, 148f) : preferredHeight;
             if (buttonLayoutElement != null && circularStyle)
             {
                 buttonLayoutElement.preferredWidth = iconButtonSize;
@@ -1554,7 +1554,8 @@ namespace TiraWantToCross.UI
                 portrait.anchorMin = new Vector2(0.5f, 0.5f);
                 portrait.anchorMax = new Vector2(0.5f, 0.5f);
                 portrait.pivot = new Vector2(0.5f, 0.5f);
-                portrait.sizeDelta = new Vector2(92f, 92f);
+                var portraitSize = Mathf.Max(96f, circleSize - 20f);
+                portrait.sizeDelta = new Vector2(portraitSize, portraitSize);
             }
             else
             {
@@ -1581,13 +1582,13 @@ namespace TiraWantToCross.UI
             borderImage.raycastTarget = false;
             borderImage.enabled = circularStyle;
 
-            var checkmark = CreateText("Checkmark", shell.transform, "✓", 34, TextAnchor.MiddleCenter, 38f);
+            var checkmark = CreateText("Checkmark", shell.transform, "✓", 38, TextAnchor.MiddleCenter, 44f);
             var checkmarkRect = checkmark.GetComponent<RectTransform>();
             checkmarkRect.anchorMin = new Vector2(1f, 0f);
             checkmarkRect.anchorMax = new Vector2(1f, 0f);
             checkmarkRect.pivot = new Vector2(1f, 0f);
-            checkmarkRect.anchoredPosition = new Vector2(-6f, 2f);
-            checkmarkRect.sizeDelta = new Vector2(38f, 38f);
+            checkmarkRect.anchoredPosition = new Vector2(-8f, 4f);
+            checkmarkRect.sizeDelta = new Vector2(44f, 44f);
             checkmark.color = new Color(0.16f, 0.68f, 0.24f, 1f);
             checkmark.raycastTarget = false;
             checkmark.enabled = false;
@@ -1643,18 +1644,18 @@ namespace TiraWantToCross.UI
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 146f : 158f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 140f : 150f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 192f : 214f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 180f : 202f;
             }
 
             if (routeRowLayoutElement != null)
             {
-                routeRowLayoutElement.preferredHeight = compact ? 72f : 82f;
-                routeRowLayoutElement.minHeight = compact ? 68f : 76f;
+                routeRowLayoutElement.preferredHeight = compact ? 76f : 84f;
+                routeRowLayoutElement.minHeight = compact ? 72f : 80f;
             }
 
             var headerHeight = compact ? 96f : 108f;
-            var bottomHeight = compact ? 350f : 370f;
+            var bottomHeight = compact ? 390f : 410f;
 
             if (playableBoardArea != null)
             {
