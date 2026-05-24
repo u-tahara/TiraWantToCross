@@ -1568,7 +1568,7 @@ namespace TiraWantToCross.UI
             var buttonLayout = button.gameObject.AddComponent<VerticalLayoutGroup>();
             buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 4, 4) : new RectOffset(4, 4, 4, 4);
             buttonLayout.spacing = circularStyle ? 3f : 2f;
-            buttonLayout.childAlignment = TextAnchor.UpperCenter;
+            buttonLayout.childAlignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
             buttonLayout.childControlWidth = true;
             buttonLayout.childControlHeight = false;
             buttonLayout.childForceExpandWidth = true;
