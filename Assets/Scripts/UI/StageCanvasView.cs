@@ -267,8 +267,8 @@ namespace TiraWantToCross.UI
             selectionCountText.color = new Color(0.22f, 0.22f, 0.22f, 1f);
             var iconPanel = CreateRect("SelectionIconPanel", bottom, new Color(0.98f, 0.96f, 0.9f, 1f));
             selectionIconPanelLayoutElement = iconPanel.gameObject.AddComponent<LayoutElement>();
-            selectionIconPanelLayoutElement.preferredHeight = 124f;
-            selectionIconPanelLayoutElement.minHeight = 116f;
+            selectionIconPanelLayoutElement.preferredHeight = 152f;
+            selectionIconPanelLayoutElement.minHeight = 144f;
             selectionIconsContainer = CreateHorizontalLayout("SelectionIcons", iconPanel, 16f, true);
             var selectionIconsLayout = selectionIconsContainer.GetComponent<HorizontalLayoutGroup>();
             selectionIconsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -654,8 +654,8 @@ namespace TiraWantToCross.UI
             selectionCountText.text = $"のせる動物 {context.SelectedEntities.Count}/{capacity}";
             var canSelectMore = context.SelectedEntities.Count < capacity;
             var isCompact = Screen.width < 1100f || (Screen.height > 0 && (float)Screen.width / Screen.height < 0.58f);
-            var iconButtonSize = isCompact ? 104f : 112f;
-            var circleSize = isCompact ? 74f : 82f;
+            var iconButtonSize = isCompact ? 120f : 128f;
+            var circleSize = isCompact ? 104f : 112f;
 
             for (var index = 0; index < candidates.Count; index++)
             {
@@ -749,14 +749,14 @@ namespace TiraWantToCross.UI
 
             if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
             {
-                var portraitSize = circleSize - 16f;
+                var portraitSize = circleSize - 20f;
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, portraitSize);
                 portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, portraitSize);
             }
 
             if (visuals.CircleBorderImage != null && visuals.CircleBorderImage.transform is RectTransform borderRect)
             {
-                var borderSize = circleSize + 6f;
+                var borderSize = circleSize;
                 borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, borderSize);
                 borderRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, borderSize);
             }
@@ -1505,7 +1505,7 @@ namespace TiraWantToCross.UI
             text.alignment = TextAnchor.LowerCenter;
             text.color = new Color(0.2f, 0.2f, 0.2f, 1f);
             var buttonLayoutElement = button.GetComponent<LayoutElement>();
-            var iconButtonSize = circularStyle ? Mathf.Clamp(preferredHeight, 104f, 116f) : preferredHeight;
+            var iconButtonSize = circularStyle ? Mathf.Clamp(preferredHeight, 120f, 128f) : preferredHeight;
             if (buttonLayoutElement != null && circularStyle)
             {
                 buttonLayoutElement.preferredWidth = iconButtonSize;
@@ -1539,7 +1539,7 @@ namespace TiraWantToCross.UI
             var shell = CreateRect("Shell", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
-            var circleSize = circularStyle ? iconButtonSize - 30f : preferredHeight - 24f;
+            var circleSize = circularStyle ? iconButtonSize - 16f : preferredHeight - 24f;
             shellLayout.preferredHeight = circleSize;
             shellLayout.preferredWidth = circleSize;
             shellLayout.minHeight = circleSize;
@@ -1554,7 +1554,7 @@ namespace TiraWantToCross.UI
                 portrait.anchorMin = new Vector2(0.5f, 0.5f);
                 portrait.anchorMax = new Vector2(0.5f, 0.5f);
                 portrait.pivot = new Vector2(0.5f, 0.5f);
-                portrait.sizeDelta = new Vector2(72f, 72f);
+                portrait.sizeDelta = new Vector2(92f, 92f);
             }
             else
             {
@@ -1570,7 +1570,7 @@ namespace TiraWantToCross.UI
                 border.anchorMin = new Vector2(0.5f, 0.5f);
                 border.anchorMax = new Vector2(0.5f, 0.5f);
                 border.pivot = new Vector2(0.5f, 0.5f);
-                border.sizeDelta = new Vector2(88f, 88f);
+                border.sizeDelta = new Vector2(circleSize, circleSize);
             }
             else
             {
@@ -1643,8 +1643,8 @@ namespace TiraWantToCross.UI
 
             if (selectionIconPanelLayoutElement != null)
             {
-                selectionIconPanelLayoutElement.preferredHeight = compact ? 116f : 126f;
-                selectionIconPanelLayoutElement.minHeight = compact ? 112f : 120f;
+                selectionIconPanelLayoutElement.preferredHeight = compact ? 146f : 158f;
+                selectionIconPanelLayoutElement.minHeight = compact ? 140f : 150f;
             }
 
             if (routeRowLayoutElement != null)
@@ -1654,7 +1654,7 @@ namespace TiraWantToCross.UI
             }
 
             var headerHeight = compact ? 96f : 108f;
-            var bottomHeight = compact ? 330f : 350f;
+            var bottomHeight = compact ? 350f : 370f;
 
             if (playableBoardArea != null)
             {
