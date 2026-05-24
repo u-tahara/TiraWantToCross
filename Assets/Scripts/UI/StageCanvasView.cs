@@ -242,7 +242,7 @@ namespace TiraWantToCross.UI
             header.pivot = new Vector2(0.5f, 1f);
             header.offsetMin = new Vector2(0f, -140f);
             header.offsetMax = new Vector2(0f, 0f);
-            var row = CreateHorizontalLayout("HeaderRow", header, 8f, false);
+            var row = CreateHorizontalLayout("HeaderRow", header, 8f, true);
             var rowLayout = row.gameObject.GetComponent<HorizontalLayoutGroup>();
             rowLayout.padding = new RectOffset(12, 12, 12, 12);
             rowLayout.childControlWidth = false;
