@@ -814,7 +814,9 @@ namespace TiraWantToCross.UI
                 var availableLabelHeight = iconButtonSize - circleSize - buttonVerticalPaddingAndSpacing;
                 var adjustedMinHeight = Mathf.Clamp(availableLabelHeight, minReadableLabelHeight, baseLabelMinHeight);
 
-                labelLayout.preferredHeight = labelPreferredHeight;
+                var adjustedPreferredHeight = Mathf.Clamp(labelPreferredHeight, adjustedMinHeight, Mathf.Max(adjustedMinHeight, availableLabelHeight));
+
+                labelLayout.preferredHeight = adjustedPreferredHeight;
                 labelLayout.minHeight = adjustedMinHeight;
                 labelLayout.flexibleHeight = 0f;
             }
