@@ -145,7 +145,8 @@ namespace TiraWantToCross.Prototype
                 OpenStageSelect,
                 TrySelectStageFromList,
                 StartSelectedStage,
-                ResetProgress);
+                ResetProgress,
+                DismissOperationError);
         }
 
         private void Update()
@@ -159,6 +160,12 @@ namespace TiraWantToCross.Prototype
         private StageUIViewContext BuildViewContext()
         {
             return new StageUIViewContext(stageIds, activeStageId, stageData, stageDataById, gameState, selectedEntities, lastMessage, ResolveAvailableRoutes(), currentViewMode == ViewMode.StageSelect, highestUnlockedStageIndex, selectedStageIdInSelect);
+        }
+
+
+        private void DismissOperationError()
+        {
+            lastMessage = string.Empty;
         }
 
         private void OpenStageSelect()
