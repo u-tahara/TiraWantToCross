@@ -805,8 +805,8 @@ namespace TiraWantToCross.UI
 
             if (visuals.Label != null && visuals.Label.TryGetComponent<LayoutElement>(out var labelLayout))
             {
-                labelLayout.preferredHeight = 28f;
-                labelLayout.minHeight = 24f;
+                labelLayout.preferredHeight = 26f;
+                labelLayout.minHeight = 22f;
                 labelLayout.flexibleHeight = 0f;
             }
         }
