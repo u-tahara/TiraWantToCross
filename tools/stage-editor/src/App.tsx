@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StageEditor } from './components/StageEditor';
 import { StageList } from './components/StageList';
 import { ValidationPanel } from './components/ValidationPanel';
@@ -17,15 +17,61 @@ const nextId = (stages: StageData[]) => {
 
 function App() {
   const [stages, setStages] = useState<StageData[]>(() => loadStages());
-  const [editingIndex, setEditingIndex] = useState<number | null>(stages.length > 0 ? 0 : null);
+  const [editingStage, setEditingStage] = useState<StageData | null>(stages.length > 0 ? stages[0] : null);
+  const [editingStageHint, setEditingStageHint] = useState<{ stageId: string; duplicateOrder: number } | null>(
+    stages.length > 0 ? { stageId: stages[0].stageId, duplicateOrder: 0 } : null,
+  );
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const issues = useMemo(() => validateStages(stages), [stages]);
   const invalidStageIds = useMemo(() => new Set(issues.map((i) => i.stageId)), [issues]);
 
   const updateStages = (next: StageData[]) => { setStages(next); saveStages(next); };
-  const editing = editingIndex !== null ? stages[editingIndex] ?? null : null;
+  const editing = editingStage;
   const filtered = stages.filter((s) => [s.stageId, s.title, s.theme, s.difficulty].join(' ').toLowerCase().includes(query.toLowerCase()));
+
+  const toStageHint = (target: StageData, all: StageData[]) => {
+    let duplicateOrder = 0;
+    for (let i = 0; i < all.length; i += 1) {
+      const stage = all[i];
+      if (stage.stageId !== target.stageId) continue;
+      if (stage === target) break;
+      duplicateOrder += 1;
+    }
+    return { stageId: target.stageId, duplicateOrder };
+  };
+
+  const isSameStageHint = (
+    a: { stageId: string; duplicateOrder: number } | null,
+    b: { stageId: string; duplicateOrder: number } | null,
+  ) => a?.stageId === b?.stageId && a?.duplicateOrder === b?.duplicateOrder;
+
+  useEffect(() => {
+    if (editingStage !== null) {
+      const sameRef = stages.find((s) => s === editingStage);
+      if (sameRef) {
+        const nextHint = toStageHint(sameRef, stages);
+        if (!isSameStageHint(editingStageHint, nextHint)) {
+          setEditingStageHint(nextHint);
+        }
+        return;
+      }
+    }
+
+    if (editingStageHint !== null) {
+      const sameIdStages = stages.filter((s) => s.stageId === editingStageHint.stageId);
+      if (sameIdStages.length > 0) {
+        const resolved = sameIdStages[Math.min(editingStageHint.duplicateOrder, sameIdStages.length - 1)];
+        setEditingStage(resolved);
+        setEditingStageHint(toStageHint(resolved, stages));
+        return;
+      }
+    }
+
+    const fallback = stages.length > 0 ? stages[0] : null;
+    setEditingStage(fallback);
+    setEditingStageHint(fallback ? toStageHint(fallback, stages) : null);
+  }, [editingStage, editingStageHint, stages]);
 
   const importJson = async (files: FileList | null) => {
     if (!files) return;
@@ -52,15 +98,19 @@ function App() {
 
 
   const handleStageChange = (st: StageData) => {
-    if (editingIndex === null || !stages[editingIndex]) return;
+    if (editingStage === null) return;
+    const editingIndex = stages.findIndex((s) => s === editingStage);
+    if (editingIndex < 0) return;
     const next = [...stages];
     next[editingIndex] = st;
     updateStages(next);
+    setEditingStage(st);
+    setEditingStageHint(toStageHint(st, next));
   };
 
   return <main>
     <h1>Stage Editor</h1>
-    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingIndex(n.length - 1); }}>新規ステージ</button>
+    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStage(n[n.length - 1]); setEditingStageHint(toStageHint(n[n.length - 1], n)); }}>新規ステージ</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
     <button className="js-export-all-zip" onClick={async () => {
@@ -83,32 +133,27 @@ function App() {
       stages={filtered}
       selected={selected}
       setSelected={setSelected}
-      onEdit={(index) => {
-        const target = filtered[index];
-        if (!target) return;
-        const originalIndex = stages.indexOf(target);
-        if (originalIndex < 0) return;
-        setEditingIndex(originalIndex);
+      onEdit={(stage) => {
+        setEditingStage(stage);
+        setEditingStageHint(toStageHint(stage, stages));
       }}
-      onDuplicate={(index) => {
-        const src = filtered[index];
-        if (!src) return;
-        const originalIndex = stages.indexOf(src);
-        if (originalIndex < 0) return;
+      onDuplicate={(src) => {
         const newId = prompt('複製後のstageId', `${src.stageId}_copy`);
         if (!newId || stages.some((s) => s.stageId === newId)) return;
         updateStages([...stages, { ...src, stageId: newId }]);
       }}
-      onDelete={(index) => {
-        const target = filtered[index];
-        if (!target) return;
-        const originalIndex = stages.indexOf(target);
-        if (originalIndex < 0) return;
-        if (!confirm(`${target.stageId} を削除しますか？`)) return;
-        const next = stages.filter((_, i) => i !== originalIndex);
+      onDelete={(stage) => {
+        const targetIndex = stages.findIndex((s) => s === stage);
+        if (targetIndex < 0) return;
+        if (!confirm(`${stage.stageId} を削除しますか？`)) return;
+        const next = [...stages];
+        next.splice(targetIndex, 1);
         updateStages(next);
-        if (editingIndex === originalIndex) setEditingIndex(null);
-        else if (editingIndex !== null && editingIndex > originalIndex) setEditingIndex(editingIndex - 1);
+        if (editingStage === stage) {
+          const fallback = next.length > 0 ? next[0] : null;
+          setEditingStage(fallback);
+          setEditingStageHint(fallback ? toStageHint(fallback, next) : null);
+        }
       }}
     />
 
