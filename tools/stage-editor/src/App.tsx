@@ -30,9 +30,17 @@ function App() {
   const importJson = async (files: FileList | null) => {
     if (!files) return;
     const imported: StageData[] = [];
+    const failedFiles: string[] = [];
     for (const f of Array.from(files)) {
-      const txt = await f.text();
-      imported.push(normalizeStageData(JSON.parse(txt), f.name.replace(/\.json$/i, '')));
+      try {
+        const txt = await f.text();
+        imported.push(normalizeStageData(JSON.parse(txt), f.name.replace(/\.json$/i, '')));
+      } catch {
+        failedFiles.push(f.name);
+      }
+    }
+    if (failedFiles.length > 0) {
+      alert(`JSONの読み込みに失敗したファイル: ${failedFiles.join(', ')}`);
     }
     const merged = [...stages];
     imported.forEach((s) => {
@@ -80,7 +88,7 @@ function App() {
       }}
     />
 
-    {editing ? <StageEditor stage={editing} onChange={(st) => updateStages(stages.map((s) => s.stageId === st.stageId ? st : s))} /> : <p>編集するステージを選択してください。</p>}
+    {editing ? <StageEditor stage={editing} onChange={(st) => updateStages(stages.map((s) => s.stageId === editing.stageId ? st : s))} /> : <p>編集するステージを選択してください。</p>}
     <ValidationPanel issues={issues} />
   </main>;
 }

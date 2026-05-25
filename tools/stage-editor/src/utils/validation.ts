@@ -24,9 +24,11 @@ export const validateStages = (stages: StageData[]): ValidationIssue[] => {
     if (!s.boat.startLocation) issues.push({ stageId: s.stageId, path: 'boat.startLocation', message: 'boat.startLocationは必須です' });
 
     const locationIds = s.locations.map((l) => l.locationId);
+    const routeIds = s.routes.map((r) => r.routeId);
     const entityIds = s.entities.map((e) => e.entityId);
 
     dup(locationIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'locations', message: `locationId重複: ${id}` }));
+    dup(routeIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'routes', message: `routeId重複: ${id}` }));
     dup(entityIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'entities', message: `entityId重複: ${id}` }));
 
     s.locations.forEach((l, i) => { if (!l.locationId) issues.push({ stageId: s.stageId, path: `locations[${i}]`, message: 'locationIdは必須です' }); });
