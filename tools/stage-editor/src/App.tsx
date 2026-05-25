@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StageEditor } from './components/StageEditor';
 import { StageList } from './components/StageList';
 import { ValidationPanel } from './components/ValidationPanel';
@@ -17,15 +17,20 @@ const nextId = (stages: StageData[]) => {
 
 function App() {
   const [stages, setStages] = useState<StageData[]>(() => loadStages());
-  const [editingStageId, setEditingStageId] = useState<string | null>(stages.length > 0 ? stages[0].stageId : null);
+  const [editingStage, setEditingStage] = useState<StageData | null>(stages.length > 0 ? stages[0] : null);
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const issues = useMemo(() => validateStages(stages), [stages]);
   const invalidStageIds = useMemo(() => new Set(issues.map((i) => i.stageId)), [issues]);
 
   const updateStages = (next: StageData[]) => { setStages(next); saveStages(next); };
-  const editing = editingStageId !== null ? stages.find((s) => s.stageId === editingStageId) ?? null : null;
+  const editing = editingStage;
   const filtered = stages.filter((s) => [s.stageId, s.title, s.theme, s.difficulty].join(' ').toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    if (editingStage !== null && stages.some((s) => s === editingStage)) return;
+    setEditingStage(stages.length > 0 ? stages[0] : null);
+  }, [editingStage, stages]);
 
   const importJson = async (files: FileList | null) => {
     if (!files) return;
@@ -52,20 +57,18 @@ function App() {
 
 
   const handleStageChange = (st: StageData) => {
-    if (editingStageId === null) return;
-    const editingIndex = stages.findIndex((s) => s.stageId === editingStageId);
+    if (editingStage === null) return;
+    const editingIndex = stages.findIndex((s) => s === editingStage);
     if (editingIndex < 0) return;
     const next = [...stages];
     next[editingIndex] = st;
     updateStages(next);
-    if (editingStageId !== st.stageId) {
-      setEditingStageId(st.stageId);
-    }
+    setEditingStage(st);
   };
 
   return <main>
     <h1>Stage Editor</h1>
-    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStageId(id); }}>新規ステージ</button>
+    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStage(n[n.length - 1]); }}>新規ステージ</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
     <button className="js-export-all-zip" onClick={async () => {
@@ -88,13 +91,10 @@ function App() {
       stages={filtered}
       selected={selected}
       setSelected={setSelected}
-      onEdit={(stageId) => {
-        if (!stages.some((s) => s.stageId === stageId)) return;
-        setEditingStageId(stageId);
+      onEdit={(stage) => {
+        setEditingStage(stage);
       }}
-      onDuplicate={(stageId) => {
-        const src = stages.find((s) => s.stageId === stageId);
-        if (!src) return;
+      onDuplicate={(src) => {
         const newId = prompt('複製後のstageId', `${src.stageId}_copy`);
         if (!newId || stages.some((s) => s.stageId === newId)) return;
         updateStages([...stages, { ...src, stageId: newId }]);
@@ -106,8 +106,8 @@ function App() {
         const next = [...stages];
         next.splice(targetIndex, 1);
         updateStages(next);
-        if (editingStageId === stage.stageId) {
-          setEditingStageId(next.length > 0 ? next[0].stageId : null);
+        if (editingStage === stage) {
+          setEditingStage(next.length > 0 ? next[0] : null);
         }
       }}
     />
