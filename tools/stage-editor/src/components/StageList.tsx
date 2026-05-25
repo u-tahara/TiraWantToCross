@@ -6,7 +6,7 @@ type Props = {
   setSelected: (ids: string[]) => void;
   onEdit: (stageId: string) => void;
   onDuplicate: (stageId: string) => void;
-  onDelete: (stageId: string) => void;
+  onDelete: (stage: StageData) => void;
 };
 
 export const StageList = ({ stages, selected, setSelected, onEdit, onDuplicate, onDelete }: Props) => {
@@ -22,7 +22,7 @@ export const StageList = ({ stages, selected, setSelected, onEdit, onDuplicate, 
             <td>
               <button className="js-edit-stage" onClick={() => onEdit(s.stageId)}>編集</button>
               <button className="js-dup-stage" onClick={() => onDuplicate(s.stageId)}>複製</button>
-              <button className="js-del-stage" onClick={() => onDelete(s.stageId)}>削除</button>
+              <button className="js-del-stage" onClick={() => onDelete(s)}>削除</button>
             </td>
           </tr>
         ))}

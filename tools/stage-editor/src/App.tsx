@@ -99,13 +99,14 @@ function App() {
         if (!newId || stages.some((s) => s.stageId === newId)) return;
         updateStages([...stages, { ...src, stageId: newId }]);
       }}
-      onDelete={(stageId) => {
-        const target = stages.find((s) => s.stageId === stageId);
-        if (!target) return;
-        if (!confirm(`${target.stageId} を削除しますか？`)) return;
-        const next = stages.filter((s) => s.stageId !== stageId);
+      onDelete={(stage) => {
+        const targetIndex = stages.findIndex((s) => s === stage);
+        if (targetIndex < 0) return;
+        if (!confirm(`${stage.stageId} を削除しますか？`)) return;
+        const next = [...stages];
+        next.splice(targetIndex, 1);
         updateStages(next);
-        if (editingStageId === stageId) {
+        if (editingStageId === stage.stageId) {
           setEditingStageId(next.length > 0 ? next[0].stageId : null);
         }
       }}
