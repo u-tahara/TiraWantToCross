@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { StageEditor } from './components/StageEditor';
 import { StageList } from './components/StageList';
 import { ValidationPanel } from './components/ValidationPanel';
-import { createEmptyStage, StageData } from './types/stage';
+import { createEmptyStage, normalizeStageData, StageData } from './types/stage';
 import { downloadUnityZip } from './utils/exportZip';
 import { loadStages, saveStages } from './utils/storage';
 import { validateStages } from './utils/validation';
@@ -32,7 +32,7 @@ function App() {
     const imported: StageData[] = [];
     for (const f of Array.from(files)) {
       const txt = await f.text();
-      imported.push(JSON.parse(txt));
+      imported.push(normalizeStageData(JSON.parse(txt), f.name.replace(/\.json$/i, '')));
     }
     const merged = [...stages];
     imported.forEach((s) => {
