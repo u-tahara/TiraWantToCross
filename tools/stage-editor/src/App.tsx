@@ -17,14 +17,14 @@ const nextId = (stages: StageData[]) => {
 
 function App() {
   const [stages, setStages] = useState<StageData[]>(() => loadStages());
-  const [editingId, setEditingId] = useState<string | null>(stages[0]?.stageId ?? null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(stages.length > 0 ? 0 : null);
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const issues = useMemo(() => validateStages(stages), [stages]);
   const invalidStageIds = useMemo(() => new Set(issues.map((i) => i.stageId)), [issues]);
 
   const updateStages = (next: StageData[]) => { setStages(next); saveStages(next); };
-  const editing = stages.find((s) => s.stageId === editingId) ?? null;
+  const editing = editingIndex !== null ? stages[editingIndex] ?? null : null;
   const filtered = stages.filter((s) => [s.stageId, s.title, s.theme, s.difficulty].join(' ').toLowerCase().includes(query.toLowerCase()));
 
   const importJson = async (files: FileList | null) => {
@@ -52,15 +52,15 @@ function App() {
 
 
   const handleStageChange = (st: StageData) => {
-    const prevId = editing?.stageId;
-    if (!prevId) return;
-    updateStages(stages.map((s) => (s.stageId === prevId ? st : s)));
-    if (st.stageId !== prevId) setEditingId(st.stageId);
+    if (editingIndex === null || !stages[editingIndex]) return;
+    const next = [...stages];
+    next[editingIndex] = st;
+    updateStages(next);
   };
 
   return <main>
     <h1>Stage Editor</h1>
-    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingId(id); }}>新規ステージ</button>
+    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingIndex(n.length - 1); }}>新規ステージ</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
     <button className="js-export-all-zip" onClick={async () => {
@@ -83,18 +83,32 @@ function App() {
       stages={filtered}
       selected={selected}
       setSelected={setSelected}
-      onEdit={setEditingId}
-      onDuplicate={(id) => {
-        const src = stages.find((s) => s.stageId === id);
+      onEdit={(index) => {
+        const target = filtered[index];
+        if (!target) return;
+        const originalIndex = stages.indexOf(target);
+        if (originalIndex < 0) return;
+        setEditingIndex(originalIndex);
+      }}
+      onDuplicate={(index) => {
+        const src = filtered[index];
         if (!src) return;
-        const newId = prompt('複製後のstageId', `${id}_copy`);
+        const originalIndex = stages.indexOf(src);
+        if (originalIndex < 0) return;
+        const newId = prompt('複製後のstageId', `${src.stageId}_copy`);
         if (!newId || stages.some((s) => s.stageId === newId)) return;
         updateStages([...stages, { ...src, stageId: newId }]);
       }}
-      onDelete={(id) => {
-        if (!confirm(`${id} を削除しますか？`)) return;
-        updateStages(stages.filter((s) => s.stageId !== id));
-        if (editingId === id) setEditingId(null);
+      onDelete={(index) => {
+        const target = filtered[index];
+        if (!target) return;
+        const originalIndex = stages.indexOf(target);
+        if (originalIndex < 0) return;
+        if (!confirm(`${target.stageId} を削除しますか？`)) return;
+        const next = stages.filter((_, i) => i !== originalIndex);
+        updateStages(next);
+        if (editingIndex === originalIndex) setEditingIndex(null);
+        else if (editingIndex !== null && editingIndex > originalIndex) setEditingIndex(editingIndex - 1);
       }}
     />
 

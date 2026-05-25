@@ -4,9 +4,9 @@ type Props = {
   stages: StageData[];
   selected: string[];
   setSelected: (ids: string[]) => void;
-  onEdit: (id: string) => void;
-  onDuplicate: (id: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (index: number) => void;
+  onDuplicate: (index: number) => void;
+  onDelete: (index: number) => void;
 };
 
 export const StageList = ({ stages, selected, setSelected, onEdit, onDuplicate, onDelete }: Props) => {
@@ -15,14 +15,14 @@ export const StageList = ({ stages, selected, setSelected, onEdit, onDuplicate, 
     <table className="js-stage-table" border={1} cellPadding={4}>
       <thead><tr><th></th><th>stageId</th><th>title</th><th>theme</th><th>difficulty</th><th>optimalMoves</th><th>appVersionAdded</th><th>操作</th></tr></thead>
       <tbody>
-        {stages.map((s) => (
-          <tr key={s.stageId}>
+        {stages.map((s, index) => (
+          <tr key={`${s.stageId || 'empty'}-${index}`}>
             <td><input className="js-select-stage" type="checkbox" checked={selected.includes(s.stageId)} onChange={() => toggle(s.stageId)} /></td>
             <td>{s.stageId}</td><td>{s.title}</td><td>{s.theme}</td><td>{s.difficulty}</td><td>{s.optimalMoves}</td><td>{s.appVersionAdded}</td>
             <td>
-              <button className="js-edit-stage" onClick={() => onEdit(s.stageId)}>編集</button>
-              <button className="js-dup-stage" onClick={() => onDuplicate(s.stageId)}>複製</button>
-              <button className="js-del-stage" onClick={() => onDelete(s.stageId)}>削除</button>
+              <button className="js-edit-stage" onClick={() => onEdit(index)}>編集</button>
+              <button className="js-dup-stage" onClick={() => onDuplicate(index)}>複製</button>
+              <button className="js-del-stage" onClick={() => onDelete(index)}>削除</button>
             </td>
           </tr>
         ))}
