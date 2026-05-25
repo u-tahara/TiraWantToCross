@@ -21,6 +21,7 @@ function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const issues = useMemo(() => validateStages(stages), [stages]);
+  const invalidStageIds = useMemo(() => new Set(issues.map((i) => i.stageId)), [issues]);
 
   const updateStages = (next: StageData[]) => { setStages(next); saveStages(next); };
   const editing = stages.find((s) => s.stageId === editingId) ?? null;
@@ -48,15 +49,15 @@ function App() {
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={(e) => importJson(e.target.files)} />
     <button className="js-export-all-zip" onClick={async () => {
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
-      const hasError = validateStages(stages).length > 0;
+      const hasError = issues.length > 0;
       if (hasError && !confirm('エラーがあります。正常ステージのみ出力しますか？')) return;
-      const valid = stages.filter((s) => validateStages([s]).length === 0);
+      const valid = stages.filter((s) => !invalidStageIds.has(s.stageId));
       await downloadUnityZip(valid, appVersion);
     }}>全ステージZIP出力</button>
     <button className="js-export-selected-zip" onClick={async () => {
       const targets = stages.filter((s) => selected.includes(s.stageId));
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
-      const valid = targets.filter((s) => validateStages([s]).length === 0);
+      const valid = targets.filter((s) => !invalidStageIds.has(s.stageId));
       await downloadUnityZip(valid, appVersion);
     }}>選択ステージZIP出力</button>
 

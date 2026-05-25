@@ -15,6 +15,12 @@ export const validateStages = (stages: StageData[]): ValidationIssue[] => {
     if (!s.title) issues.push({ stageId: s.stageId, path: 'title', message: 'titleは必須です' });
     if (s.schemaVersion < 1) issues.push({ stageId: s.stageId, path: 'schemaVersion', message: 'schemaVersionは1以上が必要です' });
     if (s.optimalMoves < 1) issues.push({ stageId: s.stageId, path: 'optimalMoves', message: 'optimalMovesは1以上が必要です' });
+    const capacityCandidates = [s.boat?.capacity, s.boat?.maxPassengers, s.maxPassengers, s.capacity]
+      .filter((v): v is number => typeof v === 'number');
+    const hasValidBoatCapacity = capacityCandidates.some((v) => v >= 1);
+    if (!hasValidBoatCapacity) {
+      issues.push({ stageId: s.stageId, path: 'boat.capacity', message: 'boatの定員は1以上が必要です' });
+    }
     if (!s.boat.startLocation) issues.push({ stageId: s.stageId, path: 'boat.startLocation', message: 'boat.startLocationは必須です' });
 
     const locationIds = s.locations.map((l) => l.locationId);
