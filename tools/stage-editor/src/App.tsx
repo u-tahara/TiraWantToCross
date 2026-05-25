@@ -50,6 +50,14 @@ function App() {
     updateStages(merged);
   };
 
+
+  const handleStageChange = (st: StageData) => {
+    const prevId = editing?.stageId;
+    if (!prevId) return;
+    updateStages(stages.map((s) => (s.stageId === prevId ? st : s)));
+    if (st.stageId !== prevId) setEditingId(st.stageId);
+  };
+
   return <main>
     <h1>Stage Editor</h1>
     <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingId(id); }}>新規ステージ</button>
@@ -88,7 +96,7 @@ function App() {
       }}
     />
 
-    {editing ? <StageEditor stage={editing} onChange={(st) => updateStages(stages.map((s) => s.stageId === editing.stageId ? st : s))} /> : <p>編集するステージを選択してください。</p>}
+    {editing ? <StageEditor stage={editing} onChange={handleStageChange} /> : <p>編集するステージを選択してください。</p>}
     <ValidationPanel issues={issues} />
   </main>;
 }
