@@ -31,5 +31,36 @@ export const StageEditor = ({ stage, onChange }: Props) => {
 
     <h4>entities</h4><button className="js-add-entity" onClick={()=>update('entities',[...stage.entities,{entityId:'',displayName:'',startLocation:'',canOperateBoat:false,spriteId:''}])}>追加</button>
     {stage.entities.map((r,i)=><div key={i}><input value={r.entityId} onChange={e=>{const n=[...stage.entities];n[i]={...r,entityId:e.target.value};update('entities',n);}} placeholder="entityId"/><input value={r.displayName} onChange={e=>{const n=[...stage.entities];n[i]={...r,displayName:e.target.value};update('entities',n);}} placeholder="displayName"/><input value={r.startLocation} onChange={e=>{const n=[...stage.entities];n[i]={...r,startLocation:e.target.value};update('entities',n);}} placeholder="startLocation"/><input value={r.spriteId} onChange={e=>{const n=[...stage.entities];n[i]={...r,spriteId:e.target.value};update('entities',n);}} placeholder="spriteId"/><label>操船<input type="checkbox" checked={r.canOperateBoat} onChange={e=>{const n=[...stage.entities];n[i]={...r,canOperateBoat:e.target.checked};update('entities',n);}}/></label><button onClick={()=>update('entities',stage.entities.filter((_,x)=>x!==i))}>削除</button></div>)}
+
+    <h4>clearConditions</h4>
+    <button
+      className="js-add-clear-condition"
+      onClick={() => update('clearConditions', [...stage.clearConditions, { conditionType: 'all_entities_at_location', targetLocationId: '' }])}
+    >
+      追加
+    </button>
+    {stage.clearConditions.map((c, i) => (
+      <div key={i}>
+        <input
+          value={c.conditionType}
+          onChange={(e) => {
+            const n = [...stage.clearConditions];
+            n[i] = { ...c, conditionType: e.target.value };
+            update('clearConditions', n);
+          }}
+          placeholder="conditionType"
+        />
+        <input
+          value={c.targetLocationId}
+          onChange={(e) => {
+            const n = [...stage.clearConditions];
+            n[i] = { ...c, targetLocationId: e.target.value };
+            update('clearConditions', n);
+          }}
+          placeholder="targetLocationId"
+        />
+        <button onClick={() => update('clearConditions', stage.clearConditions.filter((_, x) => x !== i))}>削除</button>
+      </div>
+    ))}
   </section>;
 };

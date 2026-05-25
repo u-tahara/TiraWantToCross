@@ -62,7 +62,7 @@ function App() {
     <h1>Stage Editor</h1>
     <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingId(id); }}>新規ステージ</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
-    <input className="js-import-json" type="file" multiple accept="application/json" onChange={(e) => importJson(e.target.files)} />
+    <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
     <button className="js-export-all-zip" onClick={async () => {
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
       const hasError = issues.length > 0;
