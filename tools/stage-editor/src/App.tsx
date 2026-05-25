@@ -41,11 +41,19 @@ function App() {
     return { stageId: target.stageId, duplicateOrder };
   };
 
+  const isSameStageHint = (
+    a: { stageId: string; duplicateOrder: number } | null,
+    b: { stageId: string; duplicateOrder: number } | null,
+  ) => a?.stageId === b?.stageId && a?.duplicateOrder === b?.duplicateOrder;
+
   useEffect(() => {
     if (editingStage !== null) {
       const sameRef = stages.find((s) => s === editingStage);
       if (sameRef) {
-        setEditingStageHint(toStageHint(sameRef, stages));
+        const nextHint = toStageHint(sameRef, stages);
+        if (!isSameStageHint(editingStageHint, nextHint)) {
+          setEditingStageHint(nextHint);
+        }
         return;
       }
     }
