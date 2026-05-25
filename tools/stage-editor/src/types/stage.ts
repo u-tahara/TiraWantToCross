@@ -1,24 +1,35 @@
-export type Location = { locationId: string; name: string; type: string };
-export type Route = { routeId: string; from: string; to: string; transportId: string };
-export type Entity = {
-  entityId: string;
-  name: string;
-  type: string;
-  startLocation: string;
-  goalLocation: string;
-  canOperateBoat: boolean;
-};
-export type Transport = {
-  transportId: string;
-  name: string;
+export type BoatData = {
   capacity: number;
+  maxPassengers: number;
   startLocation: string;
 };
 
-export type StageRule = {
-  forbiddenPairs: string[][];
-  operableEntityIds: string[];
-  customGoals: Array<{ entityId: string; goalLocation: string }>;
+export type Location = { locationId: string; displayName: string };
+export type Route = { routeId: string; from: string; to: string; bidirectional: boolean };
+export type Entity = {
+  entityId: string;
+  displayName: string;
+  startLocation: string;
+  canOperateBoat: boolean;
+  spriteId: string;
+};
+
+export type ClearCondition = {
+  conditionType: string;
+  targetLocationId: string;
+};
+
+export type FailCondition = {
+  conditionType: string;
+  locationId: string;
+  entityIds: string[];
+  guardianEntityIds: string[];
+};
+
+export type StageUiText = {
+  objective: string;
+  tip: string;
+  stageSelectDescription: string;
 };
 
 export type StageData = {
@@ -29,13 +40,16 @@ export type StageData = {
   appVersionAdded: string;
   theme: string;
   difficulty: string;
-  optimalMoveCount: number;
+  optimalMoves: number;
+  capacity: number;
+  maxPassengers: number;
+  boat: BoatData;
   locations: Location[];
   routes: Route[];
   entities: Entity[];
-  transports: Transport[];
-  rules: StageRule;
-  goal: { allAtLocation: string; perEntityGoals: Array<{ entityId: string; goalLocation: string }> };
+  uiText: StageUiText;
+  clearConditions: ClearCondition[];
+  failConditions: FailCondition[];
 };
 
 export type ValidationIssue = { stageId: string; path: string; message: string };
@@ -48,11 +62,14 @@ export const createEmptyStage = (stageId: string): StageData => ({
   appVersionAdded: '1.0.0',
   theme: 'default',
   difficulty: 'normal',
-  optimalMoveCount: 1,
+  optimalMoves: 1,
+  capacity: 2,
+  maxPassengers: 2,
+  boat: { capacity: 2, maxPassengers: 2, startLocation: '' },
   locations: [],
   routes: [],
   entities: [],
-  transports: [],
-  rules: { forbiddenPairs: [], operableEntityIds: [], customGoals: [] },
-  goal: { allAtLocation: '', perEntityGoals: [] }
+  uiText: { objective: '', tip: '', stageSelectDescription: '' },
+  clearConditions: [{ conditionType: 'all_entities_at_location', targetLocationId: '' }],
+  failConditions: []
 });

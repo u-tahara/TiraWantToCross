@@ -3,7 +3,7 @@ import { StageData } from '../types/stage';
 
 export const downloadUnityZip = async (stages: StageData[], appVersion: string): Promise<void> => {
   const zip = new JSZip();
-  const folder = zip.folder('Assets/Data/Stages');
+  const folder = zip.folder('Assets/Resources/Data/Stages');
   if (!folder) throw new Error('ZIP作成失敗');
 
   stages.forEach((s) => folder.file(`${s.stageId}.json`, JSON.stringify(s, null, 2)));
@@ -17,7 +17,7 @@ export const downloadUnityZip = async (stages: StageData[], appVersion: string):
       fileName: `${s.stageId}.json`,
       theme: s.theme,
       difficulty: s.difficulty,
-      optimalMoveCount: s.optimalMoveCount,
+      optimalMoves: s.optimalMoves,
       appVersionAdded: s.appVersionAdded
     }))
   }, null, 2));

@@ -14,33 +14,31 @@ export const validateStages = (stages: StageData[]): ValidationIssue[] => {
     if (s.stageId && !FILE_SAFE.test(s.stageId)) issues.push({ stageId: s.stageId, path: 'stageId', message: 'stageIdに不正な文字が含まれます' });
     if (!s.title) issues.push({ stageId: s.stageId, path: 'title', message: 'titleは必須です' });
     if (s.schemaVersion < 1) issues.push({ stageId: s.stageId, path: 'schemaVersion', message: 'schemaVersionは1以上が必要です' });
-    if (s.optimalMoveCount < 1) issues.push({ stageId: s.stageId, path: 'optimalMoveCount', message: 'optimalMoveCountは1以上が必要です' });
+    if (s.optimalMoves < 1) issues.push({ stageId: s.stageId, path: 'optimalMoves', message: 'optimalMovesは1以上が必要です' });
+    if (!s.boat.startLocation) issues.push({ stageId: s.stageId, path: 'boat.startLocation', message: 'boat.startLocationは必須です' });
 
     const locationIds = s.locations.map((l) => l.locationId);
     const entityIds = s.entities.map((e) => e.entityId);
-    const transportIds = s.transports.map((t) => t.transportId);
 
     dup(locationIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'locations', message: `locationId重複: ${id}` }));
     dup(entityIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'entities', message: `entityId重複: ${id}` }));
-    dup(transportIds).forEach((id) => issues.push({ stageId: s.stageId, path: 'transports', message: `transportId重複: ${id}` }));
 
     s.locations.forEach((l, i) => { if (!l.locationId) issues.push({ stageId: s.stageId, path: `locations[${i}]`, message: 'locationIdは必須です' }); });
-    s.transports.forEach((t, i) => {
-      if (!t.transportId) issues.push({ stageId: s.stageId, path: `transports[${i}]`, message: 'transportIdは必須です' });
-      if (t.capacity < 1) issues.push({ stageId: s.stageId, path: `transports[${i}]`, message: 'capacityは1以上が必要です' });
-      if (!locationIds.includes(t.startLocation)) issues.push({ stageId: s.stageId, path: `transports[${i}]`, message: 'startLocationが不正です' });
-    });
     s.routes.forEach((r, i) => {
       if (!r.routeId) issues.push({ stageId: s.stageId, path: `routes[${i}]`, message: 'routeIdは必須です' });
       if (!locationIds.includes(r.from)) issues.push({ stageId: s.stageId, path: `routes[${i}]`, message: 'fromが不正です' });
       if (!locationIds.includes(r.to)) issues.push({ stageId: s.stageId, path: `routes[${i}]`, message: 'toが不正です' });
       if (r.from && r.from === r.to) issues.push({ stageId: s.stageId, path: `routes[${i}]`, message: 'from/toは同一にできません' });
-      if (!transportIds.includes(r.transportId)) issues.push({ stageId: s.stageId, path: `routes[${i}]`, message: 'transportId参照が不正です' });
     });
     s.entities.forEach((e, i) => {
       if (!e.entityId) issues.push({ stageId: s.stageId, path: `entities[${i}]`, message: 'entityIdは必須です' });
       if (!locationIds.includes(e.startLocation)) issues.push({ stageId: s.stageId, path: `entities[${i}]`, message: 'startLocationが不正です' });
-      if (!locationIds.includes(e.goalLocation)) issues.push({ stageId: s.stageId, path: `entities[${i}]`, message: 'goalLocationが不正です' });
+    });
+
+    s.clearConditions.forEach((c, i) => {
+      if (c.conditionType === 'all_entities_at_location' && !locationIds.includes(c.targetLocationId)) {
+        issues.push({ stageId: s.stageId, path: `clearConditions[${i}]`, message: 'targetLocationIdが不正です' });
+      }
     });
   });
 
