@@ -24,6 +24,9 @@ export const validateStages = (stages: StageData[]): ValidationIssue[] => {
     if (!s.boat.startLocation) issues.push({ stageId: s.stageId, path: 'boat.startLocation', message: 'boat.startLocationは必須です' });
 
     const locationIds = s.locations.map((l) => l.locationId);
+    if (s.boat.startLocation && !locationIds.includes(s.boat.startLocation)) {
+      issues.push({ stageId: s.stageId, path: 'boat.startLocation', message: 'boat.startLocationが不正です' });
+    }
     const routeIds = s.routes.map((r) => r.routeId);
     const entityIds = s.entities.map((e) => e.entityId);
 

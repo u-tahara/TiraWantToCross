@@ -73,6 +73,8 @@ function App() {
     <button className="js-export-selected-zip" onClick={async () => {
       const targets = stages.filter((s) => selected.includes(s.stageId));
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
+      const hasInvalidSelected = targets.some((s) => invalidStageIds.has(s.stageId));
+      if (hasInvalidSelected && !confirm('選択ステージにエラーがあります。正常ステージのみ出力しますか？')) return;
       const valid = targets.filter((s) => !invalidStageIds.has(s.stageId));
       await downloadUnityZip(valid, appVersion);
     }}>選択ステージZIP出力</button>
