@@ -52,7 +52,7 @@ export type StageData = {
   failConditions: FailCondition[];
 };
 
-export type ValidationIssue = { stageId: string; path: string; message: string };
+export type ValidationIssue = { issueId: string; stageId: string; stageIndex?: number; path: string; message: string };
 
 export const createEmptyStage = (stageId: string): StageData => ({
   stageId,

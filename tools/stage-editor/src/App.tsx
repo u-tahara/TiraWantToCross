@@ -15,6 +15,25 @@ const nextId = (stages: StageData[]) => {
   return `stage_${Date.now()}`;
 };
 const FILE_SAFE = /^[a-zA-Z0-9_-]+$/;
+const NAVIGATION_ERROR_PREFIX = '対象ステージを特定できませんでした';
+
+const resolveStageFromIssue = (
+  issue: { stageId: string; stageIndex?: number },
+  stages: StageData[],
+  stagesByStageId: Map<string, StageData[]>,
+) => {
+  const normalizedStageId = issue.stageId === '(empty)' ? '' : issue.stageId;
+  const sameStageIdStages = stagesByStageId.get(normalizedStageId) ?? [];
+  const targetByStageId = sameStageIdStages.length === 1 ? sameStageIdStages[0] : null;
+  const stageAtIndex =
+    typeof issue.stageIndex === 'number' && issue.stageIndex >= 0 && issue.stageIndex < stages.length
+      ? stages[issue.stageIndex]
+      : null;
+  const targetByIndex = stageAtIndex !== null && stageAtIndex.stageId === normalizedStageId
+    ? stageAtIndex
+    : null;
+  return targetByStageId ?? targetByIndex;
+};
 
 function App() {
   const [stages, setStages] = useState<StageData[]>(() => loadStages());
@@ -24,8 +43,22 @@ function App() {
   );
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
+  const [validationNavigationError, setValidationNavigationError] = useState('');
+  const [lastFailedIssueId, setLastFailedIssueId] = useState<string | null>(null);
   const issues = useMemo(() => validateStages(stages), [stages]);
   const invalidStageIds = useMemo(() => new Set(issues.map((i) => i.stageId)), [issues]);
+  const stagesByStageId = useMemo(() => {
+    const map = new Map<string, StageData[]>();
+    stages.forEach((stage) => {
+      const list = map.get(stage.stageId);
+      if (list) {
+        list.push(stage);
+      } else {
+        map.set(stage.stageId, [stage]);
+      }
+    });
+    return map;
+  }, [stages]);
 
   const updateStages = (next: StageData[]) => { setStages(next); saveStages(next); };
   const editing = editingStage;
@@ -46,6 +79,19 @@ function App() {
     a: { stageId: string; duplicateOrder: number } | null,
     b: { stageId: string; duplicateOrder: number } | null,
   ) => a?.stageId === b?.stageId && a?.duplicateOrder === b?.duplicateOrder;
+
+  useEffect(() => {
+    if (!validationNavigationError) return;
+    setValidationNavigationError('');
+    setLastFailedIssueId(null);
+  }, [editingStage, query]);
+
+  useEffect(() => {
+    if (!lastFailedIssueId) return;
+    if (issues.some((issue) => issue.issueId === lastFailedIssueId)) return;
+    setValidationNavigationError('');
+    setLastFailedIssueId(null);
+  }, [issues, lastFailedIssueId]);
 
   useEffect(() => {
     if (editingStage !== null) {
@@ -197,7 +243,32 @@ function App() {
     />
 
     {editing ? <StageEditor stage={editing} onChange={handleStageChange} /> : <p>編集するステージを選択してください。</p>}
-    <ValidationPanel issues={issues} />
+    {validationNavigationError ? <p id="js-validation-navigation-error" className="js-validation-navigation-error" role="alert">{validationNavigationError}</p> : null}
+    <ValidationPanel
+      issues={issues}
+      failedIssueId={lastFailedIssueId}
+      errorMessageId="js-validation-navigation-error"
+      onSelectIssue={(issue) => {
+        const target = resolveStageFromIssue(issue, stages, stagesByStageId);
+        if (!target) {
+          const labelStageId = issue.stageId || '(empty)';
+          setValidationNavigationError(`${NAVIGATION_ERROR_PREFIX}: [${labelStageId}] ${issue.path} (${issue.issueId})`);
+          setLastFailedIssueId(issue.issueId);
+          return;
+        }
+        setValidationNavigationError('');
+        setLastFailedIssueId(null);
+        setEditingStage(target);
+        setEditingStageHint(toStageHint(target, stages));
+        if (document.activeElement instanceof HTMLElement && document.activeElement.classList.contains('js-validation-issue-link')) {
+          requestAnimationFrame(() => {
+            const firstEditorInput = document.querySelector<HTMLElement>('.js-title')
+              ?? document.querySelector<HTMLElement>('.js-stage-id');
+            firstEditorInput?.focus();
+          });
+        }
+      }}
+    />
   </main>;
 }
 
