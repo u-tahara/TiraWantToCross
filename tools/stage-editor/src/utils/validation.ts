@@ -13,6 +13,8 @@ export const validateStages = (stages: StageData[]): ValidationIssue[] => {
     if (duplicatedStageIds.has(s.stageId)) issues.push({ stageId: s.stageId, path: 'stageId', message: 'stageIdが重複しています' });
     if (s.stageId && !FILE_SAFE.test(s.stageId)) issues.push({ stageId: s.stageId, path: 'stageId', message: 'stageIdに不正な文字が含まれます' });
     if (!s.title) issues.push({ stageId: s.stageId, path: 'title', message: 'titleは必須です' });
+    if (!Number.isFinite(s.schemaVersion)) issues.push({ stageId: s.stageId, path: 'schemaVersion', message: 'schemaVersionは数値である必要があります' });
+    if (!Number.isFinite(s.optimalMoves)) issues.push({ stageId: s.stageId, path: 'optimalMoves', message: 'optimalMovesは数値である必要があります' });
     if (s.schemaVersion < 1) issues.push({ stageId: s.stageId, path: 'schemaVersion', message: 'schemaVersionは1以上が必要です' });
     if (s.optimalMoves < 1) issues.push({ stageId: s.stageId, path: 'optimalMoves', message: 'optimalMovesは1以上が必要です' });
     const capacityCandidates = [s.boat?.capacity, s.boat?.maxPassengers, s.maxPassengers, s.capacity]

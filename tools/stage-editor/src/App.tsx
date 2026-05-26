@@ -14,6 +14,7 @@ const nextId = (stages: StageData[]) => {
   }
   return `stage_${Date.now()}`;
 };
+const FILE_SAFE = /^[a-zA-Z0-9_-]+$/;
 
 function App() {
   const [stages, setStages] = useState<StageData[]>(() => loadStages());
@@ -108,9 +109,37 @@ function App() {
     setEditingStageHint(toStageHint(st, next));
   };
 
+  const handleRenameStageId = () => {
+    if (editingStage === null) return;
+    const nextId = prompt('新しいstageIdを入力してください', editingStage.stageId);
+    if (nextId === null) return;
+    const trimmed = nextId.trim();
+    if (!trimmed || trimmed === editingStage.stageId) return;
+    if (!FILE_SAFE.test(trimmed)) {
+      alert('stageIdには英数字・アンダースコア・ハイフンのみ使用できます');
+      return;
+    }
+    if (stages.some((s) => s.stageId === trimmed)) {
+      alert(`stageId「${trimmed}」は既に存在します`);
+      return;
+    }
+
+    const editingIndex = stages.findIndex((s) => s === editingStage);
+    if (editingIndex < 0) return;
+
+    const renamed = { ...editingStage, stageId: trimmed };
+    const next = [...stages];
+    next[editingIndex] = renamed;
+    updateStages(next);
+    setEditingStage(renamed);
+    setEditingStageHint(toStageHint(renamed, next));
+    setSelected((prev) => prev.map((id) => (id === editingStage.stageId ? trimmed : id)));
+  };
+
   return <main>
     <h1>Stage Editor</h1>
     <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStage(n[n.length - 1]); setEditingStageHint(toStageHint(n[n.length - 1], n)); }}>新規ステージ</button>
+    <button className="js-rename-stage-id" disabled={editing === null} onClick={handleRenameStageId}>stageId変更</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
     <button className="js-export-all-zip" onClick={async () => {
@@ -139,8 +168,18 @@ function App() {
       }}
       onDuplicate={(src) => {
         const newId = prompt('複製後のstageId', `${src.stageId}_copy`);
-        if (!newId || stages.some((s) => s.stageId === newId)) return;
-        updateStages([...stages, { ...src, stageId: newId }]);
+        if (!newId) return;
+        const trimmed = newId.trim();
+        if (!trimmed) return;
+        if (!FILE_SAFE.test(trimmed)) {
+          alert('stageIdには英数字・アンダースコア・ハイフンのみ使用できます');
+          return;
+        }
+        if (stages.some((s) => s.stageId === trimmed)) {
+          alert(`stageId「${trimmed}」は既に存在します`);
+          return;
+        }
+        updateStages([...stages, { ...src, stageId: trimmed }]);
       }}
       onDelete={(stage) => {
         const targetIndex = stages.findIndex((s) => s === stage);
