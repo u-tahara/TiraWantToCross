@@ -182,27 +182,37 @@ function App() {
     setSelected((prev) => prev.map((id) => (id === editingStage.stageId ? trimmed : id)));
   };
 
-  return <main>
-    <h1>Stage Editor</h1>
-    <button className="js-new-stage" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStage(n[n.length - 1]); setEditingStageHint(toStageHint(n[n.length - 1], n)); }}>新規ステージ</button>
-    <button className="js-rename-stage-id" disabled={editing === null} onClick={handleRenameStageId}>stageId変更</button>
+  return <main className="app-container">
+    <section className="card">
+      <h1>Stage Editor</h1>
+      <p className="helper-text">この画面でできること: ステージ作成・編集、JSON取込、JSON/Unity用ZIP出力、バリデーション確認。</p>
+      <p className="helper-text">作業順: 基本情報 → 地点 → ルート → キャラクター → 移動手段 → ルール → バリデーション確認 → 出力。</p>
+    </section>
+    <section className="card">
+    <div className="toolbar">
+    <button className="js-new-stage button-primary" onClick={() => { const id = nextId(stages); const n = [...stages, createEmptyStage(id)]; updateStages(n); setEditingStage(n[n.length - 1]); setEditingStageHint(toStageHint(n[n.length - 1], n)); }}>新規ステージ</button>
+    <button className="js-rename-stage-id button-secondary" disabled={editing === null} onClick={handleRenameStageId}>stageId変更</button>
     <input className="js-search-stage" placeholder="検索" value={query} onChange={(e) => setQuery(e.target.value)} />
     <input className="js-import-json" type="file" multiple accept="application/json" onChange={async (e) => { await importJson(e.target.files); e.currentTarget.value = ''; }} />
-    <button className="js-export-all-zip" onClick={async () => {
+    <button className="js-export-all-zip button-primary" onClick={async () => {
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
       const hasError = issues.length > 0;
       if (hasError && !confirm('エラーがあります。正常ステージのみ出力しますか？')) return;
       const valid = stages.filter((s) => !invalidStageIds.has(s.stageId));
+      if (valid.length === 0) { alert("出力対象の正常ステージがありません"); return; }
       await downloadUnityZip(valid, appVersion);
     }}>全ステージZIP出力</button>
-    <button className="js-export-selected-zip" onClick={async () => {
+    <button className="js-export-selected-zip button-secondary" onClick={async () => {
       const targets = stages.filter((s) => selected.includes(s.stageId));
       const appVersion = prompt('appVersionを入力してください', '1.0.0') ?? '1.0.0';
       const hasInvalidSelected = targets.some((s) => invalidStageIds.has(s.stageId));
       if (hasInvalidSelected && !confirm('選択ステージにエラーがあります。正常ステージのみ出力しますか？')) return;
       const valid = targets.filter((s) => !invalidStageIds.has(s.stageId));
+      if (valid.length === 0) { alert("出力対象の正常ステージがありません"); return; }
       await downloadUnityZip(valid, appVersion);
     }}>選択ステージZIP出力</button>
+    </div>
+    </section>
 
     <StageList
       stages={filtered}
@@ -242,7 +252,7 @@ function App() {
       }}
     />
 
-    {editing ? <StageEditor stage={editing} onChange={handleStageChange} /> : <p>編集するステージを選択してください。</p>}
+    {editing ? <StageEditor stage={editing} onChange={handleStageChange} hasStageErrors={issues.some((i) => resolveStageFromIssue(i, stages, stagesByStageId) === editing)} /> : <p>編集するステージを選択してください。</p>}
     {validationNavigationError ? <p id="js-validation-navigation-error" className="js-validation-navigation-error" role="alert">{validationNavigationError}</p> : null}
     <ValidationPanel
       issues={issues}
