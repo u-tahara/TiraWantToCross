@@ -29,7 +29,7 @@ npm run build
 8. ルール・ゴール・最短手数を設定する
 9. バリデーションエラーを確認する
 10. 問題がなければJSONまたはUnity用ZIPを出力する
-11. ZIPを展開してUnityプロジェクトの `Assets/Data/Stages/` に配置する
+11. ZIPを展開してUnityプロジェクトの `Assets/Resources/Data/Stages/` に配置する
 
 ## 入力項目の説明
 ### 基本情報
@@ -62,15 +62,16 @@ npm run build
 
 ```text
 Assets/
-  Data/
-    Stages/
-      stage_001.json
-      stage_002.json
-      stages_manifest.json
+  Resources/
+    Data/
+      Stages/
+        stage_001.json
+        stage_002.json
+        stages_manifest.json
 ```
 
 ## Unityプロジェクトへの配置方法
-Unity用ZIPを展開し、`Assets/Data/Stages/` 配下のJSONをUnityプロジェクトの同パスに配置してください。
+Unity用ZIPを展開し、`Assets/Resources/Data/Stages/` 配下のJSONをUnityプロジェクトの同パスに配置してください。
 
 ## localStorage保存について
 編集中ステージはブラウザの `localStorage` に保存されます。ブラウザを閉じても保持されますが、ブラウザデータ削除や別ブラウザでは消失・非共有になる場合があります。重要データは必ずJSONまたはZIPで出力してください。
