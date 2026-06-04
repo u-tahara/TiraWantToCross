@@ -47,6 +47,23 @@ namespace TiraWantToCross.UI
         private static Sprite circularMaskSprite;
         private string routeTopologyCacheKey = string.Empty;
 
+        private const float BoardNodeBaseWidth = 320f;
+        private const float BoardNodeBaseHeight = 350f;
+        private const float IslandBaseWidth = 220f;
+        private const float IslandBaseHeight = 112f;
+        private const float IslandBaseOffsetY = -72f;
+        private const float AnimalBubbleWidth = 300f;
+        private const float AnimalBubbleHeight = 254f;
+        private const float AnimalBubbleOffsetY = 86f;
+        private const float AnimalBubbleTailWidth = 38f;
+        private const float AnimalBubbleTailHeight = 22f;
+        private const float AnimalBubbleTailOffsetY = -6f;
+        private const float AnimalGridPaddingHorizontal = 2f;
+        private const float AnimalGridPaddingBottom = 4f;
+        private const float AnimalGridPaddingTop = 4f;
+        private const float BoardEntityInitialHeight = 136f;
+        private const float BoardEntityInnerPadding = 2f;
+
         private RectTransform boardPanel;
         private RectTransform playableBoardArea;
         private RectTransform headerOverlay;
@@ -399,6 +416,12 @@ namespace TiraWantToCross.UI
             var entities = context.StageData.entities ?? Array.Empty<EntityData>();
             var activeIds = new HashSet<string>(entities.Select(x => x.entityId));
 
+            var locationEntityCounts = entities
+                .Where(entity => context.GameState.EntityLocations.ContainsKey(entity.entityId))
+                .GroupBy(entity => context.GameState.EntityLocations[entity.entityId])
+                .ToDictionary(group => group.Key, group => group.Count());
+            ApplyLocationEntityGridLayouts(context, locationEntityCounts);
+
             var staleIds = boardEntityVisuals.Keys.Where(id => !activeIds.Contains(id)).ToList();
             foreach (var staleId in staleIds)
             {
@@ -427,7 +450,7 @@ namespace TiraWantToCross.UI
 
                 if (!boardEntityVisuals.TryGetValue(entityId, out var visuals) || visuals?.Button == null)
                 {
-                    visuals = CreateEntityVisual(entityId, parent, () => { }, 112f, 16, false);
+                    visuals = CreateEntityVisual(entityId, parent, () => { }, BoardEntityInitialHeight, 16, false);
                     boardEntityVisuals[entityId] = visuals;
                     boardEntityParents[entityId] = parentKey;
                 }
@@ -436,6 +459,10 @@ namespace TiraWantToCross.UI
                     visuals.Button.transform.SetParent(parent, false);
                     boardEntityParents[entityId] = parentKey;
                 }
+
+                var entityCountAtLocation = locationEntityCounts.TryGetValue(location, out var countAtLocation) ? countAtLocation : 1;
+                ResolveBoardEntityGridMetrics(entityCountAtLocation, ResolveBoardNodeScale(context.StageData.locations?.Length ?? locationNodeRoots.Count), out _, out var cellSize, out _);
+                ApplyBoardEntityVisualSizing(visuals, cellSize);
 
                 TryApplyPortraitSprite(entity, visuals, CharacterSpriteUsage.Board);
                 visuals.Label.text = string.Empty;
@@ -480,44 +507,45 @@ namespace TiraWantToCross.UI
                 }
 
                 var node = CreateRect($"{location.locationId}_Node", locationNodesRoot, new Color(0f, 0f, 0f, 0f));
-                node.sizeDelta = new Vector2(260f * nodeScale, 300f * nodeScale);
+                node.sizeDelta = new Vector2(BoardNodeBaseWidth * nodeScale, BoardNodeBaseHeight * nodeScale);
                 node.anchorMin = new Vector2(0.5f, 0.5f);
                 node.anchorMax = new Vector2(0.5f, 0.5f);
                 node.pivot = new Vector2(0.5f, 0.5f);
                 node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
 
                 var islandBase = CreateRect("IslandBase", node, new Color(0.60f, 0.82f, 0.47f, 1f));
-                islandBase.sizeDelta = new Vector2(220f * nodeScale, 112f * nodeScale);
+                islandBase.sizeDelta = new Vector2(IslandBaseWidth * nodeScale, IslandBaseHeight * nodeScale);
                 islandBase.anchorMin = new Vector2(0.5f, 0.5f);
                 islandBase.anchorMax = new Vector2(0.5f, 0.5f);
                 islandBase.pivot = new Vector2(0.5f, 0.5f);
-                islandBase.anchoredPosition = new Vector2(0f, -68f * nodeScale);
+                islandBase.anchoredPosition = new Vector2(0f, IslandBaseOffsetY * nodeScale);
 
                 var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubblePanel.sizeDelta = new Vector2(244f * nodeScale, 208f * nodeScale);
+                bubblePanel.sizeDelta = new Vector2(AnimalBubbleWidth * nodeScale, AnimalBubbleHeight * nodeScale);
                 bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
                 bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
                 bubblePanel.pivot = new Vector2(0.5f, 0.5f);
-                bubblePanel.anchoredPosition = new Vector2(0f, 70f * nodeScale);
+                bubblePanel.anchoredPosition = new Vector2(0f, AnimalBubbleOffsetY * nodeScale);
 
                 var bubbleTail = CreateRect("BubbleTail", bubblePanel, new Color(0.99f, 0.96f, 0.9f, 1f));
-                bubbleTail.sizeDelta = new Vector2(34f * nodeScale, 20f * nodeScale);
+                bubbleTail.sizeDelta = new Vector2(AnimalBubbleTailWidth * nodeScale, AnimalBubbleTailHeight * nodeScale);
                 bubbleTail.anchorMin = new Vector2(0.5f, 0f);
                 bubbleTail.anchorMax = new Vector2(0.5f, 0f);
                 bubbleTail.pivot = new Vector2(0.5f, 1f);
-                bubbleTail.anchoredPosition = new Vector2(0f, -6f * nodeScale);
+                bubbleTail.anchoredPosition = new Vector2(0f, AnimalBubbleTailOffsetY * nodeScale);
 
                 var grid = CreateRect("Entities", bubblePanel, new Color(0f, 0f, 0f, 0f));
                 grid.anchorMin = new Vector2(0f, 0f);
                 grid.anchorMax = new Vector2(1f, 1f);
                 grid.pivot = new Vector2(0.5f, 0.5f);
-                grid.offsetMin = new Vector2(4f * nodeScale, 8f * nodeScale);
-                grid.offsetMax = new Vector2(-4f * nodeScale, -6f * nodeScale);
+                grid.offsetMin = new Vector2(AnimalGridPaddingHorizontal * nodeScale, AnimalGridPaddingBottom * nodeScale);
+                grid.offsetMax = new Vector2(-AnimalGridPaddingHorizontal * nodeScale, -AnimalGridPaddingTop * nodeScale);
                 var gridComp = grid.gameObject.AddComponent<GridLayoutGroup>();
-                gridComp.cellSize = new Vector2(112f * nodeScale, 96f * nodeScale);
-                gridComp.spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
+                ResolveBoardEntityGridMetrics(0, nodeScale, out var initialColumns, out var initialCellSize, out var initialSpacing);
+                gridComp.cellSize = initialCellSize;
+                gridComp.spacing = initialSpacing;
                 gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                gridComp.constraintCount = 2;
+                gridComp.constraintCount = initialColumns;
                 gridComp.childAlignment = TextAnchor.MiddleCenter;
                 locationEntityGrids[location.locationId] = grid;
 
@@ -544,43 +572,152 @@ namespace TiraWantToCross.UI
         private static bool ApplyLocationNodeScale(RectTransform node, float nodeScale)
         {
             var changed = false;
-            changed |= ApplySizeDelta(node, new Vector2(260f * nodeScale, 300f * nodeScale));
+            changed |= ApplySizeDelta(node, new Vector2(BoardNodeBaseWidth * nodeScale, BoardNodeBaseHeight * nodeScale));
 
             var islandBase = node.Find("IslandBase") as RectTransform;
             if (islandBase != null)
             {
-                changed |= ApplySizeDelta(islandBase, new Vector2(220f * nodeScale, 112f * nodeScale));
-                changed |= ApplyAnchoredPosition(islandBase, new Vector2(0f, -68f * nodeScale));
+                changed |= ApplySizeDelta(islandBase, new Vector2(IslandBaseWidth * nodeScale, IslandBaseHeight * nodeScale));
+                changed |= ApplyAnchoredPosition(islandBase, new Vector2(0f, IslandBaseOffsetY * nodeScale));
             }
 
             var bubblePanel = node.Find("AnimalBubblePanel") as RectTransform;
             if (bubblePanel != null)
             {
-                changed |= ApplySizeDelta(bubblePanel, new Vector2(244f * nodeScale, 208f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, 70f * nodeScale));
+                changed |= ApplySizeDelta(bubblePanel, new Vector2(AnimalBubbleWidth * nodeScale, AnimalBubbleHeight * nodeScale));
+                changed |= ApplyAnchoredPosition(bubblePanel, new Vector2(0f, AnimalBubbleOffsetY * nodeScale));
             }
 
             var bubbleTail = node.Find("AnimalBubblePanel/BubbleTail") as RectTransform;
             if (bubbleTail != null)
             {
-                changed |= ApplySizeDelta(bubbleTail, new Vector2(34f * nodeScale, 20f * nodeScale));
-                changed |= ApplyAnchoredPosition(bubbleTail, new Vector2(0f, -6f * nodeScale));
+                changed |= ApplySizeDelta(bubbleTail, new Vector2(AnimalBubbleTailWidth * nodeScale, AnimalBubbleTailHeight * nodeScale));
+                changed |= ApplyAnchoredPosition(bubbleTail, new Vector2(0f, AnimalBubbleTailOffsetY * nodeScale));
             }
 
             var grid = node.Find("AnimalBubblePanel/Entities") as RectTransform;
             if (grid != null)
             {
-                changed |= ApplyOffsetMin(grid, new Vector2(4f * nodeScale, 8f * nodeScale));
-                changed |= ApplyOffsetMax(grid, new Vector2(-4f * nodeScale, -6f * nodeScale));
+                changed |= ApplyOffsetMin(grid, new Vector2(AnimalGridPaddingHorizontal * nodeScale, AnimalGridPaddingBottom * nodeScale));
+                changed |= ApplyOffsetMax(grid, new Vector2(-AnimalGridPaddingHorizontal * nodeScale, -AnimalGridPaddingTop * nodeScale));
                 var gridComp = grid.GetComponent<GridLayoutGroup>();
                 if (gridComp != null)
                 {
-                    changed |= ApplyGridCellSize(gridComp, new Vector2(112f * nodeScale, 96f * nodeScale));
-                    changed |= ApplyGridSpacing(gridComp, new Vector2(8f * nodeScale, 8f * nodeScale));
+                    ResolveBoardEntityGridMetrics(0, nodeScale, out var columns, out var cellSize, out var spacing);
+                    if (gridComp.constraintCount != columns)
+                    {
+                        gridComp.constraintCount = columns;
+                        changed = true;
+                    }
+                    changed |= ApplyGridCellSize(gridComp, cellSize);
+                    changed |= ApplyGridSpacing(gridComp, spacing);
                 }
             }
 
             return changed;
+        }
+
+        private void ApplyLocationEntityGridLayouts(StageUIViewContext context, IReadOnlyDictionary<string, int> locationEntityCounts)
+        {
+            var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
+            var nodeScale = ResolveBoardNodeScale(locationCount);
+            foreach (var pair in locationEntityGrids)
+            {
+                var entityCount = locationEntityCounts != null && locationEntityCounts.TryGetValue(pair.Key, out var count) ? count : 0;
+                ApplyLocationEntityGridLayout(pair.Value, entityCount, nodeScale);
+            }
+        }
+
+        private static void ApplyLocationEntityGridLayout(RectTransform grid, int entityCount, float nodeScale)
+        {
+            if (grid == null)
+            {
+                return;
+            }
+
+            grid.offsetMin = new Vector2(AnimalGridPaddingHorizontal * nodeScale, AnimalGridPaddingBottom * nodeScale);
+            grid.offsetMax = new Vector2(-AnimalGridPaddingHorizontal * nodeScale, -AnimalGridPaddingTop * nodeScale);
+
+            var gridComp = grid.GetComponent<GridLayoutGroup>();
+            if (gridComp == null)
+            {
+                return;
+            }
+
+            ResolveBoardEntityGridMetrics(entityCount, nodeScale, out var columns, out var cellSize, out var spacing);
+            gridComp.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridComp.constraintCount = columns;
+            gridComp.cellSize = cellSize;
+            gridComp.spacing = spacing;
+            gridComp.childAlignment = TextAnchor.MiddleCenter;
+        }
+
+        private static void ResolveBoardEntityGridMetrics(int entityCount, float nodeScale, out int columns, out Vector2 cellSize, out Vector2 spacing)
+        {
+            var count = Mathf.Max(0, entityCount);
+            if (count <= 1)
+            {
+                columns = 1;
+                cellSize = new Vector2(188f * nodeScale, 178f * nodeScale);
+                spacing = new Vector2(0f, 0f);
+                return;
+            }
+
+            if (count == 2)
+            {
+                columns = 2;
+                cellSize = new Vector2(138f * nodeScale, 176f * nodeScale);
+                spacing = new Vector2(8f * nodeScale, 0f);
+                return;
+            }
+
+            if (count <= 4)
+            {
+                columns = 2;
+                cellSize = new Vector2(138f * nodeScale, 118f * nodeScale);
+                spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
+                return;
+            }
+
+            columns = 3;
+            cellSize = new Vector2(92f * nodeScale, 116f * nodeScale);
+            spacing = new Vector2(6f * nodeScale, 8f * nodeScale);
+        }
+
+        private static void ApplyBoardEntityVisualSizing(EntityVisualRefs visuals, Vector2 cellSize)
+        {
+            if (visuals?.Button == null)
+            {
+                return;
+            }
+
+            var visualSize = Mathf.Max(64f, Mathf.Min(cellSize.x, cellSize.y) - 4f);
+            var buttonLayout = visuals.Button.GetComponent<LayoutElement>();
+            if (buttonLayout != null)
+            {
+                buttonLayout.preferredWidth = cellSize.x;
+                buttonLayout.preferredHeight = cellSize.y;
+                buttonLayout.minWidth = cellSize.x;
+                buttonLayout.minHeight = cellSize.y;
+                buttonLayout.flexibleWidth = 0f;
+                buttonLayout.flexibleHeight = 0f;
+            }
+
+            var shell = visuals.Button.transform.Find("CircleRoot") as RectTransform;
+            if (shell != null)
+            {
+                shell.sizeDelta = new Vector2(visualSize, visualSize);
+                var shellLayout = shell.GetComponent<LayoutElement>();
+                if (shellLayout != null)
+                {
+                    shellLayout.preferredWidth = visualSize;
+                    shellLayout.preferredHeight = visualSize;
+                    shellLayout.minWidth = visualSize;
+                    shellLayout.minHeight = visualSize;
+                    shellLayout.flexibleWidth = 0f;
+                    shellLayout.flexibleHeight = 0f;
+                }
+            }
         }
 
         private static bool ApplySizeDelta(RectTransform rect, Vector2 next)
@@ -658,11 +795,11 @@ namespace TiraWantToCross.UI
         private Vector2 ResolveLocationNodePosition(int index, int count)
         {
             var nodeScale = ResolveBoardNodeScale(count);
-            if (count == 2) return new[] { new Vector2(-220f * nodeScale, 10f * nodeScale), new Vector2(220f * nodeScale, 10f * nodeScale) }[index];
-            if (count == 3) return new[] { new Vector2(-260f * nodeScale, 10f * nodeScale), new Vector2(0f, 10f * nodeScale), new Vector2(260f * nodeScale, 10f * nodeScale) }[index];
+            if (count == 2) return new[] { new Vector2(-260f * nodeScale, 10f * nodeScale), new Vector2(260f * nodeScale, 10f * nodeScale) }[index];
+            if (count == 3) return new[] { new Vector2(-310f * nodeScale, 10f * nodeScale), new Vector2(0f, 10f * nodeScale), new Vector2(310f * nodeScale, 10f * nodeScale) }[index];
             var col = index % 2;
             var row = index / 2;
-            return new Vector2((col == 0 ? -180f : 180f) * nodeScale, (80f - row * 180f) * nodeScale);
+            return new Vector2((col == 0 ? -230f : 230f) * nodeScale, (104f - row * 232f) * nodeScale);
         }
 
         private float ResolveBoardNodeScale(int count)
@@ -675,8 +812,8 @@ namespace TiraWantToCross.UI
             var area = playableBoardArea != null ? playableBoardArea : boardPanel;
             var availableHeight = Mathf.Max(1f, area.rect.height - 24f);
             var availableWidth = Mathf.Max(1f, area.rect.width - 24f);
-            var baseHeight = count <= 3 ? 320f : 500f;
-            var baseWidth = count == 2 ? 620f : count == 3 ? 760f : 540f;
+            var baseHeight = count <= 3 ? 390f : 660f;
+            var baseWidth = count == 2 ? 820f : count == 3 ? 1080f : 780f;
             var scaleByHeight = availableHeight / baseHeight;
             var scaleByWidth = availableWidth / baseWidth;
             return Mathf.Min(Mathf.Max(Mathf.Min(scaleByHeight, scaleByWidth), 0.01f), 1f);
@@ -1686,8 +1823,8 @@ namespace TiraWantToCross.UI
             }
 
             var buttonLayout = button.gameObject.AddComponent<VerticalLayoutGroup>();
-            buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 4, 4) : new RectOffset(4, 4, 4, 4);
-            buttonLayout.spacing = circularStyle ? 3f : 2f;
+            buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 4, 4) : new RectOffset(0, 0, 0, 0);
+            buttonLayout.spacing = circularStyle ? 3f : 0f;
             buttonLayout.childAlignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
             buttonLayout.childControlWidth = true;
             buttonLayout.childControlHeight = false;
@@ -1739,7 +1876,7 @@ namespace TiraWantToCross.UI
             }
             else
             {
-                ApplyFullStretch(portraitMask, 6f, 6f, 6f, 6f);
+                ApplyFullStretch(portraitMask, BoardEntityInnerPadding, BoardEntityInnerPadding, BoardEntityInnerPadding, BoardEntityInnerPadding);
                 ApplyFullStretch(portrait, 0f, 0f, 0f, 0f);
             }
 
