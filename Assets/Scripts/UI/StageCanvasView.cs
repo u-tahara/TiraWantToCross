@@ -52,15 +52,15 @@ namespace TiraWantToCross.UI
         private const float IslandBaseWidth = 220f;
         private const float IslandBaseHeight = 112f;
         private const float IslandBaseOffsetY = -72f;
-        private const float AnimalBubbleWidth = 300f;
-        private const float AnimalBubbleHeight = 254f;
+        private const float AnimalBubbleWidth = 328f;
+        private const float AnimalBubbleHeight = 276f;
         private const float AnimalBubbleOffsetY = 86f;
         private const float AnimalBubbleTailWidth = 38f;
         private const float AnimalBubbleTailHeight = 22f;
         private const float AnimalBubbleTailOffsetY = -6f;
-        private const float AnimalGridPaddingHorizontal = 2f;
-        private const float AnimalGridPaddingBottom = 4f;
-        private const float AnimalGridPaddingTop = 4f;
+        private const float AnimalGridPaddingHorizontal = 16f;
+        private const float AnimalGridPaddingBottom = 14f;
+        private const float AnimalGridPaddingTop = 12f;
         private const float BoardEntityInitialHeight = 136f;
         private const float BoardEntityInnerPadding = 2f;
 
@@ -658,7 +658,7 @@ namespace TiraWantToCross.UI
             if (count <= 1)
             {
                 columns = 1;
-                cellSize = new Vector2(188f * nodeScale, 178f * nodeScale);
+                cellSize = new Vector2(190f * nodeScale, 180f * nodeScale);
                 spacing = new Vector2(0f, 0f);
                 return;
             }
@@ -666,22 +666,22 @@ namespace TiraWantToCross.UI
             if (count == 2)
             {
                 columns = 2;
-                cellSize = new Vector2(138f * nodeScale, 176f * nodeScale);
-                spacing = new Vector2(8f * nodeScale, 0f);
+                cellSize = new Vector2(140f * nodeScale, 176f * nodeScale);
+                spacing = new Vector2(12f * nodeScale, 0f);
                 return;
             }
 
             if (count <= 4)
             {
                 columns = 2;
-                cellSize = new Vector2(138f * nodeScale, 118f * nodeScale);
-                spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
+                cellSize = new Vector2(136f * nodeScale, 118f * nodeScale);
+                spacing = new Vector2(10f * nodeScale, 10f * nodeScale);
                 return;
             }
 
             columns = 3;
-            cellSize = new Vector2(92f * nodeScale, 116f * nodeScale);
-            spacing = new Vector2(6f * nodeScale, 8f * nodeScale);
+            cellSize = new Vector2(90f * nodeScale, 116f * nodeScale);
+            spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
         }
 
         private static void ApplyBoardEntityVisualSizing(EntityVisualRefs visuals, Vector2 cellSize)
