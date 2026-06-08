@@ -52,17 +52,23 @@ namespace TiraWantToCross.UI
         private const float IslandBaseWidth = 220f;
         private const float IslandBaseHeight = 112f;
         private const float IslandBaseOffsetY = -72f;
-        private const float AnimalBubbleWidth = 328f;
-        private const float AnimalBubbleHeight = 276f;
+        private const float AnimalBubbleWidth = 352f;
+        private const float AnimalBubbleHeight = 298f;
         private const float AnimalBubbleOffsetY = 86f;
         private const float AnimalBubbleTailWidth = 38f;
         private const float AnimalBubbleTailHeight = 22f;
         private const float AnimalBubbleTailOffsetY = -6f;
-        private const float AnimalGridPaddingHorizontal = 16f;
-        private const float AnimalGridPaddingBottom = 14f;
-        private const float AnimalGridPaddingTop = 12f;
+        private const float AnimalGridPaddingHorizontal = 28f;
+        private const float AnimalGridPaddingBottom = 58f;
+        private const float AnimalGridPaddingTop = 32f;
         private const float BoardEntityInitialHeight = 136f;
         private const float BoardEntityInnerPadding = 2f;
+        private const string BoardBackgroundResourcePath = "Sprites/Backgrounds/game_background";
+        private const string StageSelectBackgroundResourcePath = "Sprites/Backgrounds/stage_select_background";
+        private const string IslandResourcePath = "Sprites/Islands/island";
+        private const string BubbleResourcePath = "Sprites/UI/speech_bubble";
+        private const string StageSelectButtonResourcePath = "Sprites/UI/stage_select_wood_sign";
+        private const string StageDetailPanelResourcePath = "Sprites/UI/stage_detail_panel";
 
         private RectTransform boardPanel;
         private RectTransform playableBoardArea;
@@ -100,7 +106,7 @@ namespace TiraWantToCross.UI
         private Button stageListButton;
 
         private RectTransform stageSelectRoot;
-        private VerticalLayoutGroup stageSelectListLayout;
+        private GridLayoutGroup stageSelectListLayout;
         private readonly List<Button> stageSelectButtons = new List<Button>();
 
         private RectTransform popupOverlay;
@@ -128,6 +134,7 @@ namespace TiraWantToCross.UI
         private Text stageDetailMetaText;
         private Button stageStartButton;
         private readonly List<Button> stageSelectNavButtons = new List<Button>();
+        private Sprite stageSelectButtonSprite;
 
         private enum PopupResultState
         {
@@ -226,6 +233,7 @@ namespace TiraWantToCross.UI
 
             boardPanel = CreateRect("BoardLayer", root, new Color(0.66f, 0.89f, 0.98f, 1f));
             ApplyFullStretch(boardPanel, 0f, 0f, 0f, 0f);
+            ApplyBoardBackgroundSprite(boardPanel.GetComponent<Image>());
 
             playableBoardArea = CreateRect("PlayableBoardArea", boardPanel, new Color(0f, 0f, 0f, 0f));
             playableBoardArea.anchorMin = new Vector2(0f, 0f);
@@ -387,6 +395,107 @@ namespace TiraWantToCross.UI
             return block;
         }
 
+        private static void ApplyBoardBackgroundSprite(Image backgroundImage)
+        {
+            if (backgroundImage == null)
+            {
+                return;
+            }
+
+            backgroundImage.raycastTarget = false;
+            var backgroundSprite = Resources.Load<Sprite>(BoardBackgroundResourcePath);
+            if (backgroundSprite == null)
+            {
+                return;
+            }
+
+            backgroundImage.sprite = backgroundSprite;
+            backgroundImage.type = Image.Type.Simple;
+            backgroundImage.preserveAspect = false;
+            backgroundImage.color = Color.white;
+        }
+
+        private static void ApplyStageSelectBackgroundSprite(Image backgroundImage)
+        {
+            if (backgroundImage == null)
+            {
+                return;
+            }
+
+            var backgroundSprite = Resources.Load<Sprite>(StageSelectBackgroundResourcePath);
+            if (backgroundSprite == null)
+            {
+                return;
+            }
+
+            backgroundImage.sprite = backgroundSprite;
+            backgroundImage.type = Image.Type.Simple;
+            backgroundImage.preserveAspect = false;
+            backgroundImage.color = Color.white;
+        }
+
+        private static bool ApplyStageDetailPanelSprite(Image panelImage)
+        {
+            if (panelImage == null)
+            {
+                return false;
+            }
+
+            var panelSprite = Resources.Load<Sprite>(StageDetailPanelResourcePath);
+            if (panelSprite == null)
+            {
+                return false;
+            }
+
+            panelImage.sprite = panelSprite;
+            panelImage.type = Image.Type.Sliced;
+            panelImage.preserveAspect = false;
+            panelImage.color = Color.white;
+            return true;
+        }
+
+        private static bool ApplyIslandSprite(Image islandImage)
+        {
+            if (islandImage == null)
+            {
+                return false;
+            }
+
+            islandImage.raycastTarget = false;
+            var islandSprite = Resources.Load<Sprite>(IslandResourcePath);
+            if (islandSprite == null)
+            {
+                return false;
+            }
+
+            islandImage.sprite = islandSprite;
+            islandImage.type = Image.Type.Simple;
+            islandImage.preserveAspect = true;
+            islandImage.color = Color.white;
+            return true;
+        }
+
+        private static bool ApplyBubbleSprite(Image bubbleImage)
+        {
+            if (bubbleImage == null)
+            {
+                return false;
+            }
+
+            bubbleImage.raycastTarget = false;
+            var bubbleSprite = Resources.Load<Sprite>(BubbleResourcePath);
+            if (bubbleSprite == null)
+            {
+                return false;
+            }
+
+            bubbleImage.sprite = bubbleSprite;
+            bubbleImage.type = Image.Type.Simple;
+            bubbleImage.preserveAspect = false;
+            bubbleImage.color = Color.white;
+            return true;
+        }
+
         private static Button CreateRoundHeaderButton(Transform parent, string name, string label, Action onClick)
         {
             var button = CreateButton(name, parent, label, onClick, 84f, 22);
@@ -514,6 +623,7 @@ namespace TiraWantToCross.UI
                 node.anchoredPosition = ResolveLocationNodePosition(i, locations.Length);
 
                 var islandBase = CreateRect("IslandBase", node, new Color(0.60f, 0.82f, 0.47f, 1f));
+                var hasIslandSprite = ApplyIslandSprite(islandBase.GetComponent<Image>());
                 islandBase.sizeDelta = new Vector2(IslandBaseWidth * nodeScale, IslandBaseHeight * nodeScale);
                 islandBase.anchorMin = new Vector2(0.5f, 0.5f);
                 islandBase.anchorMax = new Vector2(0.5f, 0.5f);
@@ -521,6 +631,7 @@ namespace TiraWantToCross.UI
                 islandBase.anchoredPosition = new Vector2(0f, IslandBaseOffsetY * nodeScale);
 
                 var bubblePanel = CreateRect("AnimalBubblePanel", node, new Color(0.99f, 0.96f, 0.9f, 1f));
+                var hasBubbleSprite = ApplyBubbleSprite(bubblePanel.GetComponent<Image>());
                 bubblePanel.sizeDelta = new Vector2(AnimalBubbleWidth * nodeScale, AnimalBubbleHeight * nodeScale);
                 bubblePanel.anchorMin = new Vector2(0.5f, 0.5f);
                 bubblePanel.anchorMax = new Vector2(0.5f, 0.5f);
@@ -533,6 +644,7 @@ namespace TiraWantToCross.UI
                 bubbleTail.anchorMax = new Vector2(0.5f, 0f);
                 bubbleTail.pivot = new Vector2(0.5f, 1f);
                 bubbleTail.anchoredPosition = new Vector2(0f, AnimalBubbleTailOffsetY * nodeScale);
+                bubbleTail.gameObject.SetActive(!hasBubbleSprite);
 
                 var grid = CreateRect("Entities", bubblePanel, new Color(0f, 0f, 0f, 0f));
                 grid.anchorMin = new Vector2(0f, 0f);
@@ -554,8 +666,8 @@ namespace TiraWantToCross.UI
                     LocationId = location.locationId,
                     IslandImage = islandBase.GetComponent<Image>(),
                     BubbleImage = bubblePanel.GetComponent<Image>(),
-                    IslandBaseColor = new Color(0.60f, 0.82f, 0.47f, 1f),
-                    BubbleBaseColor = new Color(0.99f, 0.96f, 0.9f, 1f)
+                    IslandBaseColor = hasIslandSprite ? Color.white : new Color(0.60f, 0.82f, 0.47f, 1f),
+                    BubbleBaseColor = hasBubbleSprite ? Color.white : new Color(0.99f, 0.96f, 0.9f, 1f)
                 };
                 locationNodeRoots[location.locationId] = node;
                 shouldRebuildRoutes = true;
@@ -658,7 +770,7 @@ namespace TiraWantToCross.UI
             if (count <= 1)
             {
                 columns = 1;
-                cellSize = new Vector2(190f * nodeScale, 180f * nodeScale);
+                cellSize = new Vector2(156f * nodeScale, 156f * nodeScale);
                 spacing = new Vector2(0f, 0f);
                 return;
             }
@@ -666,22 +778,22 @@ namespace TiraWantToCross.UI
             if (count == 2)
             {
                 columns = 2;
-                cellSize = new Vector2(140f * nodeScale, 176f * nodeScale);
-                spacing = new Vector2(12f * nodeScale, 0f);
+                cellSize = new Vector2(124f * nodeScale, 124f * nodeScale);
+                spacing = new Vector2(10f * nodeScale, 0f);
                 return;
             }
 
             if (count <= 4)
             {
                 columns = 2;
-                cellSize = new Vector2(136f * nodeScale, 118f * nodeScale);
-                spacing = new Vector2(10f * nodeScale, 10f * nodeScale);
+                cellSize = new Vector2(94f * nodeScale, 94f * nodeScale);
+                spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
                 return;
             }
 
             columns = 3;
-            cellSize = new Vector2(90f * nodeScale, 116f * nodeScale);
-            spacing = new Vector2(8f * nodeScale, 8f * nodeScale);
+            cellSize = new Vector2(84f * nodeScale, 84f * nodeScale);
+            spacing = new Vector2(6f * nodeScale, 6f * nodeScale);
         }
 
         private static void ApplyBoardEntityVisualSizing(EntityVisualRefs visuals, Vector2 cellSize)
@@ -691,7 +803,7 @@ namespace TiraWantToCross.UI
                 return;
             }
 
-            var visualSize = Mathf.Max(64f, Mathf.Min(cellSize.x, cellSize.y) - 4f);
+            var visualSize = Mathf.Max(48f, Mathf.Min(cellSize.x, cellSize.y));
             var buttonLayout = visuals.Button.GetComponent<LayoutElement>();
             if (buttonLayout != null)
             {
@@ -706,7 +818,12 @@ namespace TiraWantToCross.UI
             var shell = visuals.Button.transform.Find("CircleRoot") as RectTransform;
             if (shell != null)
             {
-                shell.sizeDelta = new Vector2(visualSize, visualSize);
+                shell.anchorMin = new Vector2(0.5f, 0.5f);
+                shell.anchorMax = new Vector2(0.5f, 0.5f);
+                shell.pivot = new Vector2(0.5f, 0.5f);
+                shell.anchoredPosition = Vector2.zero;
+                shell.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, visualSize);
+                shell.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, visualSize);
                 var shellLayout = shell.GetComponent<LayoutElement>();
                 if (shellLayout != null)
                 {
@@ -717,6 +834,27 @@ namespace TiraWantToCross.UI
                     shellLayout.flexibleWidth = 0f;
                     shellLayout.flexibleHeight = 0f;
                 }
+            }
+
+            var mask = visuals.Button.transform.Find("CircleRoot/CircleMask") as RectTransform;
+            if (mask != null)
+            {
+                mask.anchorMin = new Vector2(0.5f, 0.5f);
+                mask.anchorMax = new Vector2(0.5f, 0.5f);
+                mask.pivot = new Vector2(0.5f, 0.5f);
+                mask.anchoredPosition = Vector2.zero;
+                mask.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, visualSize);
+                mask.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, visualSize);
+            }
+
+            if (visuals.PortraitImage != null && visuals.PortraitImage.transform is RectTransform portraitRect)
+            {
+                portraitRect.anchorMin = new Vector2(0.5f, 0.5f);
+                portraitRect.anchorMax = new Vector2(0.5f, 0.5f);
+                portraitRect.pivot = new Vector2(0.5f, 0.5f);
+                portraitRect.anchoredPosition = Vector2.zero;
+                portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, visualSize);
+                portraitRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, visualSize);
             }
         }
 
@@ -1092,7 +1230,43 @@ namespace TiraWantToCross.UI
                 var locationCount = context?.StageData?.locations?.Length ?? locationNodeRoots.Count;
                 var nodeScale = ResolveBoardNodeScale(locationCount);
                 markerRect.anchoredPosition = node.anchoredPosition + new Vector2(0f, -172f * nodeScale);
+                var shouldFlipBoat = HasReachableLocationToRight(boatLocation, node.anchoredPosition.x, context);
+                markerRect.localScale = new Vector3(shouldFlipBoat ? -1f : 1f, 1f, 1f);
+
+                if (boatLabelText != null)
+                {
+                    boatLabelText.transform.localScale = new Vector3(markerRect.localScale.x < 0f ? -1f : 1f, 1f, 1f);
+                }
             }
+        }
+
+        private bool HasReachableLocationToRight(string boatLocation, float boatLocationX, StageUIViewContext context)
+        {
+            if (context?.AvailableRoutes == null)
+            {
+                return false;
+            }
+
+            foreach (var route in context.AvailableRoutes)
+            {
+                var destination = route.from == boatLocation
+                    ? route.to
+                    : route.bidirectional && route.to == boatLocation
+                        ? route.from
+                        : null;
+                if (string.IsNullOrEmpty(destination))
+                {
+                    continue;
+                }
+
+                if (locationNodeRoots.TryGetValue(destination, out var destinationNode)
+                    && destinationNode.anchoredPosition.x > boatLocationX)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void TryApplyPortraitSprite(EntityData entity, EntityVisualRefs visuals, CharacterSpriteUsage usage)
@@ -1461,6 +1635,7 @@ namespace TiraWantToCross.UI
                     button.gameObject.SetActive(true);
                     button.interactable = false;
                     button.GetComponentInChildren<Text>().text = "Coming Soon";
+                    button.image.color = new Color(0.58f, 0.58f, 0.58f, 0.82f);
                     continue;
                 }
 
@@ -1475,10 +1650,10 @@ namespace TiraWantToCross.UI
                 var label = button.GetComponentInChildren<Text>();
                 label.text = $"STAGE {i + 1}\n最短 {optimal}手  {(cleared ? "CLEAR" : unlocked ? "OPEN" : "LOCK")}";
                 button.image.color = !unlocked
-                    ? new Color(0.6f, 0.6f, 0.6f, 0.9f)
+                    ? new Color(0.58f, 0.58f, 0.58f, 0.92f)
                     : selected
-                        ? new Color(0.98f, 0.92f, 0.54f, 1f)
-                        : new Color(0.86f, 0.95f, 0.82f, 1f);
+                        ? new Color(1f, 0.94f, 0.62f, 1f)
+                        : Color.white;
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => onSelectStage?.Invoke(stageId));
             }
@@ -1494,6 +1669,7 @@ namespace TiraWantToCross.UI
         private void BuildStageSelect(Transform parent)
         {
             stageSelectRoot = CreateRect("StageSelectRoot", parent, new Color(0.97f, 0.94f, 0.86f, 1f));
+            ApplyStageSelectBackgroundSprite(stageSelectRoot.GetComponent<Image>());
             ApplyFullStretch(stageSelectRoot);
             stageSelectRoot.SetAsLastSibling();
 
@@ -1505,7 +1681,7 @@ namespace TiraWantToCross.UI
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
-            var header = CreateRect("StageSelectHeader", stageSelectRoot, new Color(0.85f, 0.94f, 0.78f, 1f));
+            var header = CreateRect("StageSelectHeader", stageSelectRoot, new Color(0.85f, 0.94f, 0.78f, 0.82f));
             header.gameObject.AddComponent<LayoutElement>().preferredHeight = 180f;
             var headerLayout = header.gameObject.AddComponent<VerticalLayoutGroup>();
             headerLayout.padding = new RectOffset(18, 18, 16, 16);
@@ -1525,26 +1701,33 @@ namespace TiraWantToCross.UI
             stageSelectNavButtons.Add(CreateButton("RuleButton", tools, "ルール", () => { }, 56f, 24));
             stageSelectNavButtons.Add(CreateButton("MenuButton", tools, "メニュー", () => { }, 56f, 24));
 
-            var list = CreateRect("StageSelectList", stageSelectRoot, new Color(0.95f, 0.9f, 0.78f, 1f));
+            var list = CreateRect("StageSelectList", stageSelectRoot, new Color(1f, 1f, 1f, 0f));
             var listElement = list.gameObject.AddComponent<LayoutElement>();
             listElement.preferredHeight = 700f;
-            stageSelectListLayout = list.gameObject.AddComponent<VerticalLayoutGroup>();
-            stageSelectListLayout.spacing = 12f;
+            stageSelectListLayout = list.gameObject.AddComponent<GridLayoutGroup>();
+            stageSelectListLayout.cellSize = new Vector2(228f, 228f);
+            stageSelectListLayout.spacing = new Vector2(14f, 14f);
             stageSelectListLayout.padding = new RectOffset(18, 18, 18, 18);
-            stageSelectListLayout.childControlHeight = true;
-            stageSelectListLayout.childControlWidth = true;
-            stageSelectListLayout.childForceExpandHeight = false;
-            stageSelectListLayout.childForceExpandWidth = true;
+            stageSelectListLayout.childAlignment = TextAnchor.UpperCenter;
+            stageSelectListLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            stageSelectListLayout.constraintCount = 4;
 
-            var detail = CreateRect("StageDetail", stageSelectRoot, new Color(0.89f, 0.96f, 0.86f, 1f));
+            var detail = CreateRect("StageDetail", stageSelectRoot, new Color(0.94f, 0.98f, 0.88f, 0.84f));
+            var hasDetailPanelSprite = ApplyStageDetailPanelSprite(detail.GetComponent<Image>());
             detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 360f;
             var detailLayout = detail.gameObject.AddComponent<VerticalLayoutGroup>();
-            detailLayout.padding = new RectOffset(18, 18, 14, 14);
-            detailLayout.spacing = 8f;
+            detailLayout.padding = hasDetailPanelSprite
+                ? new RectOffset(58, 58, 48, 40)
+                : new RectOffset(18, 18, 14, 14);
+            detailLayout.spacing = hasDetailPanelSprite ? 6f : 8f;
             stageDetailText = CreateText("StageDetailText", detail, "", 32, TextAnchor.UpperLeft, 190f);
+            stageDetailText.color = new Color(0.25f, 0.14f, 0.06f, 1f);
+            stageDetailText.fontStyle = FontStyle.Bold;
             stageDetailText.horizontalOverflow = HorizontalWrapMode.Wrap;
             stageDetailMetaText = CreateText("StageDetailMeta", detail, "", 30, TextAnchor.UpperLeft, 96f);
+            stageDetailMetaText.color = new Color(0.36f, 0.22f, 0.1f, 1f);
             stageStartButton = CreateButton("StartButton", detail, "スタート", () => onStartSelectedStage?.Invoke(), 74f, 34);
+            ConfigureStageDetailStartButton(stageStartButton);
 
             CreateButton("ResetProgress", stageSelectRoot, "進行状況リセット", () => onResetProgress?.Invoke(), 88f, 28);
         }
@@ -1555,8 +1738,92 @@ namespace TiraWantToCross.UI
             {
                 var index = stageSelectButtons.Count;
                 var button = CreateButton($"StageSelectButton{index + 1}", stageSelectListLayout.transform, "", () => { }, 110f, 28);
+                ConfigureStageSelectButtonVisual(button);
                 stageSelectButtons.Add(button);
             }
+        }
+
+        private void ConfigureStageSelectButtonVisual(Button button)
+        {
+            var sprite = GetStageSelectButtonSprite();
+            if (sprite != null)
+            {
+                button.image.sprite = sprite;
+                button.image.type = Image.Type.Simple;
+                button.image.preserveAspect = true;
+                button.targetGraphic = button.image;
+            }
+
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.96f, 0.78f, 1f);
+            colors.pressedColor = new Color(0.88f, 0.72f, 0.46f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.85f);
+            button.colors = colors;
+
+            var label = button.GetComponentInChildren<Text>();
+            if (label == null)
+            {
+                return;
+            }
+
+            label.color = new Color(0.25f, 0.14f, 0.06f, 1f);
+            label.fontStyle = FontStyle.Bold;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 18;
+            label.resizeTextMaxSize = 30;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+            ApplyFullStretch(label.rectTransform, 26f, 26f, 42f, 42f);
+
+            var outline = label.gameObject.GetComponent<Outline>() ?? label.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 0.92f, 0.68f, 0.72f);
+            outline.effectDistance = new Vector2(1.2f, -1.2f);
+        }
+
+        private Sprite GetStageSelectButtonSprite()
+        {
+            if (stageSelectButtonSprite == null)
+            {
+                stageSelectButtonSprite = Resources.Load<Sprite>(StageSelectButtonResourcePath);
+            }
+
+            return stageSelectButtonSprite;
+        }
+
+        private void ConfigureStageDetailStartButton(Button button)
+        {
+            var sprite = GetStageSelectButtonSprite();
+            if (sprite != null)
+            {
+                button.image.sprite = sprite;
+                button.image.type = Image.Type.Simple;
+                button.image.preserveAspect = false;
+                button.targetGraphic = button.image;
+            }
+
+            button.image.color = Color.white;
+            var colors = button.colors;
+            colors.normalColor = new Color(1f, 0.94f, 0.72f, 1f);
+            colors.highlightedColor = new Color(1f, 0.98f, 0.82f, 1f);
+            colors.pressedColor = new Color(0.86f, 0.68f, 0.42f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = new Color(0.56f, 0.56f, 0.56f, 0.82f);
+            button.colors = colors;
+
+            var label = button.GetComponentInChildren<Text>();
+            if (label == null)
+            {
+                return;
+            }
+
+            label.color = new Color(0.24f, 0.12f, 0.04f, 1f);
+            label.fontStyle = FontStyle.Bold;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 22;
+            label.resizeTextMaxSize = 34;
+            ApplyFullStretch(label.rectTransform, 18f, 18f, 12f, 12f);
         }
 
         private void RenderSelectedStageDetail(StageUIViewContext context)
@@ -1826,9 +2093,9 @@ namespace TiraWantToCross.UI
             buttonLayout.padding = circularStyle ? new RectOffset(4, 4, 4, 4) : new RectOffset(0, 0, 0, 0);
             buttonLayout.spacing = circularStyle ? 3f : 0f;
             buttonLayout.childAlignment = circularStyle ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter;
-            buttonLayout.childControlWidth = true;
+            buttonLayout.childControlWidth = circularStyle;
             buttonLayout.childControlHeight = false;
-            buttonLayout.childForceExpandWidth = true;
+            buttonLayout.childForceExpandWidth = circularStyle;
             buttonLayout.childForceExpandHeight = false;
 
             var buttonImage = button.image;
@@ -1845,7 +2112,7 @@ namespace TiraWantToCross.UI
             var shell = CreateRect("CircleRoot", button.transform, Color.clear);
             shell.transform.SetSiblingIndex(0);
             var shellLayout = shell.gameObject.AddComponent<LayoutElement>();
-                var circleSize = circularStyle ? iconButtonSize - 36f : preferredHeight - 4f;
+                var circleSize = circularStyle ? iconButtonSize - 36f : preferredHeight;
             shellLayout.preferredHeight = circleSize;
             shellLayout.preferredWidth = circleSize;
             shellLayout.minHeight = circleSize;
